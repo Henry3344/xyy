@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Survival English Guide v22.0</title>
+    <title>Survival English Guide v23.0</title>
     <style>
         /* --- CSS 变量 --- */
         :root {
@@ -83,7 +83,7 @@
         [data-theme="dark"] .nav-btn { border-color: var(--border); }
         .nav-btn.active-nav { background: var(--primary); color: white; }
 
-        /* --- 主内容区 (横向滑动容器) --- */
+        /* --- 主内容区 (横向滑动) --- */
         #content-area {
             flex: 1;
             display: flex;
@@ -99,13 +99,13 @@
         
         #content-area::-webkit-scrollbar { display: none; }
 
-        /* --- 单元卡片 (紧凑版) --- */
+        /* --- 单元卡片 --- */
         .unit-card { 
             flex: 0 0 85vw; 
             max-width: 500px;
             background: var(--bg-card); 
             border-radius: 20px; 
-            padding: 20px; /* 减小内边距 */
+            padding: 20px; 
             box-shadow: 0 8px 30px var(--shadow); 
             border: 1px solid var(--border); 
             scroll-snap-align: center; 
@@ -152,11 +152,15 @@
         .btn-audio { flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 50%; width: 40px; height: 40px; min-width: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1em; box-shadow: 0 2px 5px var(--shadow); color: var(--primary); }
         .btn-audio:active { transform: scale(0.92); }
         
-        /* --- 词汇点击区 (更紧凑) --- */
+        /* --- 词汇点击区 --- */
         .chips-container { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+        
+        /* 特殊处理：有气泡的容器，底部增加内边距，防止气泡被切 */
+        .chips-container.has-bubble-container { padding-bottom: 60px; }
+
         .chip { 
             background: var(--chip-bg); border: 1px solid var(--chip-border); 
-            padding: 6px 12px; /* 减小内边距 */
+            padding: 6px 12px; 
             border-radius: 16px; 
             font-size: 0.9em; cursor: pointer; font-weight: 600; color: var(--text-main); 
             transition: all 0.2s; user-select: none; 
@@ -165,24 +169,47 @@
         .chip:hover { transform: translateY(-1px); border-color: var(--primary); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,122,255,0.3); transform: scale(1.02); }
         
-        .add-btn-wrapper { position: relative; display: inline-block; }
-        
-        /* 【关键修复】物理撑开底部空间，防止气泡被切 */
-        .add-btn-wrapper.has-bubble { margin-bottom: 50px; display: block; width: 100%; } 
+        /* 【核心修复】恢复 inline-block，让它紧跟上一个词 */
+        .add-btn-wrapper { position: relative; display: inline-block; vertical-align: middle; }
         
         .add-chip-btn { border: 1px dashed var(--text-sub); color: var(--text-sub); background: transparent; padding: 6px 10px; }
         
-        /* 气泡提示 (居中且位于下方) */
+        /* 【气泡修复】定位微调 + 箭头向上指 */
         .bubble-tip { 
-            position: absolute; top: 40px; left: 50%; transform: translateX(-50%); 
-            background: var(--danger); color: white; padding: 8px 12px; border-radius: 12px; 
-            font-size: 0.75em; font-weight: bold; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3); 
-            animation: bounce 1.5s infinite; z-index: 10; pointer-events: none;
-            width: 180px; white-space: normal; text-align: center; line-height: 1.3; opacity: 0.95;
+            position: absolute; 
+            top: 45px; /* 在按钮下方 */
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: var(--danger); 
+            color: white; 
+            padding: 8px 10px; 
+            border-radius: 10px; 
+            font-size: 0.7em; 
+            font-weight: bold; 
+            box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3); 
+            animation: bounce 1.5s infinite; 
+            z-index: 99; /* 提高层级 */
+            width: 140px; 
+            white-space: normal; 
+            text-align: center; 
+            line-height: 1.3; 
+            pointer-events: none;
         }
-        /* 气泡箭头向上指 */
-        .bubble-tip::after { content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: transparent transparent var(--danger) transparent; }
-        @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(5px); } }
+        /* 箭头朝上 */
+        .bubble-tip::after { 
+            content: ''; 
+            position: absolute; 
+            bottom: 100%; /* 位于气泡顶部 */
+            left: 50%; 
+            margin-left: -6px; 
+            border-width: 6px; 
+            border-style: solid; 
+            border-color: transparent transparent var(--danger) transparent; 
+        }
+        @keyframes bounce { 
+            0%, 100% { transform: translateX(-50%) translateY(0); } 
+            50% { transform: translateX(-50%) translateY(5px); } 
+        }
 
         /* --- 分隔线 --- */
         .divider { height: 1px; background: var(--border); margin: 20px 0; border: none; }
@@ -204,7 +231,7 @@
         .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1em; box-shadow: 0 4px 8px rgba(39, 174, 96, 0.4); }
         
         /* --- 悬浮控制组 --- */
-        .float-controls { position: fixed; bottom: 50px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; align-items: flex-end; }
+        .float-controls { position: fixed; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; align-items: flex-end; }
         
         .fab-quiz { background: var(--danger); color: white; padding: 8px 16px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 6px; border: none; font-size: 0.85em; }
         .fab-quiz:active { transform: scale(0.95); }
@@ -250,7 +277,7 @@
         .fixed-footer { 
             flex: 0 0 auto;
             text-align: center; color: var(--text-sub); font-size: 0.6em; 
-            padding: 5px; /* 极窄内边距 */
+            padding: 3px 0; /* 极窄 */
             border-top: 1px solid var(--border); 
             background: var(--bg-body);
             opacity: 0.5;
@@ -355,12 +382,13 @@
                     </div>
                     <button class="btn-audio" onclick="speakWholeSentence('u1-s1-word', 'Hi, I am', '.')">🔊</button>
                 </div>
-                <div class="chips-container" id="u1-s1-chips">
+                <div class="chips-container has-bubble-container" id="u1-s1-chips">
                     <div class="chip active" onclick="updateUnit(1, 1, 'your new neighbor', '你的新邻居', 'Hi, I am', '', this)">your new neighbor</div>
                     <div class="chip" onclick="updateUnit(1, 1, 'David', 'David', 'Hi, I am', '', this)">David</div>
                     <div class="chip" onclick="updateUnit(1, 1, 'moving in', '刚搬进来', 'Hi, I am', '', this)">moving in</div>
                     <div class="chip" onclick="updateUnit(1, 1, 'visiting my aunt', '来看我阿姨的', 'Hi, I am', '', this)">visiting my aunt</div>
-                    <div class="add-btn-wrapper has-bubble">
+                    
+                    <div class="add-btn-wrapper">
                         <div class="bubble-tip">没有你想要的？这里可以自己添加并且也可以发音哦！</div>
                         <button class="chip add-chip-btn" onclick="addCustomChip(1, 1, 'Hi, I am', '')">＋</button>
                     </div>

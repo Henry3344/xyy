@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Survival English Guide v25.2</title>
+    <title>Survival English Guide v25.3</title>
     <style>
         /* --- CSS 变量 --- */
         :root {
@@ -162,28 +162,27 @@
         .chip:hover { transform: translateY(-1px); border-color: var(--primary); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,122,255,0.3); transform: scale(1.02); }
         
-        /* 加号按钮容器：保持相对定位，但不要设为 block/100%，否则气泡会跑偏 */
+        /* 加号按钮容器 */
         .add-btn-wrapper { position: relative; display: inline-block; vertical-align: middle; }
         
         .add-chip-btn { border: 1px dashed var(--text-sub); color: var(--text-sub); background: transparent; padding: 6px 10px; }
         
-        /* 气泡提示 (CSS修正) */
+        /* 气泡提示 (CSS修正：变窄、文字精简) */
         .bubble-tip { 
             position: absolute; 
-            top: -10px; /* 稍微向上调整，避免覆盖按钮 */
+            top: -10px; 
             left: 50%; 
-            transform: translateX(-50%) translateY(-100%); /* 向上移动到按钮上方 */
-            background: var(--danger); color: white; padding: 8px 12px; border-radius: 10px; 
+            transform: translateX(-50%) translateY(-100%); 
+            background: var(--danger); color: white; padding: 8px 10px; border-radius: 10px; 
             font-size: 0.75em; font-weight: bold; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4); 
             animation: bounce 1.5s infinite; z-index: 99; 
-            width: 200px; 
+            width: 150px; /* 宽度缩小，防溢出 */
             white-space: normal; text-align: center; line-height: 1.4; 
             opacity: 0.95; transition: opacity 1s ease;
             pointer-events: none;
-            margin-bottom: 12px; /* 留出箭头空间 */
+            margin-bottom: 12px;
         }
         .bubble-tip.fade-out { opacity: 0; }
-        /* 箭头朝下，指向按钮 */
         .bubble-tip::after { 
             content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; 
             border-width: 6px; border-style: solid; border-color: var(--danger) transparent transparent transparent; 
@@ -191,7 +190,7 @@
         
         @keyframes bounce { 
             0%, 100% { transform: translateX(-50%) translateY(-100%); } 
-            50% { transform: translateX(-50%) translateY(-108%); } /* 向上跳动 */
+            50% { transform: translateX(-50%) translateY(-108%); } 
         }
 
         /* --- 分隔线 --- */
@@ -585,10 +584,10 @@
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble-tip';
-                bubble.innerText = '没有你想要的？点击这里可以添加单词或句子，也可以发音哦（此功能测试中，仅供参考）';
+                // 文案精简
+                bubble.innerText = '没找到？点我添加，还能发音！';
                 
                 wrapper.appendChild(bubble);
-                // 注意：不再添加 .has-bubble 类来撑开宽度，保持加号按钮原样
 
                 // C. 15秒后自动消失
                 setTimeout(() => {

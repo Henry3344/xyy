@@ -882,8 +882,8 @@
         <p>&copy; <span id="year"></span> Henry's Survival English Guide.</p>
     </div>
 
-       <script>
-        // === 核心逻辑 (V25.6 整句翻译修复版) ===
+    <script>
+        // === 核心逻辑 (V25.7 智能联想搜索版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -894,6 +894,10 @@
             loadTheme();
             loadCustomChips();
             loadUsageData();
+            
+            // 关键步骤：注入智能联想关键词
+            injectSmartKeywords();
+
             checkMonthlyReport(); 
             autoSortUnits();
             
@@ -908,6 +912,37 @@
             setTimeout(() => { initBubbleTip(); }, 300);
             initScrollHints();
         };
+
+        // === 🚀 新增功能：智能联想关键词库 ===
+        function injectSmartKeywords() {
+            // 这里定义“搜索什么词”应该关联到“哪个单元”
+            // 即使卡片上没有这些字，也能搜到！
+            const smartMap = {
+                1: "搬家 装修 认识 问候 新来 陌生人 hello hi greeting",
+                2: "迷路 导航 地图 哪儿 怎么走 方向 lost map where",
+                3: "厕所 尿急 大便 小便 没电 充电器 借用 手机没电 battery charge",
+                4: "钱 转账 存钱 取钱 换汇 汇率 支票 现金 money cash bank",
+                5: "买单 多少钱 刷卡 支付宝 微信 购物 消费 收据 发票 pay cost",
+                6: "饿了 吃饭 菜单 好吃 忌口 辣 甜 咸 喝水 饮料 menu eat food drink",
+                7: "请客 AA制 均摊 朋友 聚会 算账 谁付钱 treat share split",
+                8: "喝茶 喝咖啡 聊天 聊聊 很久没见 老朋友 叙旧 微信 联系 chat coffee",
+                9: "回家 司机 师傅 机场 堵车 怎么走 下车 停车 taxi uber car ride",
+                10: "救命 疼 难受 医院 报警 110 120 受伤 生病 help sick pain emergency",
+                11: "听不懂 啥 没听清 翻译 英语不好 慢点 什么意思 what pardon translate",
+                12: "坏了 烂了 不喜欢 假货 售后 退款 换货 尺码不对 broken refund return",
+                13: "定时间 几点 饭店订位 安排 改期 取消 明天 后天 schedule time book"
+            };
+
+            for (let id in smartMap) {
+                const card = document.getElementById(`u${id}`);
+                if (card) {
+                    // 把原本的关键词取出来，加上新的联想词，再塞回去
+                    const originalKeys = card.getAttribute('data-keywords') || "";
+                    const newKeys = originalKeys + " " + smartMap[id];
+                    card.setAttribute('data-keywords', newKeys);
+                }
+            }
+        }
 
         // 2. 智能下滑提示
         function initScrollHints() {
@@ -1066,6 +1101,7 @@
             for(let card of cards) {
                 const text = card.innerText.toLowerCase();
                 const keys = card.getAttribute('data-keywords') || "";
+                // 只要 text 或者 keys 里包含了搜索词，就显示
                 card.style.display = (text.includes(filter) || keys.includes(filter)) ? "" : "none";
             }
         }
@@ -1134,57 +1170,56 @@
             const cw = cnWord; // 简称，方便拼接
             const sfx = suffixCn ? suffixCn : "。";
 
-            // 针对每个单元的每个步骤，专门定制中文前缀
             switch(unitNum) {
-                case 1: // 邻居
+                case 1: 
                     if(stepNum === 1) fullCn = "嗨，我是" + cw + "。";
                     if(stepNum === 2) fullCn = "我住在" + cw + "。";
                     break;
-                case 2: // 位置
+                case 2: 
                     if(stepNum === 1) fullCn = "打扰一下，我在找" + cw + "。";
                     if(stepNum === 2) fullCn = "能告诉我" + cw + sfx;
                     break;
-                case 3: // 洗手间
+                case 3: 
                     if(stepNum === 1) fullCn = "我能借用一下您的" + cw + sfx;
                     if(stepNum === 2) fullCn = "真的很" + cw + "。"; 
                     break;
-                case 4: // 银行
+                case 4: 
                     if(stepNum === 1) fullCn = "我想" + cw + "。";
                     if(stepNum === 2) fullCn = "这是我的" + cw + "。";
                     break;
-                case 5: // 结账
+                case 5: 
                     if(stepNum === 1) fullCn = "我想用" + cw + "支付。";
                     if(stepNum === 2) fullCn = "你们提供" + cw + sfx;
                     break;
-                case 6: // 点餐
+                case 6: 
                     if(stepNum === 1) fullCn = "我想要" + cw + "。";
                     if(stepNum === 2) fullCn = "请不要" + cw + "。";
                     break;
-                case 7: // 聚餐
+                case 7: 
                     if(stepNum === 1) fullCn = "咱们" + cw + "吧。";
                     if(stepNum === 2) fullCn = "今天" + cw + "。"; 
                     break;
-                case 8: // 叙旧
+                case 8: 
                     if(stepNum === 1) fullCn = "好久不见！" + cw + "怎么样？"; 
                     if(stepNum === 2) fullCn = "我们应该" + cw + "。";
                     break;
-                case 9: // 打车
+                case 9: 
                     if(stepNum === 1) fullCn = "我要去" + cw + "。";
                     if(stepNum === 2) fullCn = "就在" + cw + "下车。";
                     break;
-                case 10: // 急救
+                case 10: 
                     if(stepNum === 1) fullCn = "我需要" + cw + "。";
                     if(stepNum === 2) fullCn = "我感到" + cw + "。"; 
                     break;
-                case 11: // 没听懂
+                case 11: 
                     if(stepNum === 1) fullCn = "能" + cw + "吗？";
                     if(stepNum === 2) fullCn = "我不" + cw + "。";
                     break;
-                case 12: // 退货
+                case 12: 
                     if(stepNum === 1) fullCn = "我想" + cw + "。";
                     if(stepNum === 2) fullCn = "它" + cw + "。";
                     break;
-                case 13: // 预约
+                case 13: 
                     if(stepNum === 1) fullCn = "我想" + cw + "。";
                     if(stepNum === 2) fullCn = "在" + cw + "。";
                     break;

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Survival English Guide v25.1</title>
+    <title>Survival English Guide v25.2</title>
     <style>
         /* --- CSS 变量 --- */
         :root {
@@ -116,7 +116,7 @@
             overflow-x: hidden;
             position: relative;
             transition: transform 0.2s;
-            padding-bottom: 40px; /* 留出底部空间给提示语 */
+            padding-bottom: 40px; 
         }
         .unit-card::-webkit-scrollbar { display: none; }
 
@@ -162,25 +162,37 @@
         .chip:hover { transform: translateY(-1px); border-color: var(--primary); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,122,255,0.3); transform: scale(1.02); }
         
+        /* 加号按钮容器：保持相对定位，但不要设为 block/100%，否则气泡会跑偏 */
         .add-btn-wrapper { position: relative; display: inline-block; vertical-align: middle; }
-        .add-btn-wrapper.has-bubble { margin-bottom: 60px; display: block; width: 100%; } 
         
         .add-chip-btn { border: 1px dashed var(--text-sub); color: var(--text-sub); background: transparent; padding: 6px 10px; }
         
-        /* 气泡提示 (CSS) */
+        /* 气泡提示 (CSS修正) */
         .bubble-tip { 
-            position: absolute; top: 45px; left: 50%; transform: translateX(-50%); 
+            position: absolute; 
+            top: -10px; /* 稍微向上调整，避免覆盖按钮 */
+            left: 50%; 
+            transform: translateX(-50%) translateY(-100%); /* 向上移动到按钮上方 */
             background: var(--danger); color: white; padding: 8px 12px; border-radius: 10px; 
-            font-size: 0.7em; font-weight: bold; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4); 
+            font-size: 0.75em; font-weight: bold; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4); 
             animation: bounce 1.5s infinite; z-index: 99; 
-            width: 220px; 
+            width: 200px; 
             white-space: normal; text-align: center; line-height: 1.4; 
             opacity: 0.95; transition: opacity 1s ease;
             pointer-events: none;
+            margin-bottom: 12px; /* 留出箭头空间 */
         }
         .bubble-tip.fade-out { opacity: 0; }
-        .bubble-tip::after { content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: transparent transparent var(--danger) transparent; }
-        @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(5px); } }
+        /* 箭头朝下，指向按钮 */
+        .bubble-tip::after { 
+            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; 
+            border-width: 6px; border-style: solid; border-color: var(--danger) transparent transparent transparent; 
+        }
+        
+        @keyframes bounce { 
+            0%, 100% { transform: translateX(-50%) translateY(-100%); } 
+            50% { transform: translateX(-50%) translateY(-108%); } /* 向上跳动 */
+        }
 
         /* --- 分隔线 --- */
         .divider { height: 1px; background: var(--border); margin: 20px 0; border: none; }
@@ -385,7 +397,7 @@
                     <div class="chip active" onclick="updateUnit(1, 2, 'Apt 302', '302室', 'I live in', '', this)">Apt 302</div>
                     <div class="chip" onclick="updateUnit(1, 2, 'next door', '隔壁', 'I live', '', this)">next door</div>
                     <div class="chip" onclick="updateUnit(1, 2, 'downstairs', '楼下', 'I live', '', this)">downstairs</div>
-                    <div class="add-btn-wrapper">
+                     <div class="add-btn-wrapper">
                         <button class="chip add-chip-btn" onclick="addCustomChip(1, 2, 'I live in', '')">＋</button>
                     </div>
                 </div>
@@ -523,21 +535,22 @@
             }
             
             // 排序完成后，显示智能气泡 & 初始化滚动提示
-            initBubbleTip();
+            // 延迟一点点，等待浏览器滚动恢复完成，才能找准“当前可见”的卡片
+            setTimeout(() => {
+                initBubbleTip();
+            }, 300);
+            
             initScrollHints();
         };
 
-        // 2. 智能下滑提示 (Smart Scroll Hint)
+        // 2. 智能下滑提示
         function initScrollHints() {
             const cards = document.querySelectorAll('.unit-card');
             cards.forEach(card => {
-                // 检查内容是否溢出
                 if (card.scrollHeight > card.clientHeight) {
                     const hint = card.querySelector('.scroll-hint');
                     if (hint) hint.classList.add('visible');
                 }
-                
-                // 监听滚动，隐藏提示
                 card.addEventListener('scroll', function() {
                     const hint = this.querySelector('.scroll-hint');
                     if (hint) hint.classList.remove('visible');
@@ -545,29 +558,29 @@
             });
         }
 
-        // 3. 智能气泡引导 (已修复：容错性更强，每次刷新显示)
+        // 3. 智能气泡引导 (终极修复版：对准加号，找准可见卡片)
         function initBubbleTip() {
-            // 1. 获取所有卡片，按当前显示顺序（因为可能被排序过）
-            const container = document.getElementById('content-area');
-            const cards = container.querySelectorAll('.unit-card');
-            if (cards.length === 0) return;
-
-            let wrapper = null;
-
-            // 2. 遍历查找第一个包含 add-btn-wrapper 的卡片
-            // 这样即使第一个卡片没有 wrapper，也能挂载到第二个上，防止 JS 报错
-            for (let card of cards) {
-                // 优先找 Step 1 的 chips-container 里的 wrapper
-                const firstStepWrapper = card.querySelector('.step-container .chips-container .add-btn-wrapper');
-                if (firstStepWrapper) {
-                    wrapper = firstStepWrapper;
-                    break;
+            // A. 找到当前屏幕中间那个卡片 (Visual Viewport Logic)
+            const center = window.innerWidth / 2;
+            let bestCard = null;
+            let minDiff = Infinity;
+            
+            document.querySelectorAll('.unit-card').forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const cardCenter = rect.left + rect.width / 2;
+                const diff = Math.abs(center - cardCenter);
+                if(diff < minDiff) {
+                    minDiff = diff;
+                    bestCard = card;
                 }
-            }
+            });
 
-            // 3. 如果找到了合适的地方，添加气泡
+            if (!bestCard) return;
+
+            // B. 在这个最佳卡片里，找 Step 1 的加号容器
+            const wrapper = bestCard.querySelector('.step-container .chips-container .add-btn-wrapper');
+            
             if (wrapper) {
-                // 防止重复添加
                 if(wrapper.querySelector('.bubble-tip')) return;
 
                 const bubble = document.createElement('div');
@@ -575,9 +588,9 @@
                 bubble.innerText = '没有你想要的？点击这里可以添加单词或句子，也可以发音哦（此功能测试中，仅供参考）';
                 
                 wrapper.appendChild(bubble);
-                wrapper.classList.add('has-bubble'); // 撑开底部
+                // 注意：不再添加 .has-bubble 类来撑开宽度，保持加号按钮原样
 
-                // 15秒后自动消失
+                // C. 15秒后自动消失
                 setTimeout(() => {
                     dismissBubble(bubble);
                 }, 15000);
@@ -588,14 +601,11 @@
             if(!element) return;
             element.classList.add('fade-out');
             setTimeout(() => {
-                const wrapper = element.parentElement;
-                if(wrapper) wrapper.classList.remove('has-bubble'); // 恢复布局
                 element.remove();
             }, 1000);
-            // 不再记录 localStorage，保证每次刷新都显示
         }
 
-        // 4. 自定义词库 (关联气泡消除)
+        // 4. 自定义词库
         function addCustomChip(unitNum, stepNum, prefix, suffix) {
             const bubble = document.querySelector('.bubble-tip');
             if(bubble) dismissBubble(bubble);
@@ -772,12 +782,10 @@
 
             btn.onclick = function() { updateUnit(data.unitNum, data.stepNum, data.eng, data.cn, data.prefix, data.suffix, this); };
             
-            // 修正后的插入逻辑：总是在 add-btn-wrapper 之前插入，或者在 add-chip-btn 之前
             const wrapper = container.querySelector('.add-btn-wrapper');
             if(wrapper) {
                 container.insertBefore(btn, wrapper);
             } else {
-                // 如果没有 wrapper (理论上都应该有了)，就 append
                 const addBtn = container.querySelector('.add-chip-btn');
                 if(addBtn) container.insertBefore(btn, addBtn);
                 else container.appendChild(btn);
@@ -809,21 +817,16 @@
             if(displayEl) displayEl.innerText = engWord;
             
             let fullCn = "";
-            // 复用翻译逻辑
             if (unitNum === 1 && stepNum === 1) fullCn = "嗨，我是" + cnWord + "。";
             else if (unitNum === 1 && stepNum === 2) fullCn = "我住在" + cnWord + "。";
             else if (unitNum === 2 && stepNum === 1) fullCn = "打扰一下，我在找" + cnWord + "。";
             else if (unitNum === 2 && stepNum === 2) fullCn = "能告诉我" + cnWord + suffixCn + "？";
-            // ... Unit 3-13 ...
             else fullCn = cnWord + (suffixCn ? suffixCn : "。");
 
             const transEl = document.getElementById(`u${unitNum}-s${stepNum}-trans`);
             if(transEl) transEl.innerText = fullCn;
 
             let container = element.parentElement;
-            // 修正：如果 chip 是动态插入的，它可能在 chips-container 里，而 add-btn 在 add-btn-wrapper 里
-            // 所以我们要找的是芯片的同级元素
-            
             let chips = container.querySelectorAll('.chip');
             for(let chip of chips) chip.classList.remove('active');
             element.classList.add('active');

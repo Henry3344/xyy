@@ -312,6 +312,67 @@
             text-align: center; max-width: 80%; animation: popIn 0.3s;
             backdrop-filter: blur(5px);
         }
+        /* --- V28.0 新增：AI 陪练界面 & 搜索动画 --- */
+        
+        /* 1. 搜索框动画类 */
+        .search-input.fade-text { transition: color 0.5s ease; color: transparent; }
+        
+        /* 2. 悬浮机器人按钮 */
+        .fab-robot {
+            background: #000; color: white; width: 45px; height: 45px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 1.4em;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: 2px solid #00ff00; 
+            cursor: pointer; margin-top: 10px; position: relative; animation: float 3s ease-in-out infinite;
+        }
+        .fab-robot .robot-badge {
+            position: absolute; top: -5px; right: -5px; width: 12px; height: 12px;
+            background: #ff3b30; border-radius: 50%; border: 2px solid #fff;
+            display: none; /* 有消息时显示 */
+        }
+        @keyframes float { 0%,100% {transform:translateY(0);} 50% {transform:translateY(-5px);} }
+
+        /* 3. 聊天窗口 */
+        .chat-overlay {
+            position: fixed; bottom: 90px; right: 20px; width: 85vw; max-width: 350px; height: 60vh;
+            background: var(--bg-card); border-radius: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            display: none; flex-direction: column; z-index: 9999; border: 1px solid var(--border);
+            overflow: hidden; animation: slideInRight 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(20px) scale(0.9); } to { opacity: 1; transform: translateX(0) scale(1); } }
+
+        .chat-header {
+            padding: 15px; background: var(--bg-body); border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; font-weight: bold;
+        }
+        .chat-body {
+            flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+            background: var(--bg-body);
+        }
+        .chat-footer {
+            padding: 10px; border-top: 1px solid var(--border); background: var(--bg-card);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+
+        /* 消息气泡 */
+        .msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9em; line-height: 1.4; word-wrap: break-word; }
+        .msg.bot { align-self: flex-start; background: var(--bg-card); border: 1px solid var(--border); border-bottom-left-radius: 2px; }
+        .msg.user { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+        .msg-btn-group { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+        .msg-chip { background: var(--primary-light); color: var(--primary); padding: 5px 10px; border-radius: 15px; font-size: 0.8em; cursor: pointer; border: 1px solid transparent; }
+        .msg-chip:active { transform: scale(0.95); }
+
+        /* 麦克风动效 */
+        .mic-wave {
+            width: 50px; height: 50px; border-radius: 50%; background: var(--danger); color: white;
+            display: flex; align-items: center; justify-content: center; font-size: 1.2em;
+            box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); cursor: pointer; border: none;
+        }
+        .mic-wave.active { animation: pulse-red 1.5s infinite; }
+        @keyframes pulse-red { 
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(255, 59, 48, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+        }
     </style>
 </head>
 <body>
@@ -934,27 +995,35 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V26.0 AI 进化版：跟读 + 智能排序) ===
+        // === 核心逻辑 (V28.0 贾维斯陪练版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
-        // 语音识别实例
         let recognition = null; 
+        
+        // AI 陪练状态机
+        let aiState = {
+            active: false,
+            currentUnit: null,
+            currentStep: 0,
+            score: 0,
+            total: 0,
+            waitingForSpeech: false,
+            silenceTimer: null,
+            idleTimer: null
+        };
 
         window.onload = function() {
             document.getElementById('year').innerText = new Date().getFullYear();
             loadTheme();
             loadCustomChips();
             loadUsageData();
-            injectSmartKeywords();
+            injectSmartKeywords(); // 注入词库
             injectShowCardDOM();
+            injectChatDOM();       // 新增：注入聊天窗口
             
-            // 1. 初始化 AI 语音识别
             initSpeechRecognition();
-
             checkMonthlyReport(); 
-            
-            // 2. 执行智能排序 (包含时间感知)
             autoSortUnits();
             
             for (let i = 1; i <= 13; i++) {
@@ -965,112 +1034,335 @@
             }
             setTimeout(() => { initBubbleTip(); }, 300);
             initScrollHints();
-            
-            // 3. 添加按钮 (眼睛 + 麦克风)
             addActionButtons(); 
+            addFloatingControls(); 
+            
+            // 启动搜索栏动画
+            startSearchAnimation();
+            
+            // 启动空闲检测
+            resetIdleTimer();
+            document.addEventListener('touchstart', resetIdleTimer);
+            document.addEventListener('click', resetIdleTimer);
+            document.addEventListener('scroll', resetIdleTimer);
         };
 
-        // --- 🚀 新增功能：AI 语音跟读 ---
-        function initSpeechRecognition() {
-            // 兼容性检查：Samsung S25 的 Chrome/Webview 通常支持 webkitSpeechRecognition
-            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-                recognition.lang = 'en-US'; // 设定只听英语
-                recognition.interimResults = false;
-                recognition.maxAlternatives = 1;
-
-                recognition.onresult = function(event) {
-                    const last = event.results.length - 1;
-                    const text = event.results[last][0].transcript;
-                    handleSpeechResult(text);
-                };
-
-                recognition.onerror = function(event) {
-                    showToast("❌ 听不清，请靠近一点说~");
-                    resetMicButtons();
-                };
+        // --- 🔍 功能 1: 搜索栏动态轮播 ---
+        function startSearchAnimation() {
+            const input = document.getElementById('searchBox');
+            // 提取所有关键词
+            let allKeywords = [];
+            document.querySelectorAll('.unit-card').forEach(c => {
+                const keys = c.getAttribute('data-keywords').split(' ');
+                allKeywords.push(...keys);
+            });
+            // 过滤掉英文和太短的词，保留有意思的中文词
+            allKeywords = allKeywords.filter(k => /^[\u4e00-\u9fa5]{2,}$/.test(k) && k.length < 5);
+            // 去重
+            allKeywords = [...new Set(allKeywords)];
+            
+            let idx = 0;
+            setInterval(() => {
+                // 如果用户正在输入，不打扰
+                if(document.activeElement === input && input.value !== "") return;
                 
-                recognition.onend = function() {
-                    resetMicButtons();
-                };
+                // 渐隐
+                input.style.color = 'transparent';
+                
+                setTimeout(() => {
+                    // 切换词
+                    const word = allKeywords[idx % allKeywords.length];
+                    input.setAttribute('placeholder', `🔍 搜"${word}"试试...`);
+                    // 渐显
+                    input.style.color = 'var(--text-main)';
+                    idx++;
+                }, 500); // 等待淡出
+                
+            }, 4000); // 4秒切换
+        }
+
+        // --- 🤖 功能 2: 伪 AI 陪练 (Jarvis Lite) ---
+
+        function injectChatDOM() {
+            const div = document.createElement('div');
+            div.id = 'chatOverlay';
+            div.className = 'chat-overlay';
+            div.innerHTML = `
+                <div class="chat-header">
+                    <span>🤖 Henry's AI Tutor</span>
+                    <span onclick="toggleChat()" style="cursor:pointer;font-size:1.2em;">✕</span>
+                </div>
+                <div class="chat-body" id="chatBody">
+                    </div>
+                <div class="chat-footer">
+                    <button id="chatMicBtn" class="mic-wave" onclick="handleChatMic()">🎙️</button>
+                    <button class="nav-btn" onclick="endChat()" style="background:#ff3b30;color:white;border:none;">End</button>
+                </div>
+            `;
+            document.body.appendChild(div);
+        }
+
+        function addFloatingControls() {
+            const container = document.querySelector('.float-controls');
+            // 添加 🤖 机器人按钮
+            const btn = document.createElement('button');
+            btn.className = 'fab-robot';
+            btn.innerHTML = '🤖<div class="robot-badge" id="robotBadge"></div>';
+            btn.title = "AI 陪练";
+            btn.onclick = () => { 
+                triggerHaptic(); 
+                toggleChat(); 
+                // 如果是第一次点，初始化
+                if(document.getElementById('chatBody').innerHTML.trim() === "") {
+                    startAiSession(); 
+                }
+            };
+            container.insertBefore(btn, container.firstChild);
+        }
+
+        function resetIdleTimer() {
+            if(aiState.active) return; // 如果正在聊天，不计时
+            if(aiState.idleTimer) clearTimeout(aiState.idleTimer);
+            
+            // 1分钟无操作触发
+            aiState.idleTimer = setTimeout(() => {
+                document.getElementById('robotBadge').style.display = 'block';
+                // 弹出气泡提示 (复用 bubble-tip 样式)
+                const robotBtn = document.querySelector('.fab-robot');
+                if(robotBtn) {
+                    showToast("🤖 嘿！想练练口语吗？点我！");
+                    triggerHaptic();
+                }
+            }, 60000); 
+        }
+
+        function toggleChat() {
+            const el = document.getElementById('chatOverlay');
+            const isHidden = el.style.display === 'none' || el.style.display === '';
+            el.style.display = isHidden ? 'flex' : 'none';
+            document.getElementById('robotBadge').style.display = 'none';
+            if(isHidden) {
+                // 滚动到底部
+                const body = document.getElementById('chatBody');
+                body.scrollTop = body.scrollHeight;
             }
         }
 
-        // 处理语音结果
-        let currentTargetText = ""; // 当前正在练习的目标句子
-        
-        function startListening(btn, targetText) {
-            if (!recognition) {
-                alert("抱歉，你的浏览器不支持语音识别功能 (推荐使用 Chrome)");
+        function addBotMsg(text, chips = []) {
+            const body = document.getElementById('chatBody');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg bot';
+            msgDiv.innerText = text;
+            body.appendChild(msgDiv);
+            
+            if(chips.length > 0) {
+                const chipGroup = document.createElement('div');
+                chipGroup.className = 'msg-btn-group';
+                chips.forEach(c => {
+                    const btn = document.createElement('div');
+                    btn.className = 'msg-chip';
+                    btn.innerText = c.text;
+                    btn.onclick = () => c.action();
+                    chipGroup.appendChild(btn);
+                });
+                body.appendChild(chipGroup);
+            }
+            speakDirect(text); // 机器人说话
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function addUserMsg(text) {
+            const body = document.getElementById('chatBody');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg user';
+            msgDiv.innerText = text;
+            body.appendChild(msgDiv);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        // --- AI 逻辑核心 ---
+        function startAiSession() {
+            aiState.active = true;
+            aiState.score = 0;
+            aiState.total = 0;
+            document.getElementById('chatBody').innerHTML = ''; // 清空
+            addBotMsg("Hi Henry! I'm your AI tutor. Want to practice English?", [
+                { text: "Yes, let's go!", action: askForScenario },
+                { text: "Not now", action: () => { toggleChat(); aiState.active = false; } }
+            ]);
+        }
+
+        function askForScenario() {
+            addUserMsg("Yes, let's go!");
+            // 生成场景列表
+            let options = [];
+            for(let i=1; i<=13; i++) {
+                const card = document.getElementById(`u${i}`);
+                if(card) {
+                    const name = card.getAttribute('data-name');
+                    options.push({ text: name, action: () => startUnitPractice(i) });
+                }
+            }
+            addBotMsg("Great! Which scenario do you want to practice?", options);
+        }
+
+        function startUnitPractice(unitId) {
+            addUserMsg(`Unit ${unitId}`);
+            aiState.currentUnit = unitId;
+            aiState.currentStep = 1; // 从 step 1 开始
+            
+            addBotMsg("Awesome choice! Please allow microphone access. Let's start!");
+            setTimeout(askQuestion, 1500);
+        }
+
+        function askQuestion() {
+            const u = aiState.currentUnit;
+            const s = aiState.currentStep;
+            
+            // 获取当前卡片的目标句子
+            // 注意：这里我们取当前显示的 active chip 或者 默认句子
+            // 简化逻辑：直接取 display-area 里的英文
+            const wordEl = document.getElementById(`u${u}-s${s}-word`);
+            const transEl = document.getElementById(`u${u}-s${s}-trans`);
+            
+            if(!wordEl || s > 2) {
+                // 单元结束
+                endChat(true);
                 return;
             }
-            triggerHaptic();
-            currentTargetText = targetText.toLowerCase().replace(/[.,?!]/g, '').trim(); // 去标点
+
+            const targetEng = wordEl.parentElement.innerText; // 整句英文
+            const targetCn = transEl.innerText; // 中文翻译
             
-            // UI 变更
-            resetMicButtons();
-            btn.classList.add('listening');
+            aiState.currentTarget = targetEng;
+            
+            addBotMsg(`How do you say this in English?\n"${targetCn}"`);
+            
+            // 自动开启听写
+            aiState.waitingForSpeech = true;
+            startChatListening();
+            
+            // 5秒沉默检测
+            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
+            aiState.silenceTimer = setTimeout(() => {
+                if(aiState.waitingForSpeech) {
+                    speakDirect("Are you there?");
+                    // 不中断录音，只是提醒一下
+                }
+            }, 5000);
+        }
+
+        function handleChatMic() {
+            if(aiState.waitingForSpeech) {
+                // 如果正在录音中，点击则是停止（这里简化为重启录音以防卡死）
+                startChatListening();
+            } else {
+                showToast("Wait for my question!");
+            }
+        }
+
+        function startChatListening() {
+            if (!recognition) { addBotMsg("Browser not supported."); return; }
+            
+            const btn = document.getElementById('chatMicBtn');
+            btn.classList.add('active');
             
             try {
                 recognition.start();
-                showToast("🎤 请大声朗读...");
             } catch(e) {
-                console.error(e);
+                // 已经开始则忽略
             }
-        }
-
-        function handleSpeechResult(spokenText) {
-            const cleanSpoken = spokenText.toLowerCase().replace(/[.,?!]/g, '').trim();
-            const cleanTarget = currentTargetText;
-
-            // 简单比对算法
-            if (cleanSpoken === cleanTarget || cleanSpoken.includes(cleanTarget)) {
-                showToast(`🎉 太棒了！完美发音！\n"${spokenText}"`);
-                triggerHaptic(); 
-                // 成功震动两下
-                if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
-            } else {
-                showToast(`🤔 有点差别，再试一次？\n你说了: "${spokenText}"`);
-                if(navigator.vibrate) navigator.vibrate(100); // 失败长震
-            }
-        }
-
-        function resetMicButtons() {
-            document.querySelectorAll('.btn-mic').forEach(b => b.classList.remove('listening'));
-        }
-
-        function showToast(msg) {
-            let toast = document.getElementById('speechToast');
-            if (!toast) {
-                toast = document.createElement('div');
-                toast.id = 'speechToast';
-                toast.className = 'speech-result-toast';
-                document.body.appendChild(toast);
-            }
-            toast.innerText = msg;
-            toast.style.display = 'block';
             
-            // 3秒后隐藏
-            if(window.toastTimer) clearTimeout(window.toastTimer);
-            window.toastTimer = setTimeout(() => {
-                toast.style.display = 'none';
-            }, 3000);
+            // 覆盖全局的 onresult
+            recognition.onresult = (event) => {
+                const last = event.results.length - 1;
+                const text = event.results[last][0].transcript;
+                processAnswer(text);
+            };
+            
+            recognition.onend = () => {
+                btn.classList.remove('active');
+                // 如果还没收到结果且还在等待，重新开启（保持常听）
+                // 实际为了省电，我们只听一轮，没听到让用户再点
+                if(aiState.waitingForSpeech) {
+                    // 没听到，按钮变灰
+                }
+            };
         }
 
-        // --- 🚀 新增功能：动态添加 👁️ 和 🎤 ---
+        function processAnswer(spokenText) {
+            aiState.waitingForSpeech = false;
+            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
+            
+            addUserMsg(spokenText);
+            
+            // 比对逻辑 (Levenshtein太复杂，用简单的词语包含率)
+            const target = aiState.currentTarget.toLowerCase().replace(/[^a-z ]/g, "");
+            const spoken = spokenText.toLowerCase().replace(/[^a-z ]/g, "");
+            
+            const targetWords = target.split(" ");
+            let matchCount = 0;
+            targetWords.forEach(w => {
+                if(spoken.includes(w)) matchCount++;
+            });
+            
+            const accuracy = matchCount / targetWords.length;
+            
+            if(accuracy >= 0.5) {
+                aiState.score++;
+                triggerHaptic();
+                addBotMsg("✅ Correct! Good job!");
+                // 下一步
+                aiState.currentStep++;
+                setTimeout(askQuestion, 1500);
+            } else {
+                triggerHaptic();
+                // 震动长一点
+                if(navigator.vibrate) navigator.vibrate(100);
+                addBotMsg(`❌ Almost. The correct sentence is:\n"${aiState.currentTarget}"\nLet's try the next one.`);
+                aiState.currentStep++;
+                setTimeout(askQuestion, 2500);
+            }
+            aiState.total++;
+        }
+
+        function endChat(completed = false) {
+            aiState.active = false;
+            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
+            if(recognition) try { recognition.abort(); } catch(e){}
+            
+            let msg = "Practice ended.";
+            if(completed && aiState.total > 0) {
+                const pct = Math.round((aiState.score / aiState.total) * 100);
+                msg = `Session Complete! 🎉\nYou got ${aiState.score}/${aiState.total} (${pct}%).\nKeep practicing, Henry!`;
+            }
+            addBotMsg(msg);
+            document.getElementById('chatMicBtn').classList.remove('active');
+        }
+
+        // --- 通用 & V26+ 功能保留 ---
+        
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US'; 
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                // 全局默认 handler，会被聊天模式覆盖
+                recognition.onresult = (e) => { console.log(e.results[0][0].transcript); };
+            }
+        }
+        
         function addActionButtons() {
             for(let i=1; i<=13; i++) {
                 const card = document.getElementById(`u${i}`);
                 if(!card) continue;
                 const steps = card.querySelectorAll('.step-container');
-                
                 steps.forEach((step, index) => {
                     const displayArea = step.querySelector('.display-area');
                     if(displayArea) {
                         const s = index + 1;
-                        
-                        // 1. 添加举牌按钮 (👁️)
                         if(!displayArea.querySelector('.btn-show')) {
                             const btnShow = document.createElement('button');
                             btnShow.className = 'btn-show';
@@ -1083,8 +1375,7 @@
                             };
                             displayArea.appendChild(btnShow);
                         }
-
-                        // 2. 添加麦克风按钮 (🎤) - 放在喇叭和眼睛中间
+                        // 这里的麦克风是“单句跟读”，不是聊天模式
                         if(!displayArea.querySelector('.btn-mic')) {
                             const btnMic = document.createElement('button');
                             btnMic.className = 'btn-mic';
@@ -1092,86 +1383,48 @@
                             btnMic.onclick = function(e) {
                                 e.stopPropagation();
                                 const wordEl = document.getElementById(`u${i}-s${s}-word`);
-                                if(wordEl) {
-                                    const text = wordEl.parentElement.innerText;
-                                    startListening(this, text);
-                                }
+                                if(wordEl) startSimpleListening(this, wordEl.parentElement.innerText);
                             };
-                            // 插入到 btn-audio 后面
                             const audioBtn = displayArea.querySelector('.btn-audio');
-                            if(audioBtn) {
-                                displayArea.insertBefore(btnMic, audioBtn.nextSibling);
-                                // 给眼睛按钮加点左边距，分开一点
-                                const showBtn = displayArea.querySelector('.btn-show');
-                                if(showBtn) showBtn.style.marginLeft = '8px';
-                            }
+                            if(audioBtn) displayArea.insertBefore(btnMic, audioBtn.nextSibling);
+                            const showBtn = displayArea.querySelector('.btn-show');
+                            if(showBtn) showBtn.style.marginLeft = '8px';
                         }
                     }
                 });
             }
         }
 
-        // --- 🚀 核心修改：智能场景排序 (时间感知) ---
-        function autoSortUnits() {
-            const container = document.getElementById('content-area');
-            const cards = Array.from(container.getElementsByClassName('unit-card'));
-            const hour = new Date().getHours(); // 获取当前小时 (0-23)
-
-            // 定义时间权重 (ID: 权重加分)
-            let timeWeights = {};
-
-            if (hour >= 5 && hour < 10) { 
-                // 早上: 邻居(1), 打车(9), 银行(4)
-                timeWeights = { 1: 50, 9: 40, 4: 30 }; 
-            } else if (hour >= 11 && hour < 14) { 
-                // 中午: 点餐(6), 聚餐(7), 结账(5)
-                timeWeights = { 6: 50, 7: 40, 5: 30 };
-            } else if (hour >= 17 && hour < 21) { 
-                // 晚上: 叙旧(8), 聚餐(7), 点餐(6)
-                timeWeights = { 8: 50, 7: 40, 6: 30 };
-            } else if (hour >= 21 || hour < 4) { 
-                // 深夜: 打车(9), 急救(10), 洗手间(3)
-                timeWeights = { 9: 60, 10: 50, 3: 40 };
+        // 单句跟读逻辑 (简单版)
+        let simpleTarget = "";
+        function startSimpleListening(btn, text) {
+            if (!recognition) { alert("Browser not supported"); return; }
+            triggerHaptic();
+            simpleTarget = text.toLowerCase().replace(/[.,?!]/g, '').trim(); 
+            // 恢复默认 handler
+            recognition.onresult = (e) => {
+                const spoken = e.results[e.results.length-1][0].transcript;
+                handleSimpleResult(spoken);
+                btn.classList.remove('listening');
+            };
+            recognition.onend = () => btn.classList.remove('listening');
+            recognition.onerror = () => { showToast("❌ Error"); btn.classList.remove('listening'); };
+            
+            document.querySelectorAll('.btn-mic').forEach(b => b.classList.remove('listening'));
+            btn.classList.add('listening');
+            try { recognition.start(); showToast("🎤 Read it!"); } catch(e){}
+        }
+        function handleSimpleResult(spoken) {
+            const cleanSpoken = spoken.toLowerCase().replace(/[.,?!]/g, '').trim();
+            if (cleanSpoken.includes(simpleTarget) || simpleTarget.includes(cleanSpoken)) { // 宽松匹配
+                showToast(`🎉 Perfect!\n"${spoken}"`);
+                triggerHaptic();
+            } else {
+                showToast(`🤔 Try again.\n"${spoken}"`);
             }
-
-            cards.sort((a, b) => {
-                const idA = parseInt(a.id.replace('u', ''));
-                const idB = parseInt(b.id.replace('u', ''));
-                
-                // 基础分：用户点击次数 (老逻辑)
-                let scoreA = usageData[idA] || 0;
-                let scoreB = usageData[idB] || 0;
-
-                // 加分：时间权重 (新逻辑)
-                scoreA += (timeWeights[idA] || 0);
-                scoreB += (timeWeights[idB] || 0);
-
-                // 降序排列 (分数高的在前面)
-                return scoreB - scoreA; 
-            });
-
-            cards.forEach(card => container.appendChild(card));
         }
 
-        // --- 以下为保留的通用功能 ---
-        
-        function injectShowCardDOM() {
-            if(document.getElementById('showCardOverlay')) return;
-            const div = document.createElement('div');
-            div.id = 'showCardOverlay';
-            div.className = 'show-card-overlay';
-            div.onclick = closeShowCard;
-            div.innerHTML = `<div class="show-card-text" id="showCardEng"></div><div class="show-card-sub" id="showCardCn"></div><div class="show-card-hint">点击任意处关闭</div>`;
-            document.body.appendChild(div);
-        }
-        function openShowCard(eng, cn) {
-            document.getElementById('showCardEng').innerText = eng;
-            document.getElementById('showCardCn').innerText = cn;
-            document.getElementById('showCardOverlay').style.display = 'flex';
-        }
-        function closeShowCard() { document.getElementById('showCardOverlay').style.display = 'none'; }
-        function triggerHaptic() { if (navigator.vibrate) navigator.vibrate(15); }
-
+        // 其他辅助函数 (保持不变)
         function injectSmartKeywords() {
              const smartMap = {
                 1: "搬家 装修 新来 陌生人 隔壁 楼上 楼下 吵 借过 快递 帮忙 认识 问候 hello hi greeting neighbor move noise package",
@@ -1197,268 +1450,64 @@
                 }
             }
         }
-
-        function initScrollHints() {
-            const cards = document.querySelectorAll('.unit-card');
-            cards.forEach(card => {
-                if (card.scrollHeight > card.clientHeight) {
-                    const hint = card.querySelector('.scroll-hint');
-                    if (hint) hint.classList.add('visible');
-                }
-                card.addEventListener('scroll', function() {
-                    const hint = this.querySelector('.scroll-hint');
-                    if (hint) hint.classList.remove('visible');
-                });
-            });
+        function injectShowCardDOM() {
+            if(document.getElementById('showCardOverlay')) return;
+            const div = document.createElement('div');
+            div.id = 'showCardOverlay';
+            div.className = 'show-card-overlay';
+            div.onclick = closeShowCard;
+            div.innerHTML = `<div class="show-card-text" id="showCardEng"></div><div class="show-card-sub" id="showCardCn"></div><div class="show-card-hint">点击任意处关闭</div>`;
+            document.body.appendChild(div);
         }
-
-        function initBubbleTip() {
-            const center = window.innerWidth / 2;
-            let bestCard = null;
-            let minDiff = Infinity;
-            document.querySelectorAll('.unit-card').forEach(card => {
-                const rect = card.getBoundingClientRect();
-                const cardCenter = rect.left + rect.width / 2;
-                const diff = Math.abs(center - cardCenter);
-                if(diff < minDiff) { minDiff = diff; bestCard = card; }
-            });
-            if (!bestCard) return;
-            const wrapper = bestCard.querySelector('.step-container .chips-container .add-btn-wrapper');
-            if (wrapper) {
-                if(wrapper.querySelector('.bubble-tip')) return;
-                const bubble = document.createElement('div');
-                bubble.className = 'bubble-tip';
-                bubble.innerText = '没找到？点我添加，还能发音！';
-                wrapper.appendChild(bubble);
-                setTimeout(() => { dismissBubble(bubble); }, 15000);
+        function openShowCard(eng, cn) {
+            document.getElementById('showCardEng').innerText = eng;
+            document.getElementById('showCardCn').innerText = cn;
+            document.getElementById('showCardOverlay').style.display = 'flex';
+        }
+        function closeShowCard() { document.getElementById('showCardOverlay').style.display = 'none'; }
+        function showToast(msg) {
+            let toast = document.getElementById('speechToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'speechToast';
+                toast.className = 'speech-result-toast';
+                document.body.appendChild(toast);
             }
+            toast.innerText = msg; toast.style.display = 'block';
+            if(window.toastTimer) clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
         }
-
-        function dismissBubble(element) {
-            if(!element) return;
-            element.classList.add('fade-out');
-            setTimeout(() => { element.remove(); }, 1000);
-        }
-
-        function addCustomChip(unitNum, stepNum, prefix, suffix) {
-            triggerHaptic();
-            const bubble = document.querySelector('.bubble-tip');
-            if(bubble) dismissBubble(bubble);
-            const eng = prompt("请输入英文单词或短语 (e.g. oat milk):"); if(!eng) return;
-            const cn = prompt("请输入中文意思 (e.g. 燕麦奶):"); if(!cn) return;
-            const chipData = { unitNum, stepNum, eng, cn, prefix, suffix };
-            const key = `custom_chips_u${unitNum}_s${stepNum}`;
-            let list = JSON.parse(localStorage.getItem(key) || "[]");
-            list.push(chipData);
-            localStorage.setItem(key, JSON.stringify(list));
-            renderAndClickChip(chipData, true);
-        }
-
-        function toggleEmergency() {
-            triggerHaptic();
-            const overlay = document.getElementById('emergencyOverlay');
-            overlay.classList.toggle('active');
-        }
-
-        function loadUsageData() {
-            usageData = JSON.parse(localStorage.getItem('unit_usage') || "{}");
-        }
-
-        function incrementUsage(unitNum) {
-            usageData[unitNum] = (usageData[unitNum] || 0) + 1;
-            localStorage.setItem('unit_usage', JSON.stringify(usageData));
-        }
-
-        function checkMonthlyReport() {
-            const now = new Date();
-            const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`; 
-            const storedMonth = localStorage.getItem('stats_last_month');
-            let openCount = parseInt(localStorage.getItem('stats_open_count') || "0") + 1;
-            localStorage.setItem('stats_open_count', openCount);
-            if (storedMonth && storedMonth !== currentMonth) {
-                showMonthlySummary(storedMonth);
-                localStorage.setItem('stats_open_count', 1);
-            }
-            localStorage.setItem('stats_last_month', currentMonth);
-        }
-
-        function showMonthlySummary(monthStr) {
-            const openCount = localStorage.getItem('stats_open_count');
-            let msg = `嘿！老朋友，${monthStr.split('-')[1]}月过得怎么样？<br><br>这个月你一共打开了这里 <b>${openCount}</b> 次。<br>`;
-            if(openCount > 20) msg += "🎉 太棒了！请务必保持这个节奏！<br><br>";
-            else msg += "🥺 记得常来看看我哦~<br><br>";
-            document.getElementById('reportContent').innerHTML = msg;
-            document.getElementById('reportModal').style.display = 'flex';
-        }
-
-        function startRandomDrill() {
-            triggerHaptic();
-            const u = Math.floor(Math.random() * 13) + 1; 
-            const unitCard = document.getElementById(`u${u}`);
-            if(!unitCard) { startRandomDrill(); return; } 
-            const rawTitle = unitCard.querySelector('.unit-header').childNodes[0].textContent.trim();
-            const modal = document.getElementById('randomModal');
-            document.getElementById('modalQuestion').innerText = `${rawTitle}`;
-            modal.style.display = 'flex';
-            currentRandomUnit = u;
-        }
-
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function revealRandomAnswer() { closeModal('randomModal'); scrollToUnit(`u${currentRandomUnit}`); }
-
-        function scrollToUnit(id) {
-            const el = document.getElementById(id);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        }
-
-        function toggleTheme() {
-            triggerHaptic();
-            const html = document.documentElement;
-            const newTheme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        }
-        function loadTheme() {
-            const saved = localStorage.getItem('theme');
-            if(saved) document.documentElement.setAttribute('data-theme', saved);
-        }
-
-        function filterUnits() {
-            const filter = document.getElementById('searchBox').value.toLowerCase();
-            const cards = document.getElementsByClassName('unit-card');
-            for(let card of cards) {
-                const text = card.innerText.toLowerCase();
-                const keys = card.getAttribute('data-keywords') || "";
-                card.style.display = (text.includes(filter) || keys.includes(filter)) ? "" : "none";
-            }
-        }
-
-        function loadCustomChips() {
-            for(let u=1; u<=13; u++) {
-                for(let s=1; s<=2; s++) {
-                    const list = JSON.parse(localStorage.getItem(`custom_chips_u${u}_s${s}`) || "[]");
-                    list.forEach(d => renderAndClickChip(d, false));
-                }
-            }
-        }
-
-        function renderAndClickChip(data, triggerClick) {
-            const container = document.getElementById(`u${data.unitNum}-s${data.stepNum}-chips`);
-            if(!container) return;
-            const btn = document.createElement('div');
-            btn.className = 'chip';
-            btn.innerText = data.eng;
-            btn.onmousedown = btn.ontouchstart = function() {
-                pressTimer = setTimeout(() => {
-                    triggerHaptic();
-                    if(confirm(`管理 "${data.eng}":\n点击[确定]修改，点击[取消]继续。`)) {
-                        const newTxt = prompt("修改英文 (留空则删除):", data.eng);
-                        if(newTxt === null) return; 
-                        updateCustomChipInStorage(data, newTxt);
-                        if(newTxt === "") btn.remove();
-                        else { btn.innerText = newTxt; data.eng = newTxt; }
-                    }
-                }, 800);
-            };
-            btn.onmouseup = btn.ontouchend = function() { clearTimeout(pressTimer); };
-            btn.onclick = function() { updateUnit(data.unitNum, data.stepNum, data.eng, data.cn, data.prefix, data.suffix, this); };
-            
-            const wrapper = container.querySelector('.add-btn-wrapper');
-            if(wrapper) container.insertBefore(btn, wrapper);
-            else {
-                const addBtn = container.querySelector('.add-chip-btn');
-                if(addBtn) container.insertBefore(btn, addBtn);
-                else container.appendChild(btn);
-            }
-            if (triggerClick) btn.click();
-        }
-
-        function updateCustomChipInStorage(oldData, newEng) {
-            const key = `custom_chips_u${oldData.unitNum}_s${oldData.stepNum}`;
-            let list = JSON.parse(localStorage.getItem(key) || "[]");
-             if(newEng === "") list = list.filter(item => item.eng !== oldData.eng);
-            else {
-                const idx = list.findIndex(item => item.eng === oldData.eng);
-                if(idx > -1) list[idx].eng = newEng;
-            }
-            localStorage.setItem(key, JSON.stringify(list));
-        }
-
-        function toggleQuizMode() { 
-            triggerHaptic();
-            document.body.classList.toggle('quiz-mode'); 
-        }
-
-        function updateUnit(unitNum, stepNum, engWord, cnWord, prefixEng, suffixCn, element, playSound = true) {
-            triggerHaptic();
-            incrementUsage(unitNum);
-
-            const wordId = `u${unitNum}-s${stepNum}-word`;
-            const displayEl = document.getElementById(wordId);
-            if(displayEl) displayEl.innerText = engWord;
-            
-            let fullCn = "";
-            const cw = cnWord; 
-            const sfx = suffixCn ? suffixCn : "。";
-
-            switch(unitNum) {
-                case 1: if(stepNum===1) fullCn="嗨，我是"+cw+"。"; if(stepNum===2) fullCn="我住在"+cw+"。"; break;
-                case 2: if(stepNum===1) fullCn="打扰一下，我在找"+cw+"。"; if(stepNum===2) fullCn="能告诉我"+cw+sfx; break;
-                case 3: if(stepNum===1) fullCn="我能借用一下您的"+cw+sfx; if(stepNum===2) fullCn="真的很"+cw+"。"; break;
-                case 4: if(stepNum===1) fullCn="我想"+cw+"。"; if(stepNum===2) fullCn="这是我的"+cw+"。"; break;
-                case 5: if(stepNum===1) fullCn="我想用"+cw+"支付。"; if(stepNum===2) fullCn="你们提供"+cw+sfx; break;
-                case 6: if(stepNum===1) fullCn="我想要"+cw+"。"; if(stepNum===2) fullCn="请不要"+cw+"。"; break;
-                case 7: if(stepNum===1) fullCn="咱们"+cw+"吧。"; if(stepNum===2) fullCn="今天"+cw+"。"; break;
-                case 8: if(stepNum===1) fullCn="好久不见！"+cw+"怎么样？"; if(stepNum===2) fullCn="我们应该"+cw+"。"; break;
-                case 9: if(stepNum===1) fullCn="我要去"+cw+"。"; if(stepNum===2) fullCn="就在"+cw+"下车。"; break;
-                case 10: if(stepNum===1) fullCn="我需要"+cw+"。"; if(stepNum===2) fullCn="我感到"+cw+"。"; break;
-                case 11: if(stepNum===1) fullCn="能"+cw+"吗？"; if(stepNum===2) fullCn="我不"+cw+"。"; break;
-                case 12: if(stepNum===1) fullCn="我想"+cw+"。"; if(stepNum===2) fullCn="它"+cw+"。"; break;
-                case 13: if(stepNum===1) fullCn="我想"+cw+"。"; if(stepNum===2) fullCn="在"+cw+"。"; break;
-                default: fullCn = cw + sfx;
-            }
-
-            const transEl = document.getElementById(`u${unitNum}-s${stepNum}-trans`);
-            if(transEl) transEl.innerText = fullCn;
-
-            let container = element.parentElement;
-            let chips = container.querySelectorAll('.chip');
-            for(let chip of chips) chip.classList.remove('active');
-            if(element.classList.contains('chip')) element.classList.add('active');
-
-            localStorage.setItem(`u${unitNum}-s${stepNum}`, JSON.stringify({ engWord, cnWord, prefix: prefixEng, suffix: suffixCn }));
-            if(playSound) speakDirect(engWord);
-        }
-
-        function restoreSelection(unitNum, stepNum) {
-            const savedData = localStorage.getItem(`u${unitNum}-s${stepNum}`);
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                const container = document.getElementById(`u${unitNum}-s${stepNum}-chips`);
-                if(container) {
-                    const chips = container.querySelectorAll('.chip');
-                    for(let chip of chips) {
-                        if(chip.innerText === data.engWord) {
-                            updateUnit(unitNum, stepNum, data.engWord, data.cnWord, data.prefix, data.suffix, chip, false);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        function speakWholeSentence(wordId, prefix, punctuation) {
-            let word = document.getElementById(wordId).innerText;
-            speakDirect(prefix + " " + word + punctuation);
-        }
-
-        function speakDirect(text) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.9; 
-            window.speechSynthesis.speak(utterance);
-        }
+        function triggerHaptic() { if (navigator.vibrate) navigator.vibrate(15); }
+        
+        // ... (保持 initScrollHints, initBubbleTip, dismissBubble, addCustomChip, toggleEmergency, loadUsageData, autoSortUnits, incrementUsage, checkMonthlyReport, showMonthlySummary, startRandomDrill, closeModal, revealRandomAnswer, scrollToUnit, toggleTheme, loadTheme, filterUnits, loadCustomChips, renderAndClickChip, updateCustomChipInStorage, toggleQuizMode, updateUnit, restoreSelection, speakWholeSentence, speakDirect) 
+        // 这里的代码太长，逻辑与 V27 相同，请确保复制时保留所有基础函数！
+        // 为了方便你复制，我把上面缺少的函数补全在下面：
+        
+        function initScrollHints() {const cards=document.querySelectorAll('.unit-card');cards.forEach(card=>{if(card.scrollHeight>card.clientHeight){const hint=card.querySelector('.scroll-hint');if(hint)hint.classList.add('visible');}card.addEventListener('scroll',function(){const hint=this.querySelector('.scroll-hint');if(hint)hint.classList.remove('visible');});});}
+        function initBubbleTip() {const center=window.innerWidth/2;let bestCard=null;let minDiff=Infinity;document.querySelectorAll('.unit-card').forEach(card=>{const rect=card.getBoundingClientRect();const cardCenter=rect.left+rect.width/2;const diff=Math.abs(center-cardCenter);if(diff<minDiff){minDiff=diff;bestCard=card;}});if(!bestCard)return;const wrapper=bestCard.querySelector('.step-container .chips-container .add-btn-wrapper');if(wrapper){if(wrapper.querySelector('.bubble-tip'))return;const bubble=document.createElement('div');bubble.className='bubble-tip';bubble.innerText='没找到？点我添加，还能发音！';wrapper.appendChild(bubble);setTimeout(()=>{dismissBubble(bubble);},15000);}}
+        function dismissBubble(element){if(!element)return;element.classList.add('fade-out');setTimeout(()=>{element.remove();},1000);}
+        function addCustomChip(unitNum,stepNum,prefix,suffix){triggerHaptic();const bubble=document.querySelector('.bubble-tip');if(bubble)dismissBubble(bubble);const eng=prompt("请输入英文单词或短语 (e.g. oat milk):");if(!eng)return;const cn=prompt("请输入中文意思 (e.g. 燕麦奶):");if(!cn)return;const chipData={unitNum,stepNum,eng,cn,prefix,suffix};const key=`custom_chips_u${unitNum}_s${stepNum}`;let list=JSON.parse(localStorage.getItem(key)||"[]");list.push(chipData);localStorage.setItem(key,JSON.stringify(list));renderAndClickChip(chipData,true);}
+        function toggleEmergency(){triggerHaptic();const overlay=document.getElementById('emergencyOverlay');overlay.classList.toggle('active');}
+        function loadUsageData(){usageData=JSON.parse(localStorage.getItem('unit_usage')||"{}");}
+        function autoSortUnits(){const container=document.getElementById('content-area');const cards=Array.from(container.getElementsByClassName('unit-card'));const hour=new Date().getHours();let timeWeights={};if(hour>=5&&hour<10){timeWeights={1:50,9:40,4:30};}else if(hour>=11&&hour<14){timeWeights={6:50,7:40,5:30};}else if(hour>=17&&hour<21){timeWeights={8:50,7:40,6:30};}else if(hour>=21||hour<4){timeWeights={9:60,10:50,3:40};}cards.sort((a,b)=>{const idA=parseInt(a.id.replace('u',''));const idB=parseInt(b.id.replace('u',''));let scoreA=usageData[idA]||0;let scoreB=usageData[idB]||0;scoreA+=(timeWeights[idA]||0);scoreB+=(timeWeights[idB]||0);return scoreB-scoreA;});cards.forEach(card=>container.appendChild(card));}
+        function incrementUsage(unitNum){usageData[unitNum]=(usageData[unitNum]||0)+1;localStorage.setItem('unit_usage',JSON.stringify(usageData));}
+        function checkMonthlyReport(){const now=new Date();const currentMonth=`${now.getFullYear()}-${now.getMonth()+1}`;const storedMonth=localStorage.getItem('stats_last_month');let openCount=parseInt(localStorage.getItem('stats_open_count')||"0")+1;localStorage.setItem('stats_open_count',openCount);if(storedMonth&&storedMonth!==currentMonth){showMonthlySummary(storedMonth);localStorage.setItem('stats_open_count',1);}localStorage.setItem('stats_last_month',currentMonth);}
+        function showMonthlySummary(monthStr){const openCount=localStorage.getItem('stats_open_count');let msg=`嘿！老朋友，${monthStr.split('-')[1]}月过得怎么样？<br><br>这个月你一共打开了这里 <b>${openCount}</b> 次。<br>`;if(openCount>20)msg+="🎉 太棒了！请务必保持这个节奏！<br><br>";else msg+="🥺 记得常来看看我哦~<br><br>";document.getElementById('reportContent').innerHTML=msg;document.getElementById('reportModal').style.display='flex';}
+        function startRandomDrill(){triggerHaptic();const u=Math.floor(Math.random()*13)+1;const unitCard=document.getElementById(`u${u}`);if(!unitCard){startRandomDrill();return;}const rawTitle=unitCard.querySelector('.unit-header').childNodes[0].textContent.trim();const modal=document.getElementById('randomModal');document.getElementById('modalQuestion').innerText=`${rawTitle}`;modal.style.display='flex';currentRandomUnit=u;}
+        function closeModal(id){document.getElementById(id).style.display='none';}
+        function revealRandomAnswer(){closeModal('randomModal');scrollToUnit(`u${currentRandomUnit}`);}
+        function scrollToUnit(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}
+        function toggleTheme(){triggerHaptic();const html=document.documentElement;const newTheme=html.getAttribute('data-theme')==='light'?'dark':'light';html.setAttribute('data-theme',newTheme);localStorage.setItem('theme',newTheme);}
+        function loadTheme(){const saved=localStorage.getItem('theme');if(saved)document.documentElement.setAttribute('data-theme',saved);}
+        function filterUnits(){const filter=document.getElementById('searchBox').value.toLowerCase();const cards=document.getElementsByClassName('unit-card');for(let card of cards){const text=card.innerText.toLowerCase();const keys=card.getAttribute('data-keywords')||"";card.style.display=(text.includes(filter)||keys.includes(filter))?"":"none";}}
+        function loadCustomChips(){for(let u=1;u<=13;u++){for(let s=1;s<=2;s++){const list=JSON.parse(localStorage.getItem(`custom_chips_u${u}_s${s}`)||"[]");list.forEach(d=>renderAndClickChip(d,false));}}}
+        function renderAndClickChip(data,triggerClick){const container=document.getElementById(`u${data.unitNum}-s${data.stepNum}-chips`);if(!container)return;const btn=document.createElement('div');btn.className='chip';btn.innerText=data.eng;btn.onmousedown=btn.ontouchstart=function(){pressTimer=setTimeout(()=>{triggerHaptic();if(confirm(`管理 "${data.eng}":\n点击[确定]修改，点击[取消]继续。`)){const newTxt=prompt("修改英文 (留空则删除):",data.eng);if(newTxt===null)return;updateCustomChipInStorage(data,newTxt);if(newTxt==="")btn.remove();else{btn.innerText=newTxt;data.eng=newTxt;}}},800);};btn.onmouseup=btn.ontouchend=function(){clearTimeout(pressTimer);};btn.onclick=function(){updateUnit(data.unitNum,data.stepNum,data.eng,data.cn,data.prefix,data.suffix,this);};const wrapper=container.querySelector('.add-btn-wrapper');if(wrapper)container.insertBefore(btn,wrapper);else{const addBtn=container.querySelector('.add-chip-btn');if(addBtn)container.insertBefore(btn,addBtn);else container.appendChild(btn);}if(triggerClick)btn.click();}
+        function updateCustomChipInStorage(oldData,newEng){const key=`custom_chips_u${oldData.unitNum}_s${oldData.stepNum}`;let list=JSON.parse(localStorage.getItem(key)||"[]");if(newEng==="")list=list.filter(item=>item.eng!==oldData.eng);else{const idx=list.findIndex(item=>item.eng===oldData.eng);if(idx>-1)list[idx].eng=newEng;}localStorage.setItem(key,JSON.stringify(list));}
+        function toggleQuizMode(){triggerHaptic();document.body.classList.toggle('quiz-mode');}
+        function updateUnit(unitNum,stepNum,engWord,cnWord,prefixEng,suffixCn,element,playSound=true){triggerHaptic();incrementUsage(unitNum);const wordId=`u${unitNum}-s${stepNum}-word`;const displayEl=document.getElementById(wordId);if(displayEl)displayEl.innerText=engWord;let fullCn="";const cw=cnWord;const sfx=suffixCn?suffixCn:"。";switch(unitNum){case 1:if(stepNum===1)fullCn="嗨，我是"+cw+"。";if(stepNum===2)fullCn="我住在"+cw+"。";break;case 2:if(stepNum===1)fullCn="打扰一下，我在找"+cw+"。";if(stepNum===2)fullCn="能告诉我"+cw+sfx;break;case 3:if(stepNum===1)fullCn="我能借用一下您的"+cw+sfx;if(stepNum===2)fullCn="真的很"+cw+"。";break;case 4:if(stepNum===1)fullCn="我想"+cw+"。";if(stepNum===2)fullCn="这是我的"+cw+"。";break;case 5:if(stepNum===1)fullCn="我想用"+cw+"支付。";if(stepNum===2)fullCn="你们提供"+cw+sfx;break;case 6:if(stepNum===1)fullCn="我想要"+cw+"。";if(stepNum===2)fullCn="请不要"+cw+"。";break;case 7:if(stepNum===1)fullCn="咱们"+cw+"吧。";if(stepNum===2)fullCn="今天"+cw+"。";break;case 8:if(stepNum===1)fullCn="好久不见！"+cw+"怎么样？";if(stepNum===2)fullCn="我们应该"+cw+"。";break;case 9:if(stepNum===1)fullCn="我要去"+cw+"。";if(stepNum===2)fullCn="就在"+cw+"下车。";break;case 10:if(stepNum===1)fullCn="我需要"+cw+"。";if(stepNum===2)fullCn="我感到"+cw+"。";break;case 11:if(stepNum===1)fullCn="能"+cw+"吗？";if(stepNum===2)fullCn="我不"+cw+"。";break;case 12:if(stepNum===1)fullCn="我想"+cw+"。";if(stepNum===2)fullCn="它"+cw+"。";break;case 13:if(stepNum===1)fullCn="我想"+cw+"。";if(stepNum===2)fullCn="在"+cw+"。";break;default:fullCn=cw+sfx;}const transEl=document.getElementById(`u${unitNum}-s${stepNum}-trans`);if(transEl)transEl.innerText=fullCn;let container=element.parentElement;let chips=container.querySelectorAll('.chip');for(let chip of chips)chip.classList.remove('active');if(element.classList.contains('chip'))element.classList.add('active');localStorage.setItem(`u${unitNum}-s${stepNum}`,JSON.stringify({engWord,cnWord,prefix:prefixEng,suffix:suffixCn}));if(playSound)speakDirect(engWord);}
+        function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
+        function speakWholeSentence(wordId,prefix,punctuation){let word=document.getElementById(wordId).innerText;speakDirect(prefix+" "+word+punctuation);}
+        function speakDirect(text){window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang='en-US';utterance.rate=0.9;window.speechSynthesis.speak(utterance);}
     </script>
 </body>
 </html>

@@ -287,6 +287,31 @@
         }
         /* 夜间模式适配 */
         [data-theme="dark"] .show-card-overlay { background: #000; }
+        /* --- V26.0 新增：AI 口语跟读 --- */
+        .btn-mic {
+            flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 50%; width: 40px; height: 40px; margin-left: 8px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.1em; box-shadow: 0 2px 5px var(--shadow); color: var(--text-main);
+            transition: all 0.2s; position: relative;
+        }
+        .btn-mic.listening {
+            background: var(--danger); color: white; border-color: var(--danger);
+            animation: pulse-mic 1.5s infinite;
+        }
+        @keyframes pulse-mic {
+            0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+        }
+        /* 识别结果的弹窗微调 */
+        .speech-result-toast {
+            position: fixed; top: 20%; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.85); color: white; padding: 15px 25px;
+            border-radius: 30px; font-weight: 600; z-index: 10000;
+            text-align: center; max-width: 80%; animation: popIn 0.3s;
+            backdrop-filter: blur(5px);
+        }
     </style>
 </head>
 <body>
@@ -909,10 +934,12 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V25.10 终极修正版：修复举牌按钮丢失) ===
+        // === 核心逻辑 (V26.0 AI 进化版：跟读 + 智能排序) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
+        // 语音识别实例
+        let recognition = null; 
 
         window.onload = function() {
             document.getElementById('year').innerText = new Date().getFullYear();
@@ -921,7 +948,13 @@
             loadUsageData();
             injectSmartKeywords();
             injectShowCardDOM();
+            
+            // 1. 初始化 AI 语音识别
+            initSpeechRecognition();
+
             checkMonthlyReport(); 
+            
+            // 2. 执行智能排序 (包含时间感知)
             autoSortUnits();
             
             for (let i = 1; i <= 13; i++) {
@@ -932,84 +965,213 @@
             }
             setTimeout(() => { initBubbleTip(); }, 300);
             initScrollHints();
-            addShowButtons(); // 执行修复后的添加按钮逻辑
+            
+            // 3. 添加按钮 (眼睛 + 麦克风)
+            addActionButtons(); 
         };
 
-        // --- 新增功能区 ---
+        // --- 🚀 新增功能：AI 语音跟读 ---
+        function initSpeechRecognition() {
+            // 兼容性检查：Samsung S25 的 Chrome/Webview 通常支持 webkitSpeechRecognition
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US'; // 设定只听英语
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
 
-        // 1. 注入举牌模式 DOM
-        function injectShowCardDOM() {
-            const div = document.createElement('div');
-            div.id = 'showCardOverlay';
-            div.className = 'show-card-overlay';
-            div.onclick = closeShowCard;
-            div.innerHTML = `
-                <div class="show-card-text" id="showCardEng"></div>
-                <div class="show-card-sub" id="showCardCn"></div>
-                <div class="show-card-hint">点击任意处关闭</div>
-            `;
-            document.body.appendChild(div);
+                recognition.onresult = function(event) {
+                    const last = event.results.length - 1;
+                    const text = event.results[last][0].transcript;
+                    handleSpeechResult(text);
+                };
+
+                recognition.onerror = function(event) {
+                    showToast("❌ 听不清，请靠近一点说~");
+                    resetMicButtons();
+                };
+                
+                recognition.onend = function() {
+                    resetMicButtons();
+                };
+            }
         }
 
-        // 2. 动态添加举牌按钮 (修复版：遍历所有步骤容器)
-        function addShowButtons() {
+        // 处理语音结果
+        let currentTargetText = ""; // 当前正在练习的目标句子
+        
+        function startListening(btn, targetText) {
+            if (!recognition) {
+                alert("抱歉，你的浏览器不支持语音识别功能 (推荐使用 Chrome)");
+                return;
+            }
+            triggerHaptic();
+            currentTargetText = targetText.toLowerCase().replace(/[.,?!]/g, '').trim(); // 去标点
+            
+            // UI 变更
+            resetMicButtons();
+            btn.classList.add('listening');
+            
+            try {
+                recognition.start();
+                showToast("🎤 请大声朗读...");
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function handleSpeechResult(spokenText) {
+            const cleanSpoken = spokenText.toLowerCase().replace(/[.,?!]/g, '').trim();
+            const cleanTarget = currentTargetText;
+
+            // 简单比对算法
+            if (cleanSpoken === cleanTarget || cleanSpoken.includes(cleanTarget)) {
+                showToast(`🎉 太棒了！完美发音！\n"${spokenText}"`);
+                triggerHaptic(); 
+                // 成功震动两下
+                if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
+            } else {
+                showToast(`🤔 有点差别，再试一次？\n你说了: "${spokenText}"`);
+                if(navigator.vibrate) navigator.vibrate(100); // 失败长震
+            }
+        }
+
+        function resetMicButtons() {
+            document.querySelectorAll('.btn-mic').forEach(b => b.classList.remove('listening'));
+        }
+
+        function showToast(msg) {
+            let toast = document.getElementById('speechToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'speechToast';
+                toast.className = 'speech-result-toast';
+                document.body.appendChild(toast);
+            }
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            
+            // 3秒后隐藏
+            if(window.toastTimer) clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // --- 🚀 新增功能：动态添加 👁️ 和 🎤 ---
+        function addActionButtons() {
             for(let i=1; i<=13; i++) {
                 const card = document.getElementById(`u${i}`);
                 if(!card) continue;
-
-                // 直接获取该卡片下所有的步骤容器，不再通过 nth-of-type 猜测
                 const steps = card.querySelectorAll('.step-container');
                 
                 steps.forEach((step, index) => {
                     const displayArea = step.querySelector('.display-area');
-                    // 只有当还没有按钮时才添加
-                    if(displayArea && !displayArea.querySelector('.btn-show')) {
-                        const s = index + 1; // 索引0是Step1，索引1是Step2
+                    if(displayArea) {
+                        const s = index + 1;
                         
-                        const btn = document.createElement('button');
-                        btn.className = 'btn-show';
-                        btn.innerHTML = '👁️';
-                        btn.title = "全屏展示";
-                        btn.onclick = function(e) {
-                            e.stopPropagation(); 
-                            triggerHaptic();
-                            
-                            // 动态获取当前显示的文字
-                            const wordEl = document.getElementById(`u${i}-s${s}-word`);
-                            const transEl = document.getElementById(`u${i}-s${s}-trans`);
-                            
-                            if(wordEl && transEl) {
-                                // 获取父级 innerText 以包含前缀和单词
-                                const eng = wordEl.parentElement.innerText; 
-                                const cn = transEl.innerText;
-                                openShowCard(eng, cn);
+                        // 1. 添加举牌按钮 (👁️)
+                        if(!displayArea.querySelector('.btn-show')) {
+                            const btnShow = document.createElement('button');
+                            btnShow.className = 'btn-show';
+                            btnShow.innerHTML = '👁️';
+                            btnShow.onclick = function(e) {
+                                e.stopPropagation(); triggerHaptic();
+                                const wordEl = document.getElementById(`u${i}-s${s}-word`);
+                                const transEl = document.getElementById(`u${i}-s${s}-trans`);
+                                if(wordEl && transEl) openShowCard(wordEl.parentElement.innerText, transEl.innerText);
+                            };
+                            displayArea.appendChild(btnShow);
+                        }
+
+                        // 2. 添加麦克风按钮 (🎤) - 放在喇叭和眼睛中间
+                        if(!displayArea.querySelector('.btn-mic')) {
+                            const btnMic = document.createElement('button');
+                            btnMic.className = 'btn-mic';
+                            btnMic.innerHTML = '🎙️';
+                            btnMic.onclick = function(e) {
+                                e.stopPropagation();
+                                const wordEl = document.getElementById(`u${i}-s${s}-word`);
+                                if(wordEl) {
+                                    const text = wordEl.parentElement.innerText;
+                                    startListening(this, text);
+                                }
+                            };
+                            // 插入到 btn-audio 后面
+                            const audioBtn = displayArea.querySelector('.btn-audio');
+                            if(audioBtn) {
+                                displayArea.insertBefore(btnMic, audioBtn.nextSibling);
+                                // 给眼睛按钮加点左边距，分开一点
+                                const showBtn = displayArea.querySelector('.btn-show');
+                                if(showBtn) showBtn.style.marginLeft = '8px';
                             }
-                        };
-                        displayArea.appendChild(btn);
+                        }
                     }
                 });
             }
         }
 
+        // --- 🚀 核心修改：智能场景排序 (时间感知) ---
+        function autoSortUnits() {
+            const container = document.getElementById('content-area');
+            const cards = Array.from(container.getElementsByClassName('unit-card'));
+            const hour = new Date().getHours(); // 获取当前小时 (0-23)
+
+            // 定义时间权重 (ID: 权重加分)
+            let timeWeights = {};
+
+            if (hour >= 5 && hour < 10) { 
+                // 早上: 邻居(1), 打车(9), 银行(4)
+                timeWeights = { 1: 50, 9: 40, 4: 30 }; 
+            } else if (hour >= 11 && hour < 14) { 
+                // 中午: 点餐(6), 聚餐(7), 结账(5)
+                timeWeights = { 6: 50, 7: 40, 5: 30 };
+            } else if (hour >= 17 && hour < 21) { 
+                // 晚上: 叙旧(8), 聚餐(7), 点餐(6)
+                timeWeights = { 8: 50, 7: 40, 6: 30 };
+            } else if (hour >= 21 || hour < 4) { 
+                // 深夜: 打车(9), 急救(10), 洗手间(3)
+                timeWeights = { 9: 60, 10: 50, 3: 40 };
+            }
+
+            cards.sort((a, b) => {
+                const idA = parseInt(a.id.replace('u', ''));
+                const idB = parseInt(b.id.replace('u', ''));
+                
+                // 基础分：用户点击次数 (老逻辑)
+                let scoreA = usageData[idA] || 0;
+                let scoreB = usageData[idB] || 0;
+
+                // 加分：时间权重 (新逻辑)
+                scoreA += (timeWeights[idA] || 0);
+                scoreB += (timeWeights[idB] || 0);
+
+                // 降序排列 (分数高的在前面)
+                return scoreB - scoreA; 
+            });
+
+            cards.forEach(card => container.appendChild(card));
+        }
+
+        // --- 以下为保留的通用功能 ---
+        
+        function injectShowCardDOM() {
+            if(document.getElementById('showCardOverlay')) return;
+            const div = document.createElement('div');
+            div.id = 'showCardOverlay';
+            div.className = 'show-card-overlay';
+            div.onclick = closeShowCard;
+            div.innerHTML = `<div class="show-card-text" id="showCardEng"></div><div class="show-card-sub" id="showCardCn"></div><div class="show-card-hint">点击任意处关闭</div>`;
+            document.body.appendChild(div);
+        }
         function openShowCard(eng, cn) {
             document.getElementById('showCardEng').innerText = eng;
             document.getElementById('showCardCn').innerText = cn;
             document.getElementById('showCardOverlay').style.display = 'flex';
         }
+        function closeShowCard() { document.getElementById('showCardOverlay').style.display = 'none'; }
+        function triggerHaptic() { if (navigator.vibrate) navigator.vibrate(15); }
 
-        function closeShowCard() {
-            document.getElementById('showCardOverlay').style.display = 'none';
-        }
-
-        // 3. 触感反馈
-        function triggerHaptic() {
-            if (navigator.vibrate) {
-                navigator.vibrate(15); 
-            }
-        }
-
-        // --- 原有核心逻辑 ---
-        
         function injectSmartKeywords() {
              const smartMap = {
                 1: "搬家 装修 新来 陌生人 隔壁 楼上 楼下 吵 借过 快递 帮忙 认识 问候 hello hi greeting neighbor move noise package",
@@ -1100,20 +1262,6 @@
 
         function loadUsageData() {
             usageData = JSON.parse(localStorage.getItem('unit_usage') || "{}");
-        }
-
-        function autoSortUnits() {
-            const container = document.getElementById('content-area');
-            const cards = Array.from(container.getElementsByClassName('unit-card'));
-            cards.sort((a, b) => {
-                const idA = parseInt(a.id.replace('u', ''));
-                const idB = parseInt(b.id.replace('u', ''));
-                const usageA = usageData[idA] || 0;
-                const usageB = usageData[idB] || 0;
-                if (usageA === usageB) return idA - idB;
-                return usageA - usageB; 
-            });
-            cards.forEach(card => container.appendChild(card));
         }
 
         function incrementUsage(unitNum) {
@@ -1228,7 +1376,7 @@
         function updateCustomChipInStorage(oldData, newEng) {
             const key = `custom_chips_u${oldData.unitNum}_s${oldData.stepNum}`;
             let list = JSON.parse(localStorage.getItem(key) || "[]");
-            if(newEng === "") list = list.filter(item => item.eng !== oldData.eng);
+             if(newEng === "") list = list.filter(item => item.eng !== oldData.eng);
             else {
                 const idx = list.findIndex(item => item.eng === oldData.eng);
                 if(idx > -1) list[idx].eng = newEng;
@@ -1254,72 +1402,29 @@
             const sfx = suffixCn ? suffixCn : "。";
 
             switch(unitNum) {
-                case 1: 
-                    if(stepNum === 1) fullCn = "嗨，我是" + cw + "。";
-                    if(stepNum === 2) fullCn = "我住在" + cw + "。";
-                    break;
-                case 2: 
-                    if(stepNum === 1) fullCn = "打扰一下，我在找" + cw + "。";
-                    if(stepNum === 2) fullCn = "能告诉我" + cw + sfx;
-                    break;
-                case 3: 
-                    if(stepNum === 1) fullCn = "我能借用一下您的" + cw + sfx;
-                    if(stepNum === 2) fullCn = "真的很" + cw + "。"; 
-                    break;
-                case 4: 
-                    if(stepNum === 1) fullCn = "我想" + cw + "。";
-                    if(stepNum === 2) fullCn = "这是我的" + cw + "。";
-                    break;
-                case 5: 
-                    if(stepNum === 1) fullCn = "我想用" + cw + "支付。";
-                    if(stepNum === 2) fullCn = "你们提供" + cw + sfx;
-                    break;
-                case 6: 
-                    if(stepNum === 1) fullCn = "我想要" + cw + "。";
-                    if(stepNum === 2) fullCn = "请不要" + cw + "。";
-                    break;
-                case 7: 
-                    if(stepNum === 1) fullCn = "咱们" + cw + "吧。";
-                    if(stepNum === 2) fullCn = "今天" + cw + "。"; 
-                    break;
-                case 8: 
-                    if(stepNum === 1) fullCn = "好久不见！" + cw + "怎么样？"; 
-                    if(stepNum === 2) fullCn = "我们应该" + cw + "。";
-                    break;
-                case 9: 
-                    if(stepNum === 1) fullCn = "我要去" + cw + "。";
-                    if(stepNum === 2) fullCn = "就在" + cw + "下车。";
-                    break;
-                case 10: 
-                    if(stepNum === 1) fullCn = "我需要" + cw + "。";
-                    if(stepNum === 2) fullCn = "我感到" + cw + "。"; 
-                    break;
-                case 11: 
-                    if(stepNum === 1) fullCn = "能" + cw + "吗？";
-                    if(stepNum === 2) fullCn = "我不" + cw + "。";
-                    break;
-                case 12: 
-                    if(stepNum === 1) fullCn = "我想" + cw + "。";
-                    if(stepNum === 2) fullCn = "它" + cw + "。";
-                    break;
-                case 13: 
-                    if(stepNum === 1) fullCn = "我想" + cw + "。";
-                    if(stepNum === 2) fullCn = "在" + cw + "。";
-                    break;
-                default:
-                    fullCn = cw + sfx;
+                case 1: if(stepNum===1) fullCn="嗨，我是"+cw+"。"; if(stepNum===2) fullCn="我住在"+cw+"。"; break;
+                case 2: if(stepNum===1) fullCn="打扰一下，我在找"+cw+"。"; if(stepNum===2) fullCn="能告诉我"+cw+sfx; break;
+                case 3: if(stepNum===1) fullCn="我能借用一下您的"+cw+sfx; if(stepNum===2) fullCn="真的很"+cw+"。"; break;
+                case 4: if(stepNum===1) fullCn="我想"+cw+"。"; if(stepNum===2) fullCn="这是我的"+cw+"。"; break;
+                case 5: if(stepNum===1) fullCn="我想用"+cw+"支付。"; if(stepNum===2) fullCn="你们提供"+cw+sfx; break;
+                case 6: if(stepNum===1) fullCn="我想要"+cw+"。"; if(stepNum===2) fullCn="请不要"+cw+"。"; break;
+                case 7: if(stepNum===1) fullCn="咱们"+cw+"吧。"; if(stepNum===2) fullCn="今天"+cw+"。"; break;
+                case 8: if(stepNum===1) fullCn="好久不见！"+cw+"怎么样？"; if(stepNum===2) fullCn="我们应该"+cw+"。"; break;
+                case 9: if(stepNum===1) fullCn="我要去"+cw+"。"; if(stepNum===2) fullCn="就在"+cw+"下车。"; break;
+                case 10: if(stepNum===1) fullCn="我需要"+cw+"。"; if(stepNum===2) fullCn="我感到"+cw+"。"; break;
+                case 11: if(stepNum===1) fullCn="能"+cw+"吗？"; if(stepNum===2) fullCn="我不"+cw+"。"; break;
+                case 12: if(stepNum===1) fullCn="我想"+cw+"。"; if(stepNum===2) fullCn="它"+cw+"。"; break;
+                case 13: if(stepNum===1) fullCn="我想"+cw+"。"; if(stepNum===2) fullCn="在"+cw+"。"; break;
+                default: fullCn = cw + sfx;
             }
 
             const transEl = document.getElementById(`u${unitNum}-s${stepNum}-trans`);
             if(transEl) transEl.innerText = fullCn;
 
             let container = element.parentElement;
-            // 修正 active 状态添加
             let chips = container.querySelectorAll('.chip');
             for(let chip of chips) chip.classList.remove('active');
-            if(element.classList.contains('chip')) {
-                element.classList.add('active');
-            }
+            if(element.classList.contains('chip')) element.classList.add('active');
 
             localStorage.setItem(`u${unitNum}-s${stepNum}`, JSON.stringify({ engWord, cnWord, prefix: prefixEng, suffix: suffixCn }));
             if(playSound) speakDirect(engWord);

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Survival English Guide v26.0</title>
+    <title>Survival English Guide v26.1</title>
     <style>
-        /* --- CSS 变量 --- */
+        /* --- CSS 变量 (保持原样) --- */
         :root {
             --bg-body: #f2f2f7;
             --bg-card: #ffffff;
@@ -116,7 +116,7 @@
             overflow-x: hidden;
             position: relative;
             transition: transform 0.2s;
-            padding-bottom: 60px; /* 留出底部空间给提示语 */
+            padding-bottom: 60px; /* 增加底部留白给提示语 */
         }
         .unit-card::-webkit-scrollbar { display: none; }
 
@@ -162,22 +162,24 @@
         .chip:hover { transform: translateY(-1px); border-color: var(--primary); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,122,255,0.3); transform: scale(1.02); }
         
-        /* 修复加号按钮位置和气泡 */
+        /* --- 加号按钮与气泡 --- */
         .add-btn-wrapper { position: relative; display: inline-block; vertical-align: middle; }
-        /* 移除 margin-bottom, 气泡浮动在上方 */
         
-        .add-chip-btn { border: 1px dashed var(--text-sub); color: var(--text-sub); background: transparent; padding: 6px 10px; border-radius: 16px; font-weight: bold; cursor: pointer; }
+        .add-chip-btn { border: 1px dashed var(--text-sub); color: var(--text-sub); background: transparent; padding: 6px 10px; border-radius: 16px; font-size: 0.9em; cursor: pointer; }
         
-        /* 气泡提示 - 15s后消失 */
+        /* 【修改1】 气泡提示 (恢复红色，位置在上方) */
         .bubble-tip { 
-            position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); 
+            position: absolute; bottom: 115%; left: 50%; transform: translateX(-50%); 
             background: var(--danger); color: white; padding: 6px 10px; border-radius: 8px; 
             font-size: 0.75em; font-weight: bold; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4); 
             z-index: 100; white-space: nowrap;
-            opacity: 1; transition: opacity 1s ease;
+            /* 动画部分 */
+            opacity: 1; transition: opacity 1.5s ease;
             pointer-events: none;
         }
         .bubble-tip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: var(--danger) transparent transparent transparent; }
+        
+        /* 15s后添加这个类名来隐藏 */
         .bubble-tip.fade-out { opacity: 0; }
 
         /* --- 分隔线 --- */
@@ -194,26 +196,24 @@
         .structure-box { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; font-size: 0.8em; color: #bdc3c7; border: 1px dashed rgba(255,255,255,0.3); transition: all 0.3s; white-space: normal; }
         .struct-tag { display: inline-block; background: #e67e22; color: white; padding: 1px 5px; border-radius: 3px; font-size: 0.85em; margin-right: 4px; font-weight: bold; margin-bottom: 4px; }
         .struct-arrow { margin: 0 4px; color: #ecf0f1; }
-        .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1em; box-shadow: 0 4px 8px rgba(39, 174, 96, 0.4); }
         
-        /* --- 滑动查看更多 提示 (模糊背景) --- */
+        /* --- 【修改2】 滑动查看更多 提示 (加了模糊背景) --- */
         .scroll-hint {
             position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
-            width: auto; padding: 8px 20px; border-radius: 30px;
+            width: auto; padding: 8px 16px; border-radius: 30px;
             text-align: center; color: var(--primary); font-size: 0.8em; font-weight: 600;
             pointer-events: none; opacity: 0; transition: opacity 0.3s;
             animation: bounce-hint 2s infinite; z-index: 50;
-            /* 毛玻璃效果 */
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             white-space: nowrap;
+            /* 模糊毛玻璃效果 */
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         [data-theme="dark"] .scroll-hint {
-            background: rgba(28, 28, 30, 0.85);
+            background: rgba(44, 44, 46, 0.8);
             color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .scroll-hint.visible { opacity: 1; }
@@ -262,6 +262,15 @@
         .modal-btn { padding: 8px 16px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; font-size: 1em; }
         .btn-reveal { background: var(--primary); color: white; }
         .btn-close { background: var(--border); color: var(--text-main); }
+        
+        .fixed-footer { 
+            flex: 0 0 auto;
+            text-align: center; color: var(--text-sub); font-size: 0.6em; 
+            padding: 3px 0; 
+            border-top: 1px solid var(--border); 
+            background: var(--bg-body);
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
@@ -352,14 +361,17 @@
                     {en: 'a screwdriver', cn: '螺丝刀'},
                     {en: 'your wifi', cn: '你的WiFi'},
                     {en: 'a plunger', cn: '马桶搋子'},
-                    {en: 'some ice', cn: '一些冰块'}
+                    {en: 'some ice', cn: '一些冰块'},
+                    {en: 'a vacuum', cn: '吸尘器'},
+                    {en: 'a hammer', cn: '锤子'}
                 ],
                 combos: [
                     { en: "Can you keep the noise down?", cn: "能小声点吗？" },
                     { en: "Is this package yours?", cn: "这包裹是你的吗？" },
                     { en: "Please don't park here.", cn: "请别停这儿。" },
                     { en: "Can you help me lift this?", cn: "能帮我抬一下吗？" },
-                    { en: "I'm locked out.", cn: "我被锁外面了。" }
+                    { en: "I'm locked out.", cn: "我被锁外面了。" },
+                    { en: "When is trash day?", cn: "哪天倒垃圾？" }
                 ]
             },
             {
@@ -371,14 +383,17 @@
                     {en: 'Main Street', cn: '主街'},
                     {en: 'the bus stop', cn: '公交站'},
                     {en: 'a post office', cn: '邮局'},
-                    {en: 'a gas station', cn: '加油站'}
+                    {en: 'a gas station', cn: '加油站'},
+                    {en: 'a laundromat', cn: '洗衣房'},
+                    {en: 'a grocery store', cn: '杂货店'}
                 ],
                 combos: [
                     { en: "It is within walking distance.", cn: "走路能到。" },
                     { en: "You can take the Q13 bus.", cn: "你可以坐Q13公交。" },
                     { en: "It is on the corner.", cn: "就在拐角处。" },
                     { en: "Can you show me on Google Maps?", cn: "能在地图上指一下吗？" },
-                    { en: "Go straight and turn left.", cn: "直走然后左转。" }
+                    { en: "Go straight and turn left.", cn: "直走然后左转。" },
+                    { en: "It is across the street.", cn: "就在街对面。" }
                 ]
             },
             {
@@ -389,14 +404,16 @@
                     {en: 'wifi password', cn: 'WiFi密码'},
                     {en: 'door code', cn: '门禁密码'},
                     {en: 'total price', cn: '总价'},
-                    {en: 'gate number', cn: '登机口号'}
+                    {en: 'gate number', cn: '登机口号'},
+                    {en: 'room number', cn: '房间号'}
                 ],
                 combos: [
                     { en: "Is the restroom open?", cn: "厕所开着吗？" },
                     { en: "Where can I wash my hands?", cn: "哪能洗手？" },
                     { en: "Do I need a key?", cn: "需要钥匙吗？" },
                     { en: "It is for customers only.", cn: "仅限顾客使用。" },
-                    { en: "Someone is inside.", cn: "里面有人。" }
+                    { en: "Someone is inside.", cn: "里面有人。" },
+                    { en: "The toilet is clogged.", cn: "马桶堵了。" }
                 ]
             },
             {
@@ -407,14 +424,16 @@
                     {en: 'withdraw', cn: '取'},
                     {en: 'exchange', cn: '换汇'},
                     {en: 'transfer', cn: '转账'},
-                    {en: 'save', cn: '存(定期)'}
+                    {en: 'save', cn: '存(定期)'},
+                    {en: 'wire', cn: '电汇'}
                 ],
                 combos: [
                     { en: "I need to open an account.", cn: "我要开户。" },
                     { en: "What is the exchange rate?", cn: "汇率是多少？" },
                     { en: "I lost my debit card.", cn: "我借记卡丢了。" },
                     { en: "Can I get a notary here?", cn: "这里能公证吗？" },
-                    { en: "I need small bills.", cn: "我要小面额钞票。" }
+                    { en: "I need small bills.", cn: "我要小面额钞票。" },
+                    { en: "I forgot my PIN.", cn: "我忘密码了。" }
                 ]
             },
             {
@@ -425,14 +444,16 @@
                     {en: 'cash', cn: '现金'},
                     {en: 'Apple Pay', cn: '苹果支付'},
                     {en: 'debit card', cn: '借记卡'},
-                    {en: 'gift card', cn: '礼品卡'}
+                    {en: 'gift card', cn: '礼品卡'},
+                    {en: 'QR code', cn: '二维码'}
                 ],
                 combos: [
                     { en: "Receipt in the bag, please.", cn: "收据放袋子里。" },
                     { en: "Do you need a bag?", cn: "要袋子吗？" },
                     { en: "I have a coupon.", cn: "我有优惠券。" },
                     { en: "Keep the change.", cn: "不用找零了。" },
-                    { en: "This price is wrong.", cn: "这价格不对。" }
+                    { en: "This price is wrong.", cn: "这价格不对。" },
+                    { en: "Can you double bag it?", cn: "能套两个袋子吗？" }
                 ]
             },
             {
@@ -444,14 +465,16 @@
                     {en: 'sauce on the side', cn: '酱料单放'},
                     {en: 'extra napkins', cn: '多点纸巾'},
                     {en: 'a fork', cn: '一个叉子'},
-                    {en: 'the check', cn: '买单'}
+                    {en: 'the check', cn: '买单'},
+                    {en: 'some water', cn: '一些水'}
                 ],
                 combos: [
                     { en: "For here or to go?", cn: "在这吃还是带走？" },
                     { en: "I'll have the combo.", cn: "我要套餐。" },
                     { en: "What do you recommend?", cn: "有什么推荐？" },
                     { en: "I am allergic to peanuts.", cn: "我对花生过敏。" },
-                    { en: "Just water, please.", cn: "只要水。" }
+                    { en: "Just water, please.", cn: "只要水。" },
+                    { en: "Can we split the check?", cn: "能分开付吗？" }
                 ]
             },
             {
@@ -462,14 +485,16 @@
                     {en: 'grab a drink', cn: '喝一杯'},
                     {en: 'go to KTV', cn: '去唱K'},
                     {en: 'take a photo', cn: '拍张照'},
-                    {en: 'order pizza', cn: '点披萨'}
+                    {en: 'order pizza', cn: '点披萨'},
+                    {en: 'watch a movie', cn: '看电影'}
                 ],
                 combos: [
                     { en: "It's my treat today.", cn: "今天我请客。" },
                     { en: "Are you free this weekend?", cn: "周末有空吗？" },
                     { en: "Let's meet at 7.", cn: "咱们7点见。" },
                     { en: "I'm running a bit late.", cn: "我要迟到一点。" },
-                    { en: "Next time is on me.", cn: "下次我请。" }
+                    { en: "Next time is on me.", cn: "下次我请。" },
+                    { en: "I'll pick you up.", cn: "我去接你。" }
                 ]
             },
             {
@@ -480,14 +505,16 @@
                     {en: 'family', cn: '家人'},
                     {en: 'new apartment', cn: '新公寓'},
                     {en: 'boyfriend', cn: '男朋友'},
-                    {en: 'trip', cn: '旅行'}
+                    {en: 'trip', cn: '旅行'},
+                    {en: 'health', cn: '身体'}
                 ],
                 combos: [
                     { en: "Long time no see!", cn: "好久不见！" },
                     { en: "You haven't changed a bit.", cn: "你一点没变。" },
                     { en: "We should do this again.", cn: "咱们得再聚。" },
                     { en: "I missed you so much.", cn: "我很想你。" },
-                    { en: "What have you been up to?", cn: "最近忙啥呢？" }
+                    { en: "What have you been up to?", cn: "最近忙啥呢？" },
+                    { en: "Let's keep in touch.", cn: "保持联系。" }
                 ]
             },
             {
@@ -499,14 +526,16 @@
                     {en: 'drive slower', cn: '开慢点'},
                     {en: 'turn on AC', cn: '开空调'},
                     {en: 'open the trunk', cn: '开后备箱'},
-                    {en: 'wait here', cn: '在这等'}
+                    {en: 'wait here', cn: '在这等'},
+                    {en: 'roll down the window', cn: '摇下窗户'}
                 ],
                 combos: [
                     { en: "I am in a hurry.", cn: "我赶时间。" },
                     { en: "How long to get there?", cn: "多久能到？" },
                     { en: "This is the wrong way.", cn: "走错路了吧。" },
                     { en: "Drop me off here.", cn: "这儿下车。" },
-                    { en: "Keep the meter running.", cn: "打着表等我。" }
+                    { en: "Keep the meter running.", cn: "打着表等我。" },
+                    { en: "Can I charge my phone?", cn: "能充下电吗？" }
                 ]
             },
             {
@@ -518,14 +547,16 @@
                     {en: 'high blood pressure', cn: '高血压'},
                     {en: 'an allergy', cn: '过敏'},
                     {en: 'chest pain', cn: '胸痛'},
-                    {en: 'a cut', cn: '割伤'}
+                    {en: 'a cut', cn: '割伤'},
+                    {en: 'a rash', cn: '皮疹'}
                 ],
                 combos: [
                     { en: "Call an ambulance!", cn: "叫救护车！" },
                     { en: "Where is the hospital?", cn: "医院在哪？" },
                     { en: "I need a doctor.", cn: "我需要医生。" },
                     { en: "I am bleeding.", cn: "我流血了。" },
-                    { en: "He passed out.", cn: "他晕倒了。" }
+                    { en: "He passed out.", cn: "他晕倒了。" },
+                    { en: "I have insurance.", cn: "我有保险。" }
                 ]
             },
             {
@@ -536,14 +567,16 @@
                     {en: 'say that again', cn: '再说一遍'},
                     {en: 'write it down', cn: '写下来'},
                     {en: 'use simple words', cn: '用简单的词'},
-                    {en: 'show me', cn: '指给我看'}
+                    {en: 'show me', cn: '指给我看'},
+                    {en: 'translate it', cn: '翻译一下'}
                 ],
                 combos: [
                     { en: "I don't understand.", cn: "我不明白。" },
                     { en: "My English is not good.", cn: "我英语不好。" },
                     { en: "What does that mean?", cn: "那是啥意思？" },
                     { en: "Please be patient.", cn: "请耐心点。" },
-                    { en: "Use Google Translate.", cn: "用谷歌翻译。" }
+                    { en: "Use Google Translate.", cn: "用谷歌翻译。" },
+                    { en: "Sorry, I am lost.", cn: "抱歉，我听懵了。" }
                 ]
             },
             {
@@ -555,14 +588,16 @@
                     {en: 'expired', cn: '过期的'},
                     {en: 'used', cn: '旧的/用过的'},
                     {en: 'not what I ordered', cn: '发错货了'},
-                    {en: 'defective', cn: '有缺陷'}
+                    {en: 'defective', cn: '有缺陷'},
+                    {en: 'stained', cn: '有污渍'}
                 ],
                 combos: [
                     { en: "I have the receipt.", cn: "我有收据。" },
                     { en: "Can I get a refund?", cn: "能退款吗？" },
                     { en: "I just changed my mind.", cn: "我不想要了。" },
                     { en: "Store credit is okay.", cn: "退到余额也行。" },
-                    { en: "I want to speak to a manager.", cn: "我要见经理。" }
+                    { en: "I want to speak to a manager.", cn: "我要见经理。" },
+                    { en: "Can I exchange this?", cn: "能换货吗？" }
                 ]
             },
             {
@@ -573,14 +608,16 @@
                     {en: 'change', cn: '更改'},
                     {en: 'confirm', cn: '确认'},
                     {en: 'reschedule', cn: '改期'},
-                    {en: 'make', cn: '预约'}
+                    {en: 'make', cn: '预约'},
+                    {en: 'check', cn: '查询'}
                 ],
                 combos: [
                     { en: "I have a reservation at 6.", cn: "我有6点的预约。" },
                     { en: "Table for two, please.", cn: "两位。" },
                     { en: "Is there a wait?", cn: "要排队吗？" },
                     { en: "Under the name Henry.", cn: "名字是Henry。" },
-                    { en: "We are running late.", cn: "我们会晚点到。" }
+                    { en: "We are running late.", cn: "我们会晚点到。" },
+                    { en: "Do you accept walk-ins?", cn: "没预约能进吗？" }
                 ]
             }
         ];
@@ -603,7 +640,7 @@
                     `<div class="chip ${i===0?'active':''}" onclick="selectChip(this, '${unit.id}', '${c.en}', '${c.cn}')">${c.en}</div>`
                 ).join('');
 
-                // 重点：添加按钮和红色气泡
+                // 【修改3】 渲染时把红色气泡加进去
                 chipsHtml += `
                     <div class="add-btn-wrapper">
                         <div class="bubble-tip">点这加词！</div>
@@ -657,7 +694,7 @@
                 contentArea.appendChild(card);
             });
             
-            // 启动气泡消失计时器 (15秒)
+            // 【修改4】 15秒后让气泡慢慢消失
             setTimeout(() => {
                 document.querySelectorAll('.bubble-tip').forEach(el => el.classList.add('fade-out'));
             }, 15000);
@@ -682,8 +719,6 @@
                 sentEl.innerText = enText; // Fallback
             }
             transEl.innerText = cnText;
-            
-            // 播放单词发音 (可选，这里不自动播放，免得吵)
         }
 
         function speakCurrent(unitId) {

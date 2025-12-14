@@ -908,8 +908,8 @@
         <p>&copy; <span id="year"></span> Henry's Survival English Guide.</p>
     </div>
 
-     <script>
-        // === 核心逻辑 (V25.9 举牌+震动版) ===
+    <script>
+        // === 核心逻辑 (V25.10 终极修正版：修复举牌按钮丢失) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -919,8 +919,8 @@
             loadTheme();
             loadCustomChips();
             loadUsageData();
-            injectSmartKeywords(); // 这里的智能词库逻辑保留上一版的，为节省篇幅我不重复写大段词库了，逻辑通用
-            injectShowCardDOM();   // 新增：注入举牌模式的容器
+            injectSmartKeywords();
+            injectShowCardDOM();
             checkMonthlyReport(); 
             autoSortUnits();
             
@@ -932,12 +932,12 @@
             }
             setTimeout(() => { initBubbleTip(); }, 300);
             initScrollHints();
-            addShowButtons(); // 新增：给所有卡片添加举牌按钮
+            addShowButtons(); // 执行修复后的添加按钮逻辑
         };
 
         // --- 新增功能区 ---
 
-        // 1. 注入举牌模式的 HTML 结构
+        // 1. 注入举牌模式 DOM
         function injectShowCardDOM() {
             const div = document.createElement('div');
             div.id = 'showCardOverlay';
@@ -951,26 +951,43 @@
             document.body.appendChild(div);
         }
 
-        // 2. 动态添加举牌按钮 (👁️)
+        // 2. 动态添加举牌按钮 (修复版：遍历所有步骤容器)
         function addShowButtons() {
-            // 遍历所有 unit
             for(let i=1; i<=13; i++) {
-                for(let s=1; s<=2; s++) {
-                    const displayArea = document.querySelector(`#u${i} .step-container:nth-of-type(${s===1?1:3}) .display-area`);
+                const card = document.getElementById(`u${i}`);
+                if(!card) continue;
+
+                // 直接获取该卡片下所有的步骤容器，不再通过 nth-of-type 猜测
+                const steps = card.querySelectorAll('.step-container');
+                
+                steps.forEach((step, index) => {
+                    const displayArea = step.querySelector('.display-area');
+                    // 只有当还没有按钮时才添加
                     if(displayArea && !displayArea.querySelector('.btn-show')) {
+                        const s = index + 1; // 索引0是Step1，索引1是Step2
+                        
                         const btn = document.createElement('button');
                         btn.className = 'btn-show';
                         btn.innerHTML = '👁️';
+                        btn.title = "全屏展示";
                         btn.onclick = function(e) {
-                            e.stopPropagation(); // 防止触发其他点击
+                            e.stopPropagation(); 
                             triggerHaptic();
-                            const eng = document.getElementById(`u${i}-s${s}-word`).parentElement.innerText; // 获取整句英文
-                            const cn = document.getElementById(`u${i}-s${s}-trans`).innerText;
-                            openShowCard(eng, cn);
+                            
+                            // 动态获取当前显示的文字
+                            const wordEl = document.getElementById(`u${i}-s${s}-word`);
+                            const transEl = document.getElementById(`u${i}-s${s}-trans`);
+                            
+                            if(wordEl && transEl) {
+                                // 获取父级 innerText 以包含前缀和单词
+                                const eng = wordEl.parentElement.innerText; 
+                                const cn = transEl.innerText;
+                                openShowCard(eng, cn);
+                            }
                         };
                         displayArea.appendChild(btn);
                     }
-                }
+                });
             }
         }
 
@@ -984,15 +1001,14 @@
             document.getElementById('showCardOverlay').style.display = 'none';
         }
 
-        // 3. 触感反馈 (Haptic Feedback)
+        // 3. 触感反馈
         function triggerHaptic() {
-            // 如果手机支持震动，且浏览器允许
             if (navigator.vibrate) {
-                navigator.vibrate(15); // 轻微震动 15ms
+                navigator.vibrate(15); 
             }
         }
 
-        // --- 原有核心逻辑保持不变 (含 V25.8 的智能词库) ---
+        // --- 原有核心逻辑 ---
         
         function injectSmartKeywords() {
              const smartMap = {
@@ -1063,7 +1079,7 @@
         }
 
         function addCustomChip(unitNum, stepNum, prefix, suffix) {
-            triggerHaptic(); // 添加震动
+            triggerHaptic();
             const bubble = document.querySelector('.bubble-tip');
             if(bubble) dismissBubble(bubble);
             const eng = prompt("请输入英文单词或短语 (e.g. oat milk):"); if(!eng) return;
@@ -1077,7 +1093,7 @@
         }
 
         function toggleEmergency() {
-            triggerHaptic(); // 添加震动
+            triggerHaptic();
             const overlay = document.getElementById('emergencyOverlay');
             overlay.classList.toggle('active');
         }
@@ -1128,7 +1144,7 @@
         }
 
         function startRandomDrill() {
-            triggerHaptic(); // 添加震动
+            triggerHaptic();
             const u = Math.floor(Math.random() * 13) + 1; 
             const unitCard = document.getElementById(`u${u}`);
             if(!unitCard) { startRandomDrill(); return; } 
@@ -1148,7 +1164,7 @@
         }
 
         function toggleTheme() {
-            triggerHaptic(); // 添加震动
+            triggerHaptic();
             const html = document.documentElement;
             const newTheme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
             html.setAttribute('data-theme', newTheme);
@@ -1186,7 +1202,7 @@
             btn.innerText = data.eng;
             btn.onmousedown = btn.ontouchstart = function() {
                 pressTimer = setTimeout(() => {
-                    triggerHaptic(); // 长按也震动
+                    triggerHaptic();
                     if(confirm(`管理 "${data.eng}":\n点击[确定]修改，点击[取消]继续。`)) {
                         const newTxt = prompt("修改英文 (留空则删除):", data.eng);
                         if(newTxt === null) return; 
@@ -1225,9 +1241,8 @@
             document.body.classList.toggle('quiz-mode'); 
         }
 
-        // === 核心逻辑修改：整句翻译拼接 ===
         function updateUnit(unitNum, stepNum, engWord, cnWord, prefixEng, suffixCn, element, playSound = true) {
-            triggerHaptic(); // 核心：点击单词震动
+            triggerHaptic();
             incrementUsage(unitNum);
 
             const wordId = `u${unitNum}-s${stepNum}-word`;
@@ -1299,11 +1314,9 @@
             if(transEl) transEl.innerText = fullCn;
 
             let container = element.parentElement;
-            // 修正查找逻辑
+            // 修正 active 状态添加
             let chips = container.querySelectorAll('.chip');
             for(let chip of chips) chip.classList.remove('active');
-            
-            // 确保是 chip 本身添加 active
             if(element.classList.contains('chip')) {
                 element.classList.add('active');
             }

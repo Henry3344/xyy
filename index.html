@@ -882,8 +882,8 @@
         <p>&copy; <span id="year"></span> Henry's Survival English Guide.</p>
     </div>
 
-    <script>
-        // === 核心逻辑 (v25.5 最终修正版) ===
+       <script>
+        // === 核心逻辑 (V25.6 整句翻译修复版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -895,10 +895,8 @@
             loadCustomChips();
             loadUsageData();
             checkMonthlyReport(); 
-            
-            // 先排序
             autoSortUnits();
-
+            
             // 恢复上次选择
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
@@ -907,11 +905,7 @@
                 }
             }
             
-            // 排序完成后，显示智能气泡 & 初始化滚动提示
-            setTimeout(() => {
-                initBubbleTip();
-            }, 300);
-            
+            setTimeout(() => { initBubbleTip(); }, 300);
             initScrollHints();
         };
 
@@ -919,22 +913,19 @@
         function initScrollHints() {
             const cards = document.querySelectorAll('.unit-card');
             cards.forEach(card => {
-                // 强制检查：如果内容高度 > 容器高度，显示提示
                 if (card.scrollHeight > card.clientHeight) {
                     const hint = card.querySelector('.scroll-hint');
                     if (hint) hint.classList.add('visible');
                 }
                 card.addEventListener('scroll', function() {
                     const hint = this.querySelector('.scroll-hint');
-                    // 只要一开始滚动，就隐藏
                     if (hint) hint.classList.remove('visible');
                 });
             });
         }
 
-        // 3. 智能气泡引导 (核心修复：Visual Viewport 居中算法)
+        // 3. 智能气泡引导
         function initBubbleTip() {
-            // A. 找到当前屏幕中间那个卡片
             const center = window.innerWidth / 2;
             let bestCard = null;
             let minDiff = Infinity;
@@ -943,39 +934,26 @@
                 const rect = card.getBoundingClientRect();
                 const cardCenter = rect.left + rect.width / 2;
                 const diff = Math.abs(center - cardCenter);
-                if(diff < minDiff) {
-                    minDiff = diff;
-                    bestCard = card;
-                }
+                if(diff < minDiff) { minDiff = diff; bestCard = card; }
             });
 
             if (!bestCard) return;
 
-            // B. 在这个最佳卡片里，找 Step 1 的加号容器
             const wrapper = bestCard.querySelector('.step-container .chips-container .add-btn-wrapper');
-            
             if (wrapper) {
                 if(wrapper.querySelector('.bubble-tip')) return;
-
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble-tip';
-                bubble.innerText = '没找到？点我添加，还能发音！'; // 极简文案
-                
+                bubble.innerText = '没找到？点我添加，还能发音！';
                 wrapper.appendChild(bubble);
-
-                // C. 15秒后自动消失
-                setTimeout(() => {
-                    dismissBubble(bubble);
-                }, 15000);
+                setTimeout(() => { dismissBubble(bubble); }, 15000);
             }
         }
 
         function dismissBubble(element) {
             if(!element) return;
             element.classList.add('fade-out');
-            setTimeout(() => {
-                element.remove();
-            }, 1000);
+            setTimeout(() => { element.remove(); }, 1000);
         }
 
         // 4. 自定义词库
@@ -1009,7 +987,6 @@
         function autoSortUnits() {
             const container = document.getElementById('content-area');
             const cards = Array.from(container.getElementsByClassName('unit-card'));
-
             cards.sort((a, b) => {
                 const idA = parseInt(a.id.replace('u', ''));
                 const idB = parseInt(b.id.replace('u', ''));
@@ -1018,7 +995,6 @@
                 if (usageA === usageB) return idA - idB;
                 return usageA - usageB; 
             });
-
             cards.forEach(card => container.appendChild(card));
         }
 
@@ -1044,27 +1020,9 @@
 
         function showMonthlySummary(monthStr) {
             const openCount = localStorage.getItem('stats_open_count');
-            let maxId = null, minId = null;
-            let maxVal = -1, minVal = 999999;
-            for(let i=1; i<=13; i++) {
-                let val = usageData[i] || 0;
-                if(val > maxVal) { maxVal = val; maxId = i; }
-                if(val < minVal) { minVal = val; minId = i; }
-            }
-
-            let msg = `嘿！老朋友，${monthStr.split('-')[1]}月过得怎么样？<br><br>`;
-            msg += `这个月你一共打开了这里 <b>${openCount}</b> 次。<br>`;
+            let msg = `嘿！老朋友，${monthStr.split('-')[1]}月过得怎么样？<br><br>这个月你一共打开了这里 <b>${openCount}</b> 次。<br>`;
             if(openCount > 20) msg += "🎉 太棒了！请务必保持这个节奏！<br><br>";
             else msg += "🥺 记得常来看看我哦~<br><br>";
-
-            const getName = (id) => {
-                const el = document.getElementById(`u${id}`);
-                return el ? el.getAttribute('data-name') : "未知";
-            };
-
-            if(maxId) msg += `🔥 最常练习：<b>${getName(maxId)}</b><br>`;
-            if(minId) msg += `🧊 练得最少：<b>${getName(minId)}</b>`;
-
             document.getElementById('reportContent').innerHTML = msg;
             document.getElementById('reportModal').style.display = 'flex';
         }
@@ -1074,7 +1032,6 @@
             const u = Math.floor(Math.random() * 13) + 1; 
             const unitCard = document.getElementById(`u${u}`);
             if(!unitCard) { startRandomDrill(); return; } 
-            
             const rawTitle = unitCard.querySelector('.unit-header').childNodes[0].textContent.trim();
             const modal = document.getElementById('randomModal');
             document.getElementById('modalQuestion').innerText = `${rawTitle}`;
@@ -1083,18 +1040,12 @@
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-        function revealRandomAnswer() {
-            closeModal('randomModal');
-            scrollToUnit(`u${currentRandomUnit}`);
-        }
+        function revealRandomAnswer() { closeModal('randomModal'); scrollToUnit(`u${currentRandomUnit}`); }
 
         // 9. 横向导航
         function scrollToUnit(id) {
             const el = document.getElementById(id);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
 
         // 10. 基础功能
@@ -1131,48 +1082,38 @@
         function renderAndClickChip(data, triggerClick) {
             const container = document.getElementById(`u${data.unitNum}-s${data.stepNum}-chips`);
             if(!container) return;
-
             const btn = document.createElement('div');
             btn.className = 'chip';
             btn.innerText = data.eng;
-            
             btn.onmousedown = btn.ontouchstart = function() {
                 pressTimer = setTimeout(() => {
                     if(confirm(`管理 "${data.eng}":\n点击[确定]修改，点击[取消]继续。`)) {
                         const newTxt = prompt("修改英文 (留空则删除):", data.eng);
                         if(newTxt === null) return; 
                         updateCustomChipInStorage(data, newTxt);
-                        if(newTxt === "") {
-                            btn.remove();
-                        } else {
-                            btn.innerText = newTxt;
-                            data.eng = newTxt;
-                        }
+                        if(newTxt === "") btn.remove();
+                        else { btn.innerText = newTxt; data.eng = newTxt; }
                     }
                 }, 800);
             };
             btn.onmouseup = btn.ontouchend = function() { clearTimeout(pressTimer); };
-
             btn.onclick = function() { updateUnit(data.unitNum, data.stepNum, data.eng, data.cn, data.prefix, data.suffix, this); };
             
             const wrapper = container.querySelector('.add-btn-wrapper');
-            if(wrapper) {
-                container.insertBefore(btn, wrapper);
-            } else {
+            if(wrapper) container.insertBefore(btn, wrapper);
+            else {
                 const addBtn = container.querySelector('.add-chip-btn');
                 if(addBtn) container.insertBefore(btn, addBtn);
                 else container.appendChild(btn);
             }
-
             if (triggerClick) btn.click();
         }
 
         function updateCustomChipInStorage(oldData, newEng) {
             const key = `custom_chips_u${oldData.unitNum}_s${oldData.stepNum}`;
             let list = JSON.parse(localStorage.getItem(key) || "[]");
-            if(newEng === "") {
-                list = list.filter(item => item.eng !== oldData.eng);
-            } else {
+            if(newEng === "") list = list.filter(item => item.eng !== oldData.eng);
+            else {
                 const idx = list.findIndex(item => item.eng === oldData.eng);
                 if(idx > -1) list[idx].eng = newEng;
             }
@@ -1181,7 +1122,7 @@
 
         function toggleQuizMode() { document.body.classList.toggle('quiz-mode'); }
 
-        // 核心更新
+        // === 核心逻辑修改：整句翻译拼接 ===
         function updateUnit(unitNum, stepNum, engWord, cnWord, prefixEng, suffixCn, element, playSound = true) {
             incrementUsage(unitNum);
 
@@ -1190,11 +1131,66 @@
             if(displayEl) displayEl.innerText = engWord;
             
             let fullCn = "";
-            if (unitNum === 1 && stepNum === 1) fullCn = "嗨，我是" + cnWord + "。";
-            else if (unitNum === 1 && stepNum === 2) fullCn = "我住在" + cnWord + "。";
-            else if (unitNum === 2 && stepNum === 1) fullCn = "打扰一下，我在找" + cnWord + "。";
-            else if (unitNum === 2 && stepNum === 2) fullCn = "能告诉我" + cnWord + suffixCn + "？";
-            else fullCn = cnWord + (suffixCn ? suffixCn : "。");
+            const cw = cnWord; // 简称，方便拼接
+            const sfx = suffixCn ? suffixCn : "。";
+
+            // 针对每个单元的每个步骤，专门定制中文前缀
+            switch(unitNum) {
+                case 1: // 邻居
+                    if(stepNum === 1) fullCn = "嗨，我是" + cw + "。";
+                    if(stepNum === 2) fullCn = "我住在" + cw + "。";
+                    break;
+                case 2: // 位置
+                    if(stepNum === 1) fullCn = "打扰一下，我在找" + cw + "。";
+                    if(stepNum === 2) fullCn = "能告诉我" + cw + sfx;
+                    break;
+                case 3: // 洗手间
+                    if(stepNum === 1) fullCn = "我能借用一下您的" + cw + sfx;
+                    if(stepNum === 2) fullCn = "真的很" + cw + "。"; 
+                    break;
+                case 4: // 银行
+                    if(stepNum === 1) fullCn = "我想" + cw + "。";
+                    if(stepNum === 2) fullCn = "这是我的" + cw + "。";
+                    break;
+                case 5: // 结账
+                    if(stepNum === 1) fullCn = "我想用" + cw + "支付。";
+                    if(stepNum === 2) fullCn = "你们提供" + cw + sfx;
+                    break;
+                case 6: // 点餐
+                    if(stepNum === 1) fullCn = "我想要" + cw + "。";
+                    if(stepNum === 2) fullCn = "请不要" + cw + "。";
+                    break;
+                case 7: // 聚餐
+                    if(stepNum === 1) fullCn = "咱们" + cw + "吧。";
+                    if(stepNum === 2) fullCn = "今天" + cw + "。"; 
+                    break;
+                case 8: // 叙旧
+                    if(stepNum === 1) fullCn = "好久不见！" + cw + "怎么样？"; 
+                    if(stepNum === 2) fullCn = "我们应该" + cw + "。";
+                    break;
+                case 9: // 打车
+                    if(stepNum === 1) fullCn = "我要去" + cw + "。";
+                    if(stepNum === 2) fullCn = "就在" + cw + "下车。";
+                    break;
+                case 10: // 急救
+                    if(stepNum === 1) fullCn = "我需要" + cw + "。";
+                    if(stepNum === 2) fullCn = "我感到" + cw + "。"; 
+                    break;
+                case 11: // 没听懂
+                    if(stepNum === 1) fullCn = "能" + cw + "吗？";
+                    if(stepNum === 2) fullCn = "我不" + cw + "。";
+                    break;
+                case 12: // 退货
+                    if(stepNum === 1) fullCn = "我想" + cw + "。";
+                    if(stepNum === 2) fullCn = "它" + cw + "。";
+                    break;
+                case 13: // 预约
+                    if(stepNum === 1) fullCn = "我想" + cw + "。";
+                    if(stepNum === 2) fullCn = "在" + cw + "。";
+                    break;
+                default:
+                    fullCn = cw + sfx;
+            }
 
             const transEl = document.getElementById(`u${unitNum}-s${stepNum}-trans`);
             if(transEl) transEl.innerText = fullCn;

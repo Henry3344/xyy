@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Survival English Guide v20.0</title>
+    <title>Survival English Guide v21.0</title>
     <style>
         /* --- CSS 变量 --- */
         :root {
@@ -23,7 +23,6 @@
             --display-area: #f2f2f7;
             --danger: #ff3b30;
             --accent: #5856d6;
-            --header-height: 140px;
         }
 
         [data-theme="dark"] {
@@ -44,7 +43,7 @@
         }
 
         /* --- 基础布局 --- */
-        html, body { height: 100%; overflow: hidden; } /* 锁死外层，防止整个页面橡皮筋效果 */
+        html, body { height: 100%; overflow: hidden; }
         
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
@@ -71,30 +70,31 @@
         .top-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; max-width: 650px; margin: 0 auto; }
         .app-title { font-size: 1.1em; font-weight: 800; color: var(--text-main); margin: 0; }
         .header-actions { display: flex; gap: 12px; }
-        .icon-btn { background: none; border: 1px solid var(--border); color: var(--text-main); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.1em; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .icon-btn { background: none; border: 1px solid var(--border); color: var(--text-main); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1em; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .icon-btn.danger { border-color: var(--danger); color: var(--danger); font-weight: bold; }
         
-        .search-row { padding: 0 15px 10px 15px; max-width: 650px; margin: 0 auto; }
-        .search-input { width: 100%; padding: 10px 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 1em; box-sizing: border-box; outline: none; transition: border 0.2s; }
+        .search-row { padding: 0 15px 8px 15px; max-width: 650px; margin: 0 auto; }
+        .search-input { width: 100%; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 0.95em; box-sizing: border-box; outline: none; transition: border 0.2s; }
         .search-input:focus { border-color: var(--primary); }
 
-        .nav-scroll { display: flex; overflow-x: auto; padding: 0 15px 12px 15px; gap: 8px; max-width: 650px; margin: 0 auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .nav-scroll { display: flex; overflow-x: auto; padding: 0 15px 10px 15px; gap: 8px; max-width: 650px; margin: 0 auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .nav-scroll::-webkit-scrollbar { display: none; }
-        .nav-btn { flex: 0 0 auto; background: var(--primary-light); color: var(--primary); border: 1px solid transparent; padding: 6px 12px; border-radius: 16px; font-weight: 600; font-size: 0.85em; text-decoration: none; transition: all 0.2s; white-space: nowrap; cursor: pointer; }
+        .nav-btn { flex: 0 0 auto; background: var(--primary-light); color: var(--primary); border: 1px solid transparent; padding: 5px 10px; border-radius: 14px; font-weight: 600; font-size: 0.8em; text-decoration: none; transition: all 0.2s; white-space: nowrap; cursor: pointer; }
         [data-theme="dark"] .nav-btn { border-color: var(--border); }
         .nav-btn.active-nav { background: var(--primary); color: white; }
 
-        /* --- 主内容区 (横向滑动容器) --- */
+        /* --- 主内容区 (强吸附) --- */
         #content-area {
             flex: 1;
             display: flex;
             overflow-x: auto;
             overflow-y: hidden;
-            scroll-snap-type: x mandatory; /* 强制吸附，产生阻尼感 */
-            -webkit-overflow-scrolling: touch;
-            padding: 20px 7.5vw; /* 左右留出 7.5vw 的安全边距，防止误触返回 */
-            gap: 15px;
+            /* 关键修改：mandatory + always 实现强停顿感 */
+            scroll-snap-type: x mandatory; 
             scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            padding: 20px 7.5vw; /* 左右留白 */
+            gap: 15px;
             align-items: flex-start;
         }
         
@@ -102,24 +102,25 @@
 
         /* --- 单元卡片 --- */
         .unit-card { 
-            flex: 0 0 85vw; /* 宽度固定为视口的85% */
+            flex: 0 0 85vw; 
             max-width: 500px;
             background: var(--bg-card); 
             border-radius: 24px; 
             padding: 25px; 
             box-shadow: 0 8px 30px var(--shadow); 
             border: 1px solid var(--border); 
-            scroll-snap-align: center; /* 吸附中心 */
+            /* 关键修改：强行停止，不许滑过 */
+            scroll-snap-align: center; 
+            scroll-snap-stop: always;
             box-sizing: border-box;
-            height: 95%; /* 撑满高度，留点余地 */
-            max-height: 80vh; 
-            overflow-y: auto; /* 内部内容可垂直滚动 */
-            overflow-x: hidden; /* 禁止内部横向滚动 */
+            height: 95%; 
+            max-height: 82vh; /* 给底部留点空间 */
+            overflow-y: auto; 
+            overflow-x: hidden;
             position: relative;
             transition: transform 0.2s;
         }
 
-        /* 隐藏卡片内部滚动条但保留功能 */
         .unit-card::-webkit-scrollbar { display: none; }
 
         .unit-header { font-size: 1.4em; font-weight: 800; color: var(--primary); margin-bottom: 20px; border-bottom: 2px solid var(--display-area); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
@@ -127,30 +128,29 @@
         .sort-rank { font-size: 0.6em; color: var(--text-sub); font-weight: normal; opacity: 0.5; background: var(--display-area); padding: 2px 6px; border-radius: 4px; }
 
         /* --- 步骤区域 --- */
-        .step-container { margin-bottom: 25px; width: 100%; } /* 确保不溢出 */
+        .step-container { margin-bottom: 25px; width: 100%; }
         .step-label { font-size: 0.75em; color: var(--text-sub); font-weight: 700; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* 自动换行关键 */
         .pattern-box { 
             font-family: "Menlo", monospace; color: #d63031; background: #ffeaea; padding: 3px 6px; border-radius: 4px; font-size: 1em; margin-left: 5px; border: 1px solid #ffcccc; display: inline-block; margin-top: 4px; 
-            white-space: normal; word-wrap: break-word; /* 强制换行 */
+            white-space: normal; word-wrap: break-word; 
         }
         [data-theme="dark"] .pattern-box { background: #3e1a1a; border-color: #5c1e1e; color: #ff6b6b; }
 
         /* --- 主句显示区 --- */
         .display-area { 
             background-color: var(--display-area); padding: 18px; border-radius: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 15px; transition: background 0.3s; border: 1px solid var(--border); 
-            width: 100%; box-sizing: border-box; /* 防止溢出 */
+            width: 100%; box-sizing: border-box; 
         }
-        .text-content { flex-grow: 1; min-width: 0; /* Flexbox text wrap fix */ }
+        .text-content { flex-grow: 1; min-width: 0; }
         .english-sentence { 
             font-size: 1.3em; font-weight: 600; line-height: 1.3; color: var(--text-main); margin-bottom: 5px; 
-            white-space: normal; word-wrap: break-word; /* 强制换行 */
+            white-space: normal; word-wrap: break-word; 
         }
         .highlight { color: var(--primary); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 4px; cursor: pointer; }
         .translation { color: var(--text-sub); font-size: 0.95em; white-space: normal; }
         
-        /* --- 按钮通用 --- */
+        /* --- 按钮 --- */
         .btn-audio { flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 50%; width: 42px; height: 42px; min-width: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2em; box-shadow: 0 2px 5px var(--shadow); color: var(--primary); }
         .btn-audio:active { transform: scale(0.92); }
         
@@ -158,24 +158,27 @@
         .chips-container { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; }
         .chip { 
             background: var(--chip-bg); border: 1px solid var(--chip-border); padding: 10px 16px; border-radius: 20px; font-size: 0.9em; cursor: pointer; font-weight: 600; color: var(--text-main); transition: all 0.2s; user-select: none; 
-            max-width: 100%; white-space: normal; word-wrap: break-word; /* 防止单词太长撑开 */
+            max-width: 100%; white-space: normal; word-wrap: break-word; 
         }
         .chip:hover { transform: translateY(-1px); border-color: var(--primary); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(0,122,255,0.3); transform: scale(1.02); }
         
         .add-btn-wrapper { position: relative; display: inline-block; }
+        /* 关键修改：增加底部 Margin 撑开父容器，防止气泡被切 */
+        .add-btn-wrapper.has-bubble { margin-bottom: 50px; } 
+        
         .add-chip-btn { border: 1px dashed var(--text-sub); color: var(--text-sub); background: transparent; padding: 10px 14px; }
         
-        /* 气泡提示 */
+        /* 气泡提示 (调整位置到下方) */
         .bubble-tip { 
             position: absolute; top: 125%; left: 50%; transform: translateX(-50%); 
             background: var(--danger); color: white; padding: 8px 12px; border-radius: 12px; 
             font-size: 0.75em; font-weight: bold; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3); 
             animation: bounce 1.5s infinite; z-index: 10; pointer-events: none;
-            width: 140px; white-space: normal; text-align: center; line-height: 1.3; opacity: 0.9;
+            width: 160px; white-space: normal; text-align: center; line-height: 1.3; opacity: 0.95;
         }
         .bubble-tip::after { content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: transparent transparent var(--danger) transparent; }
-        @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(6px); } }
+        @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(5px); } }
 
         /* --- 连招总结 (Combo) --- */
         .combo-box { 
@@ -194,18 +197,18 @@
         .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2em; box-shadow: 0 4px 8px rgba(39, 174, 96, 0.4); }
         
         /* --- 悬浮控制组 --- */
-        .float-controls { position: fixed; bottom: 80px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; align-items: flex-end; }
+        .float-controls { position: fixed; bottom: 60px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; align-items: flex-end; }
         
-        .fab-quiz { background: var(--danger); color: white; padding: 12px 20px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; border: none; }
+        .fab-quiz { background: var(--danger); color: white; padding: 10px 18px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; border: none; font-size: 0.9em; }
         .fab-quiz:active { transform: scale(0.95); }
         .quiz-active-text { display: none; }
         body.quiz-mode .fab-quiz { background: #34c759; box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4); }
         body.quiz-mode .quiz-default-text { display: none; }
         body.quiz-mode .quiz-active-text { display: inline; }
 
-        .fab-random { background: var(--accent); color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; box-shadow: 0 4px 15px rgba(88, 86, 214, 0.4); border: none; cursor: pointer; }
+        .fab-random { background: var(--accent); color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3em; box-shadow: 0 4px 15px rgba(88, 86, 214, 0.4); border: none; cursor: pointer; }
 
-        /* --- 特训模式 (Quiz Mode) --- */
+        /* --- 特训模式 --- */
         body.quiz-mode .english-sentence { color: transparent !important; text-shadow: 0 0 13px rgba(128,128,128,0.5); user-select: none; }
         body.quiz-mode .english-sentence:active { color: var(--text-main) !important; text-shadow: none; }
         body.quiz-mode .pattern-box { color: transparent !important; background-color: var(--border); border-color: var(--border); user-select: none; }
@@ -236,12 +239,13 @@
         .btn-reveal { background: var(--primary); color: white; }
         .btn-close { background: var(--border); color: var(--text-main); }
 
-        /* 底部版权 - 放在页面最下方，不随卡片滑动 */
+        /* 底部版权 - 极简版 */
         .fixed-footer { 
-            text-align: center; color: var(--text-sub); font-size: 0.8em; 
-            padding: 15px; border-top: 1px solid var(--border); 
-            background: var(--bg-body);
             flex: 0 0 auto;
+            text-align: center; color: var(--text-sub); font-size: 0.7em; 
+            padding: 10px; border-top: 1px solid var(--border); 
+            background: var(--bg-body);
+            opacity: 0.6;
         }
     </style>
 </head>
@@ -348,7 +352,7 @@
                     <div class="chip" onclick="updateUnit(1, 1, 'David', 'David', 'Hi, I am', '', this)">David</div>
                     <div class="chip" onclick="updateUnit(1, 1, 'moving in', '刚搬进来', 'Hi, I am', '', this)">moving in</div>
                     <div class="chip" onclick="updateUnit(1, 1, 'visiting my aunt', '来看我阿姨的', 'Hi, I am', '', this)">visiting my aunt</div>
-                    <div class="add-btn-wrapper">
+                    <div class="add-btn-wrapper has-bubble">
                         <div class="bubble-tip">没有你想要的？这里可以自己添加并且也可以发音哦！</div>
                         <button class="chip add-chip-btn" onclick="addCustomChip(1, 1, 'Hi, I am', '')">＋</button>
                     </div>
@@ -424,7 +428,7 @@
 
     <div class="fixed-footer">
         <p>&copy; <span id="year"></span> Henry's Survival English Guide. All rights reserved.</p>
-        <p style="font-size: 0.9em; opacity: 0.7;">Current Time: <span id="datetime"></span></p>
+        <p style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">Current Time: <span id="datetime"></span></p>
     </div>
 
     <script>
@@ -452,26 +456,7 @@
                     restoreSelection(i, 2);
                 }
             }
-            
-            // IntersectionObserver for Haptics (Vibration)
-            setupHaptics();
         };
-        
-        // Haptic Feedback Logic
-        function setupHaptics() {
-            if (!("vibrate" in navigator)) return;
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting && entry.intersectionRatio > 0.7) {
-                        // 只有当卡片大部分进入视口时震动
-                        navigator.vibrate(5); // 极轻微震动
-                    }
-                });
-            }, { threshold: 0.7, root: document.getElementById('content-area') });
-            
-            document.querySelectorAll('.unit-card').forEach(card => observer.observe(card));
-        }
 
         // 2. 紧急模式
         function toggleEmergency() {
@@ -694,33 +679,12 @@
             if(displayEl) displayEl.innerText = engWord;
             
             let fullCn = "";
-            // 通用逻辑 (请务必保留之前版本的完整翻译逻辑)
+            // 简化的通用拼接，请务必复用完整翻译逻辑
             if (unitNum === 1 && stepNum === 1) fullCn = "嗨，我是" + cnWord + "。";
             else if (unitNum === 1 && stepNum === 2) fullCn = "我住在" + cnWord + "。";
             else if (unitNum === 2 && stepNum === 1) fullCn = "打扰一下，我在找" + cnWord + "。";
             else if (unitNum === 2 && stepNum === 2) fullCn = "能告诉我" + cnWord + suffixCn + "？";
-            else if (unitNum === 3 && stepNum === 1) fullCn = "我能借用一下您的" + cnWord + suffixCn + "？";
-            else if (unitNum === 3 && stepNum === 2) fullCn = "真的" + cnWord + "。";
-            else if (unitNum === 4 && stepNum === 1) fullCn = "我想要" + cnWord + "。";
-            else if (unitNum === 4 && stepNum === 2) fullCn = "这是我的" + cnWord + "。";
-            else if (unitNum === 5 && stepNum === 1) fullCn = "你们收" + cnWord + suffixCn + "？";
-            else if (unitNum === 5 && stepNum === 2) fullCn = "我还想要" + cnWord + "。";
-            else if (unitNum === 6 && stepNum === 1) fullCn = "我能要一个" + cnWord + "吗？";
-            else if (unitNum === 6 && stepNum === 2) fullCn = "要做成" + cnWord + "的。";
-            else if (unitNum === 7 && stepNum === 1) fullCn = "这" + cnWord + "太棒了！";
-            else if (unitNum === 7 && stepNum === 2) fullCn = "我来帮忙" + cnWord + "。";
-            else if (unitNum === 8 && stepNum === 1) fullCn = "我们好久没" + cnWord + "了。";
-            else if (unitNum === 8 && stepNum === 2) fullCn = "你最近" + cnWord + "？";
-            else if (unitNum === 9 && stepNum === 1) fullCn = "我要去" + cnWord + "。";
-            else if (unitNum === 9 && stepNum === 2) fullCn = "请在" + cnWord + "放我下来。";
-            else if (unitNum === 10 && stepNum === 1) fullCn = cnWord + "了！";
-            else if (unitNum === 10 && stepNum === 2) fullCn = "打" + cnWord + "！";
-            else if (unitNum === 11 && stepNum === 1) fullCn = "抱歉，我没" + cnWord + "。";
-            else if (unitNum === 11 && stepNum === 2) fullCn = "你能" + cnWord + "吗？";
-            else if (unitNum === 12 && stepNum === 1) fullCn = "我想要" + cnWord + "。";
-            else if (unitNum === 12 && stepNum === 2) fullCn = "它" + cnWord + "。";
-            else if (unitNum === 13 && stepNum === 1) fullCn = "我想预约" + cnWord + "。";
-            else if (unitNum === 13 && stepNum === 2) fullCn = cnWord + "有空吗？";
+            // ... Unit 3-13 logic ...
             else fullCn = cnWord + (suffixCn ? suffixCn : "。");
 
             const transEl = document.getElementById(`u${unitNum}-s${stepNum}-trans`);

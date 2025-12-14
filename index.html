@@ -261,6 +261,32 @@
             background: var(--bg-body);
             opacity: 0.5;
         }
+        /* --- 新增：举牌模式 (Show Card) --- */
+        .show-card-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); z-index: 9999;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; box-sizing: border-box; text-align: center;
+            animation: popIn 0.2s ease-out;
+        }
+        .show-card-text {
+            font-size: 3.5em; font-weight: 800; color: var(--text-main);
+            line-height: 1.2; margin-bottom: 30px; word-wrap: break-word;
+        }
+        .show-card-sub {
+            font-size: 1.5em; color: var(--text-sub); font-weight: 500;
+        }
+        .show-card-hint {
+            position: absolute; bottom: 30px; font-size: 0.8em; color: var(--text-sub); opacity: 0.6;
+        }
+        .btn-show {
+            flex-shrink: 0; background: transparent; border: 1px solid var(--border);
+            border-radius: 50%; width: 40px; height: 40px; margin-left: 8px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2em; color: var(--text-main);
+        }
+        /* 夜间模式适配 */
+        [data-theme="dark"] .show-card-overlay { background: #000; }
     </style>
 </head>
 <body>
@@ -882,92 +908,118 @@
         <p>&copy; <span id="year"></span> Henry's Survival English Guide.</p>
     </div>
 
-    <script>
-        // === 核心逻辑 (V25.8 超级联想词库版) ===
+     <script>
+        // === 核心逻辑 (V25.9 举牌+震动版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
 
-        // 1. 初始化
         window.onload = function() {
             document.getElementById('year').innerText = new Date().getFullYear();
             loadTheme();
             loadCustomChips();
             loadUsageData();
-            
-            // 注入扩容后的超级词库
-            injectSmartKeywords();
-
+            injectSmartKeywords(); // 这里的智能词库逻辑保留上一版的，为节省篇幅我不重复写大段词库了，逻辑通用
+            injectShowCardDOM();   // 新增：注入举牌模式的容器
             checkMonthlyReport(); 
             autoSortUnits();
             
-            // 恢复上次选择
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
                     restoreSelection(i, 1);
                     restoreSelection(i, 2);
                 }
             }
-            
             setTimeout(() => { initBubbleTip(); }, 300);
             initScrollHints();
+            addShowButtons(); // 新增：给所有卡片添加举牌按钮
         };
 
-        // === 🚀 核心升级：超级隐形关键词库 ===
+        // --- 新增功能区 ---
+
+        // 1. 注入举牌模式的 HTML 结构
+        function injectShowCardDOM() {
+            const div = document.createElement('div');
+            div.id = 'showCardOverlay';
+            div.className = 'show-card-overlay';
+            div.onclick = closeShowCard;
+            div.innerHTML = `
+                <div class="show-card-text" id="showCardEng"></div>
+                <div class="show-card-sub" id="showCardCn"></div>
+                <div class="show-card-hint">点击任意处关闭</div>
+            `;
+            document.body.appendChild(div);
+        }
+
+        // 2. 动态添加举牌按钮 (👁️)
+        function addShowButtons() {
+            // 遍历所有 unit
+            for(let i=1; i<=13; i++) {
+                for(let s=1; s<=2; s++) {
+                    const displayArea = document.querySelector(`#u${i} .step-container:nth-of-type(${s===1?1:3}) .display-area`);
+                    if(displayArea && !displayArea.querySelector('.btn-show')) {
+                        const btn = document.createElement('button');
+                        btn.className = 'btn-show';
+                        btn.innerHTML = '👁️';
+                        btn.onclick = function(e) {
+                            e.stopPropagation(); // 防止触发其他点击
+                            triggerHaptic();
+                            const eng = document.getElementById(`u${i}-s${s}-word`).parentElement.innerText; // 获取整句英文
+                            const cn = document.getElementById(`u${i}-s${s}-trans`).innerText;
+                            openShowCard(eng, cn);
+                        };
+                        displayArea.appendChild(btn);
+                    }
+                }
+            }
+        }
+
+        function openShowCard(eng, cn) {
+            document.getElementById('showCardEng').innerText = eng;
+            document.getElementById('showCardCn').innerText = cn;
+            document.getElementById('showCardOverlay').style.display = 'flex';
+        }
+
+        function closeShowCard() {
+            document.getElementById('showCardOverlay').style.display = 'none';
+        }
+
+        // 3. 触感反馈 (Haptic Feedback)
+        function triggerHaptic() {
+            // 如果手机支持震动，且浏览器允许
+            if (navigator.vibrate) {
+                navigator.vibrate(15); // 轻微震动 15ms
+            }
+        }
+
+        // --- 原有核心逻辑保持不变 (含 V25.8 的智能词库) ---
+        
         function injectSmartKeywords() {
-            const smartMap = {
-                // Unit 1: 邻居
+             const smartMap = {
                 1: "搬家 装修 新来 陌生人 隔壁 楼上 楼下 吵 借过 快递 帮忙 认识 问候 hello hi greeting neighbor move noise package",
-                
-                // Unit 2: 位置
                 2: "迷路 找不到 哪儿 怎么走 方向 地图 导航 电梯 楼梯 出口 入口 在哪 几楼 lost map where direction elevator exit entrance",
-                
-                // Unit 3: 洗手间 (包含内急、充电)
                 3: "内急 渴了 尿急 拉肚子 憋不住 大便 小便 厕所 茅房 卫生间 姨妈 痛经 没电 充电器 借用 手机没电 蹭网 wifi battery charge toilet restroom urgent pee poop",
-                
-                // Unit 4: 银行
                 4: "没钱 钱 现金 转账 存钱 取钱 换汇 美金 人民币 汇率 支票 银行卡 挂失 手续费 money cash bank deposit withdraw transfer check card",
-                
-                // Unit 5: 结账
                 5: "买单 付钱 多少钱 贵 便宜 刷卡 支付宝 微信 扫码 ApplePay 零钱 找零 收据 发票 塑料袋 袋子 pay cost bill receipt bag plastic",
-                
-                // Unit 6: 点餐 (包含渴了、饿了)
                 6: "渴了 饿了 吃饭 喝水 饮料 啤酒 可乐 菜单 好吃 难吃 辣 甜 咸 酸 忌口 过敏 海鲜 牛肉 猪肉 鸡肉 外卖 打包 menu eat food drink hungry thirsty spicy",
-                
-                // Unit 7: 聚餐
                 7: "请客 AA制 均摊 算账 谁付钱 朋友 聚会 也就是 甚至 也是我 既然 还是我来 别抢 treat share split bill dinner party",
-                
-                // Unit 8: 叙旧
                 8: "喝茶 喝咖啡 聊天 聊聊 很久没见 老朋友 老同学 叙旧 微信 联系 电话 号码 怎么样 最近 chat coffee long time see contact",
-                
-                // Unit 9: 打车
                 9: "回家 去哪 司机 师傅 机场 车站 酒店 怎么走 到了 停车 下车 拐弯 堵车 迟到 赶时间 taxi uber lyft car ride driver airport",
-                
-                // Unit 10: 急救
                 10: "救命 疼 痛 难受 晕倒 流血 骨折 发烧 呕吐 医院 医生 护士 警察 报警 110 911 120 救护车 抢劫 偷 危险 help sick pain emergency hospital police",
-                
-                // Unit 11: 没听懂
                 11: "听不懂 啥 什么 没听清 再说一遍 慢点 翻译 英语不好 不会英语 中文 啥意思 写下来 解释 what pardon repeat slow translate understand mean",
-                
-                // Unit 12: 退货
                 12: "坏了 烂了 破了 假的 不喜欢 不合适 大了 小了 质量问题 客服 售后 退款 换货 换一个 return refund exchange broken bad size",
-                
-                // Unit 13: 预约
                 13: "定时间 几点 什么时候 饭店订位 安排 改期 取消 明天 后天 下周 既然 甚至 也就是 约会 schedule time book reserve appointment cancel"
             };
-
             for (let id in smartMap) {
                 const card = document.getElementById(`u${id}`);
                 if (card) {
                     const originalKeys = card.getAttribute('data-keywords') || "";
-                    // 关键词去重拼接
                     const newKeys = originalKeys + " " + smartMap[id];
                     card.setAttribute('data-keywords', newKeys);
                 }
             }
         }
 
-        // 2. 智能下滑提示
         function initScrollHints() {
             const cards = document.querySelectorAll('.unit-card');
             cards.forEach(card => {
@@ -982,21 +1034,17 @@
             });
         }
 
-        // 3. 智能气泡引导
         function initBubbleTip() {
             const center = window.innerWidth / 2;
             let bestCard = null;
             let minDiff = Infinity;
-            
             document.querySelectorAll('.unit-card').forEach(card => {
                 const rect = card.getBoundingClientRect();
                 const cardCenter = rect.left + rect.width / 2;
                 const diff = Math.abs(center - cardCenter);
                 if(diff < minDiff) { minDiff = diff; bestCard = card; }
             });
-
             if (!bestCard) return;
-
             const wrapper = bestCard.querySelector('.step-container .chips-container .add-btn-wrapper');
             if (wrapper) {
                 if(wrapper.querySelector('.bubble-tip')) return;
@@ -1014,30 +1062,26 @@
             setTimeout(() => { element.remove(); }, 1000);
         }
 
-        // 4. 自定义词库
         function addCustomChip(unitNum, stepNum, prefix, suffix) {
+            triggerHaptic(); // 添加震动
             const bubble = document.querySelector('.bubble-tip');
             if(bubble) dismissBubble(bubble);
-
             const eng = prompt("请输入英文单词或短语 (e.g. oat milk):"); if(!eng) return;
             const cn = prompt("请输入中文意思 (e.g. 燕麦奶):"); if(!cn) return;
-
             const chipData = { unitNum, stepNum, eng, cn, prefix, suffix };
             const key = `custom_chips_u${unitNum}_s${stepNum}`;
             let list = JSON.parse(localStorage.getItem(key) || "[]");
             list.push(chipData);
             localStorage.setItem(key, JSON.stringify(list));
-
             renderAndClickChip(chipData, true);
         }
 
-        // 5. 紧急模式
         function toggleEmergency() {
+            triggerHaptic(); // 添加震动
             const overlay = document.getElementById('emergencyOverlay');
             overlay.classList.toggle('active');
         }
 
-        // 6. 智能排序
         function loadUsageData() {
             usageData = JSON.parse(localStorage.getItem('unit_usage') || "{}");
         }
@@ -1061,14 +1105,12 @@
             localStorage.setItem('unit_usage', JSON.stringify(usageData));
         }
 
-        // 7. 月度报告
         function checkMonthlyReport() {
             const now = new Date();
             const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`; 
             const storedMonth = localStorage.getItem('stats_last_month');
             let openCount = parseInt(localStorage.getItem('stats_open_count') || "0") + 1;
             localStorage.setItem('stats_open_count', openCount);
-
             if (storedMonth && storedMonth !== currentMonth) {
                 showMonthlySummary(storedMonth);
                 localStorage.setItem('stats_open_count', 1);
@@ -1085,8 +1127,8 @@
             document.getElementById('reportModal').style.display = 'flex';
         }
 
-        // 8. 随机抽查
         function startRandomDrill() {
+            triggerHaptic(); // 添加震动
             const u = Math.floor(Math.random() * 13) + 1; 
             const unitCard = document.getElementById(`u${u}`);
             if(!unitCard) { startRandomDrill(); return; } 
@@ -1100,14 +1142,13 @@
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function revealRandomAnswer() { closeModal('randomModal'); scrollToUnit(`u${currentRandomUnit}`); }
 
-        // 9. 横向导航
         function scrollToUnit(id) {
             const el = document.getElementById(id);
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
 
-        // 10. 基础功能
         function toggleTheme() {
+            triggerHaptic(); // 添加震动
             const html = document.documentElement;
             const newTheme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
             html.setAttribute('data-theme', newTheme);
@@ -1145,6 +1186,7 @@
             btn.innerText = data.eng;
             btn.onmousedown = btn.ontouchstart = function() {
                 pressTimer = setTimeout(() => {
+                    triggerHaptic(); // 长按也震动
                     if(confirm(`管理 "${data.eng}":\n点击[确定]修改，点击[取消]继续。`)) {
                         const newTxt = prompt("修改英文 (留空则删除):", data.eng);
                         if(newTxt === null) return; 
@@ -1178,10 +1220,14 @@
             localStorage.setItem(key, JSON.stringify(list));
         }
 
-        function toggleQuizMode() { document.body.classList.toggle('quiz-mode'); }
+        function toggleQuizMode() { 
+            triggerHaptic();
+            document.body.classList.toggle('quiz-mode'); 
+        }
 
         // === 核心逻辑修改：整句翻译拼接 ===
         function updateUnit(unitNum, stepNum, engWord, cnWord, prefixEng, suffixCn, element, playSound = true) {
+            triggerHaptic(); // 核心：点击单词震动
             incrementUsage(unitNum);
 
             const wordId = `u${unitNum}-s${stepNum}-word`;
@@ -1253,9 +1299,14 @@
             if(transEl) transEl.innerText = fullCn;
 
             let container = element.parentElement;
+            // 修正查找逻辑
             let chips = container.querySelectorAll('.chip');
             for(let chip of chips) chip.classList.remove('active');
-            element.classList.add('active');
+            
+            // 确保是 chip 本身添加 active
+            if(element.classList.contains('chip')) {
+                element.classList.add('active');
+            }
 
             localStorage.setItem(`u${unitNum}-s${stepNum}`, JSON.stringify({ engWord, cnWord, prefix: prefixEng, suffix: suffixCn }));
             if(playSound) speakDirect(engWord);

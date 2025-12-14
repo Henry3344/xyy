@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Survival English Guide v25.0</title>
+    <title>Survival English Guide v26.1</title>
     <style>
-        /* --- CSS 变量 --- */
+        /* --- CSS 变量 (保持原样) --- */
         :root {
             --bg-body: #f2f2f7;
             --bg-card: #ffffff;
@@ -116,7 +116,7 @@
             overflow-x: hidden;
             position: relative;
             transition: transform 0.2s;
-            padding-bottom: 40px; /* 留出底部空间给提示语 */
+            padding-bottom: 60px; /* 增加底部留白给提示语 */
         }
         .unit-card::-webkit-scrollbar { display: none; }
 
@@ -162,25 +162,25 @@
         .chip:hover { transform: translateY(-1px); border-color: var(--primary); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,122,255,0.3); transform: scale(1.02); }
         
+        /* --- 加号按钮与气泡 --- */
         .add-btn-wrapper { position: relative; display: inline-block; vertical-align: middle; }
-        .add-btn-wrapper.has-bubble { margin-bottom: 60px; display: block; width: 100%; } 
         
-        .add-chip-btn { border: 1px dashed var(--text-sub); color: var(--text-sub); background: transparent; padding: 6px 10px; }
+        .add-chip-btn { border: 1px dashed var(--text-sub); color: var(--text-sub); background: transparent; padding: 6px 10px; border-radius: 16px; font-size: 0.9em; cursor: pointer; }
         
-        /* 气泡提示 (更新文案，加宽) */
+        /* 【修改1】 气泡提示 (恢复红色，位置在上方) */
         .bubble-tip { 
-            position: absolute; top: 45px; left: 50%; transform: translateX(-50%); 
-            background: var(--danger); color: white; padding: 8px 12px; border-radius: 10px; 
-            font-size: 0.7em; font-weight: bold; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4); 
-            animation: bounce 1.5s infinite; z-index: 99; 
-            width: 220px; /* 加宽以容纳长文案 */
-            white-space: normal; text-align: center; line-height: 1.4; 
-            opacity: 0.95; transition: opacity 1s ease;
+            position: absolute; bottom: 115%; left: 50%; transform: translateX(-50%); 
+            background: var(--danger); color: white; padding: 6px 10px; border-radius: 8px; 
+            font-size: 0.75em; font-weight: bold; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4); 
+            z-index: 100; white-space: nowrap;
+            /* 动画部分 */
+            opacity: 1; transition: opacity 1.5s ease;
             pointer-events: none;
         }
+        .bubble-tip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: var(--danger) transparent transparent transparent; }
+        
+        /* 15s后添加这个类名来隐藏 */
         .bubble-tip.fade-out { opacity: 0; }
-        .bubble-tip::after { content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: transparent transparent var(--danger) transparent; }
-        @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(5px); } }
 
         /* --- 分隔线 --- */
         .divider { height: 1px; background: var(--border); margin: 20px 0; border: none; }
@@ -196,20 +196,31 @@
         .structure-box { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; font-size: 0.8em; color: #bdc3c7; border: 1px dashed rgba(255,255,255,0.3); transition: all 0.3s; white-space: normal; }
         .struct-tag { display: inline-block; background: #e67e22; color: white; padding: 1px 5px; border-radius: 3px; font-size: 0.85em; margin-right: 4px; font-weight: bold; margin-bottom: 4px; }
         .struct-arrow { margin: 0 4px; color: #ecf0f1; }
-        .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1em; box-shadow: 0 4px 8px rgba(39, 174, 96, 0.4); }
         
-        /* --- 滑动查看更多 提示 --- */
+        /* --- 【修改2】 滑动查看更多 提示 (加了模糊背景) --- */
         .scroll-hint {
-            position: absolute; bottom: 10px; left: 0; width: 100%;
+            position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+            width: auto; padding: 8px 16px; border-radius: 30px;
             text-align: center; color: var(--primary); font-size: 0.8em; font-weight: 600;
             pointer-events: none; opacity: 0; transition: opacity 0.3s;
             animation: bounce-hint 2s infinite; z-index: 50;
+            white-space: nowrap;
+            /* 模糊毛玻璃效果 */
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .scroll-hint.visible { opacity: 0.8; }
+        [data-theme="dark"] .scroll-hint {
+            background: rgba(44, 44, 46, 0.8);
+            color: white;
+        }
+
+        .scroll-hint.visible { opacity: 1; }
         @keyframes bounce-hint { 
-            0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 
-            40% {transform: translateY(-5px);} 
-            60% {transform: translateY(-3px);} 
+            0%, 20%, 50%, 80%, 100% {transform: translateX(-50%) translateY(0);} 
+            40% {transform: translateX(-50%) translateY(-5px);} 
+            60% {transform: translateX(-50%) translateY(-3px);} 
         }
 
         /* --- 悬浮控制组 --- */
@@ -251,8 +262,7 @@
         .modal-btn { padding: 8px 16px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; font-size: 1em; }
         .btn-reveal { background: var(--primary); color: white; }
         .btn-close { background: var(--border); color: var(--text-main); }
-
-        /* 底部版权 - 极简极窄版 */
+        
         .fixed-footer { 
             flex: 0 0 auto;
             text-align: center; color: var(--text-sub); font-size: 0.6em; 
@@ -328,7 +338,501 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="reportModal">
-        <div class="modal-card">
-            <div class="modal-title">📅 月度暖心小结</div>
-            <div class="modal-content-text" id="reportContent" style="text-align: left; font-size: 1em;">...</div>
+    <div id="content-area">
+        </div>
+
+    <div class="float-controls">
+        <button class="fab-quiz" onclick="toggleQuizMode()">
+            <span class="quiz-default-text">👓 遮盖模式</span>
+            <span class="quiz-active-text">👀 退出遮盖</span>
+        </button>
+        <button class="fab-random" onclick="showRandomCard()">🎲</button>
+    </div>
+
+    <script>
+        // --- 核心数据 (全面扩充) ---
+        const units = [
+            {
+                id: 'u1', title: 'Neighbor / Help', titleCn: '邻里/求助',
+                pattern: 'Can I borrow [item]?',
+                chips: [
+                    {en: 'your ladder', cn: '你的梯子'},
+                    {en: 'some salt', cn: '一些盐'},
+                    {en: 'a screwdriver', cn: '螺丝刀'},
+                    {en: 'your wifi', cn: '你的WiFi'},
+                    {en: 'a plunger', cn: '马桶搋子'},
+                    {en: 'some ice', cn: '一些冰块'},
+                    {en: 'a vacuum', cn: '吸尘器'},
+                    {en: 'a hammer', cn: '锤子'}
+                ],
+                combos: [
+                    { en: "Can you keep the noise down?", cn: "能小声点吗？" },
+                    { en: "Is this package yours?", cn: "这包裹是你的吗？" },
+                    { en: "Please don't park here.", cn: "请别停这儿。" },
+                    { en: "Can you help me lift this?", cn: "能帮我抬一下吗？" },
+                    { en: "I'm locked out.", cn: "我被锁外面了。" },
+                    { en: "When is trash day?", cn: "哪天倒垃圾？" }
+                ]
+            },
+            {
+                id: 'u2', title: 'Location', titleCn: '问路/位置',
+                pattern: 'Is [place] near here?',
+                chips: [
+                    {en: 'the subway', cn: '地铁站'},
+                    {en: 'a pharmacy', cn: '药房'},
+                    {en: 'Main Street', cn: '主街'},
+                    {en: 'the bus stop', cn: '公交站'},
+                    {en: 'a post office', cn: '邮局'},
+                    {en: 'a gas station', cn: '加油站'},
+                    {en: 'a laundromat', cn: '洗衣房'},
+                    {en: 'a grocery store', cn: '杂货店'}
+                ],
+                combos: [
+                    { en: "It is within walking distance.", cn: "走路能到。" },
+                    { en: "You can take the Q13 bus.", cn: "你可以坐Q13公交。" },
+                    { en: "It is on the corner.", cn: "就在拐角处。" },
+                    { en: "Can you show me on Google Maps?", cn: "能在地图上指一下吗？" },
+                    { en: "Go straight and turn left.", cn: "直走然后左转。" },
+                    { en: "It is across the street.", cn: "就在街对面。" }
+                ]
+            },
+            {
+                id: 'u3', title: 'Restroom', titleCn: '洗手间',
+                pattern: 'What is the [noun]?',
+                chips: [
+                    {en: 'restroom code', cn: '厕所密码'},
+                    {en: 'wifi password', cn: 'WiFi密码'},
+                    {en: 'door code', cn: '门禁密码'},
+                    {en: 'total price', cn: '总价'},
+                    {en: 'gate number', cn: '登机口号'},
+                    {en: 'room number', cn: '房间号'}
+                ],
+                combos: [
+                    { en: "Is the restroom open?", cn: "厕所开着吗？" },
+                    { en: "Where can I wash my hands?", cn: "哪能洗手？" },
+                    { en: "Do I need a key?", cn: "需要钥匙吗？" },
+                    { en: "It is for customers only.", cn: "仅限顾客使用。" },
+                    { en: "Someone is inside.", cn: "里面有人。" },
+                    { en: "The toilet is clogged.", cn: "马桶堵了。" }
+                ]
+            },
+            {
+                id: 'u4', title: 'Bank', titleCn: '银行',
+                pattern: 'I want to [verb] money.',
+                chips: [
+                    {en: 'deposit', cn: '存'},
+                    {en: 'withdraw', cn: '取'},
+                    {en: 'exchange', cn: '换汇'},
+                    {en: 'transfer', cn: '转账'},
+                    {en: 'save', cn: '存(定期)'},
+                    {en: 'wire', cn: '电汇'}
+                ],
+                combos: [
+                    { en: "I need to open an account.", cn: "我要开户。" },
+                    { en: "What is the exchange rate?", cn: "汇率是多少？" },
+                    { en: "I lost my debit card.", cn: "我借记卡丢了。" },
+                    { en: "Can I get a notary here?", cn: "这里能公证吗？" },
+                    { en: "I need small bills.", cn: "我要小面额钞票。" },
+                    { en: "I forgot my PIN.", cn: "我忘密码了。" }
+                ]
+            },
+            {
+                id: 'u5', title: 'Checkout', titleCn: '超市结账',
+                pattern: 'I will pay by [method].',
+                chips: [
+                    {en: 'credit card', cn: '信用卡'},
+                    {en: 'cash', cn: '现金'},
+                    {en: 'Apple Pay', cn: '苹果支付'},
+                    {en: 'debit card', cn: '借记卡'},
+                    {en: 'gift card', cn: '礼品卡'},
+                    {en: 'QR code', cn: '二维码'}
+                ],
+                combos: [
+                    { en: "Receipt in the bag, please.", cn: "收据放袋子里。" },
+                    { en: "Do you need a bag?", cn: "要袋子吗？" },
+                    { en: "I have a coupon.", cn: "我有优惠券。" },
+                    { en: "Keep the change.", cn: "不用找零了。" },
+                    { en: "This price is wrong.", cn: "这价格不对。" },
+                    { en: "Can you double bag it?", cn: "能套两个袋子吗？" }
+                ]
+            },
+            {
+                id: 'u6', title: 'Ordering', titleCn: '点餐',
+                pattern: 'Can I get [item]?',
+                chips: [
+                    {en: 'no ice', cn: '去冰'},
+                    {en: 'less sugar', cn: '少糖'},
+                    {en: 'sauce on the side', cn: '酱料单放'},
+                    {en: 'extra napkins', cn: '多点纸巾'},
+                    {en: 'a fork', cn: '一个叉子'},
+                    {en: 'the check', cn: '买单'},
+                    {en: 'some water', cn: '一些水'}
+                ],
+                combos: [
+                    { en: "For here or to go?", cn: "在这吃还是带走？" },
+                    { en: "I'll have the combo.", cn: "我要套餐。" },
+                    { en: "What do you recommend?", cn: "有什么推荐？" },
+                    { en: "I am allergic to peanuts.", cn: "我对花生过敏。" },
+                    { en: "Just water, please.", cn: "只要水。" },
+                    { en: "Can we split the check?", cn: "能分开付吗？" }
+                ]
+            },
+            {
+                id: 'u7', title: 'Hanging Out', titleCn: '朋友聚餐',
+                pattern: 'Let\'s [action].',
+                chips: [
+                    {en: 'split the bill', cn: 'AA制'},
+                    {en: 'grab a drink', cn: '喝一杯'},
+                    {en: 'go to KTV', cn: '去唱K'},
+                    {en: 'take a photo', cn: '拍张照'},
+                    {en: 'order pizza', cn: '点披萨'},
+                    {en: 'watch a movie', cn: '看电影'}
+                ],
+                combos: [
+                    { en: "It's my treat today.", cn: "今天我请客。" },
+                    { en: "Are you free this weekend?", cn: "周末有空吗？" },
+                    { en: "Let's meet at 7.", cn: "咱们7点见。" },
+                    { en: "I'm running a bit late.", cn: "我要迟到一点。" },
+                    { en: "Next time is on me.", cn: "下次我请。" },
+                    { en: "I'll pick you up.", cn: "我去接你。" }
+                ]
+            },
+            {
+                id: 'u8', title: 'Catch Up', titleCn: '叙旧',
+                pattern: 'How is your [noun]?',
+                chips: [
+                    {en: 'job', cn: '工作'},
+                    {en: 'family', cn: '家人'},
+                    {en: 'new apartment', cn: '新公寓'},
+                    {en: 'boyfriend', cn: '男朋友'},
+                    {en: 'trip', cn: '旅行'},
+                    {en: 'health', cn: '身体'}
+                ],
+                combos: [
+                    { en: "Long time no see!", cn: "好久不见！" },
+                    { en: "You haven't changed a bit.", cn: "你一点没变。" },
+                    { en: "We should do this again.", cn: "咱们得再聚。" },
+                    { en: "I missed you so much.", cn: "我很想你。" },
+                    { en: "What have you been up to?", cn: "最近忙啥呢？" },
+                    { en: "Let's keep in touch.", cn: "保持联系。" }
+                ]
+            },
+            {
+                id: 'u9', title: 'Taxi / Uber', titleCn: '打车',
+                pattern: 'Please [action].',
+                chips: [
+                    {en: 'turn left', cn: '左转'},
+                    {en: 'pull over', cn: '靠边停车'},
+                    {en: 'drive slower', cn: '开慢点'},
+                    {en: 'turn on AC', cn: '开空调'},
+                    {en: 'open the trunk', cn: '开后备箱'},
+                    {en: 'wait here', cn: '在这等'},
+                    {en: 'roll down the window', cn: '摇下窗户'}
+                ],
+                combos: [
+                    { en: "I am in a hurry.", cn: "我赶时间。" },
+                    { en: "How long to get there?", cn: "多久能到？" },
+                    { en: "This is the wrong way.", cn: "走错路了吧。" },
+                    { en: "Drop me off here.", cn: "这儿下车。" },
+                    { en: "Keep the meter running.", cn: "打着表等我。" },
+                    { en: "Can I charge my phone?", cn: "能充下电吗？" }
+                ]
+            },
+            {
+                id: 'u10', title: 'Emergency', titleCn: '急救/医疗',
+                pattern: 'I have [symptom].',
+                chips: [
+                    {en: 'a fever', cn: '发烧'},
+                    {en: 'a stomachache', cn: '胃疼'},
+                    {en: 'high blood pressure', cn: '高血压'},
+                    {en: 'an allergy', cn: '过敏'},
+                    {en: 'chest pain', cn: '胸痛'},
+                    {en: 'a cut', cn: '割伤'},
+                    {en: 'a rash', cn: '皮疹'}
+                ],
+                combos: [
+                    { en: "Call an ambulance!", cn: "叫救护车！" },
+                    { en: "Where is the hospital?", cn: "医院在哪？" },
+                    { en: "I need a doctor.", cn: "我需要医生。" },
+                    { en: "I am bleeding.", cn: "我流血了。" },
+                    { en: "He passed out.", cn: "他晕倒了。" },
+                    { en: "I have insurance.", cn: "我有保险。" }
+                ]
+            },
+            {
+                id: 'u11', title: 'Confusion', titleCn: '没听懂',
+                pattern: 'Can you [action]?',
+                chips: [
+                    {en: 'speak slowly', cn: '说慢点'},
+                    {en: 'say that again', cn: '再说一遍'},
+                    {en: 'write it down', cn: '写下来'},
+                    {en: 'use simple words', cn: '用简单的词'},
+                    {en: 'show me', cn: '指给我看'},
+                    {en: 'translate it', cn: '翻译一下'}
+                ],
+                combos: [
+                    { en: "I don't understand.", cn: "我不明白。" },
+                    { en: "My English is not good.", cn: "我英语不好。" },
+                    { en: "What does that mean?", cn: "那是啥意思？" },
+                    { en: "Please be patient.", cn: "请耐心点。" },
+                    { en: "Use Google Translate.", cn: "用谷歌翻译。" },
+                    { en: "Sorry, I am lost.", cn: "抱歉，我听懵了。" }
+                ]
+            },
+            {
+                id: 'u12', title: 'Returns', titleCn: '退货/售后',
+                pattern: 'I want to return this. It is [reason].',
+                chips: [
+                    {en: 'broken', cn: '坏的'},
+                    {en: 'wrong size', cn: '尺码不对'},
+                    {en: 'expired', cn: '过期的'},
+                    {en: 'used', cn: '旧的/用过的'},
+                    {en: 'not what I ordered', cn: '发错货了'},
+                    {en: 'defective', cn: '有缺陷'},
+                    {en: 'stained', cn: '有污渍'}
+                ],
+                combos: [
+                    { en: "I have the receipt.", cn: "我有收据。" },
+                    { en: "Can I get a refund?", cn: "能退款吗？" },
+                    { en: "I just changed my mind.", cn: "我不想要了。" },
+                    { en: "Store credit is okay.", cn: "退到余额也行。" },
+                    { en: "I want to speak to a manager.", cn: "我要见经理。" },
+                    { en: "Can I exchange this?", cn: "能换货吗？" }
+                ]
+            },
+            {
+                id: 'u13', title: 'Reservation', titleCn: '预约',
+                pattern: 'I want to [action] my appointment.',
+                chips: [
+                    {en: 'cancel', cn: '取消'},
+                    {en: 'change', cn: '更改'},
+                    {en: 'confirm', cn: '确认'},
+                    {en: 'reschedule', cn: '改期'},
+                    {en: 'make', cn: '预约'},
+                    {en: 'check', cn: '查询'}
+                ],
+                combos: [
+                    { en: "I have a reservation at 6.", cn: "我有6点的预约。" },
+                    { en: "Table for two, please.", cn: "两位。" },
+                    { en: "Is there a wait?", cn: "要排队吗？" },
+                    { en: "Under the name Henry.", cn: "名字是Henry。" },
+                    { en: "We are running late.", cn: "我们会晚点到。" },
+                    { en: "Do you accept walk-ins?", cn: "没预约能进吗？" }
+                ]
+            }
+        ];
+
+        // --- 初始化与渲染 ---
+        const contentArea = document.getElementById('content-area');
+
+        function renderUnits() {
+            contentArea.innerHTML = '';
+            units.forEach((unit, index) => {
+                const card = document.createElement('div');
+                card.className = 'unit-card';
+                card.id = unit.id;
+                
+                // 默认选中第一个 chip
+                const firstChip = unit.chips[0];
+                const cleanPattern = unit.pattern.replace(/\[.*?\]/, '<span class="pattern-slot">' + firstChip.en + '</span>');
+                
+                let chipsHtml = unit.chips.map((c, i) => 
+                    `<div class="chip ${i===0?'active':''}" onclick="selectChip(this, '${unit.id}', '${c.en}', '${c.cn}')">${c.en}</div>`
+                ).join('');
+
+                // 【修改3】 渲染时把红色气泡加进去
+                chipsHtml += `
+                    <div class="add-btn-wrapper">
+                        <div class="bubble-tip">点这加词！</div>
+                        <button class="add-chip-btn" onclick="addChip('${unit.id}')">+ Add</button>
+                    </div>
+                `;
+
+                // 连招部分 HTML
+                let combosHtml = unit.combos.map(combo => 
+                    `<div class="combo-text" onclick="speak('${combo.en}')">${combo.en} <span style="font-size:0.8em; opacity:0.7; font-weight:normal">(${combo.cn})</span></div>`
+                ).join('');
+
+                // 底部滑动提示 (仅第一个卡片显示)
+                const scrollHint = index === 0 ? `<div class="scroll-hint visible">⬇️ 向下滑动查看更多连招</div>` : '';
+
+                card.innerHTML = `
+                    <div class="unit-header">
+                        <span>${unit.title} <span style="font-size:0.6em; font-weight:normal;">${unit.titleCn}</span></span>
+                        <span class="sort-rank">#${index + 1}</span>
+                    </div>
+
+                    <div class="step-container">
+                        <span class="step-label">Step 1: 核心句型 (替换单词)</span>
+                        <div class="display-area">
+                            <div class="text-content">
+                                <div class="english-sentence" id="sent-${unit.id}">${cleanPattern}</div>
+                                <div class="translation" id="trans-${unit.id}">${firstChip.cn}</div>
+                            </div>
+                            <button class="btn-audio" onclick="speakCurrent('${unit.id}')">🔊</button>
+                        </div>
+                        <div class="chips-container" id="chips-${unit.id}">
+                            ${chipsHtml}
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="step-container">
+                        <span class="step-label">Step 2: 高频连招 (直接用)</span>
+                        <div class="combo-box">
+                            <div class="combo-title">Native Speakers Say:</div>
+                            ${combosHtml}
+                            <div class="structure-box">
+                                <span class="struct-tag">Structure</span>
+                                💡 点击句子直接发音，模仿语调。
+                            </div>
+                        </div>
+                    </div>
+                    ${scrollHint}
+                `;
+                contentArea.appendChild(card);
+            });
+            
+            // 【修改4】 15秒后让气泡慢慢消失
+            setTimeout(() => {
+                document.querySelectorAll('.bubble-tip').forEach(el => el.classList.add('fade-out'));
+            }, 15000);
+        }
+
+        // --- 交互逻辑 ---
+        function selectChip(el, unitId, enText, cnText) {
+            // 更新 UI 状态
+            document.querySelectorAll(`#chips-${unitId} .chip`).forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            
+            // 更新句子
+            const unit = units.find(u => u.id === unitId);
+            const sentEl = document.getElementById(`sent-${unitId}`);
+            const transEl = document.getElementById(`trans-${unitId}`);
+            
+            // 简单的正则替换，保留句型结构
+            const parts = unit.pattern.split(/\[.*?\]/);
+            if(parts.length > 1) {
+                sentEl.innerHTML = parts[0] + `<span class="pattern-slot" style="color:var(--primary); text-decoration:underline;">${enText}</span>` + parts[1];
+            } else {
+                sentEl.innerText = enText; // Fallback
+            }
+            transEl.innerText = cnText;
+        }
+
+        function speakCurrent(unitId) {
+            const text = document.getElementById(`sent-${unitId}`).innerText;
+            speak(text);
+        }
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+        
+        function speakDirect(text) {
+             window.speechSynthesis.cancel();
+             const msg = new SpeechSynthesisUtterance(text);
+             msg.lang = 'en-US';
+             window.speechSynthesis.speak(msg);
+        }
+
+        function scrollToUnit(id) {
+            document.getElementById(id).scrollIntoView({behavior: 'smooth', block: 'center'});
+            // 更新导航激活状态
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-nav'));
+            event.target.classList.add('active-nav');
+        }
+        
+        function filterUnits() {
+            const term = document.getElementById('searchBox').value.toLowerCase();
+            units.forEach(u => {
+                const card = document.getElementById(u.id);
+                // 搜索 标题、中文标题、Chips内容
+                const match = u.title.toLowerCase().includes(term) || 
+                              u.titleCn.includes(term) || 
+                              u.chips.some(c => c.en.toLowerCase().includes(term) || c.cn.includes(term));
+                card.style.display = match ? 'block' : 'none';
+            });
+        }
+
+        function addChip(unitId) {
+            const en = prompt("输入英文单词/短语 (例如: extra rice)");
+            if(!en) return;
+            const cn = prompt("输入中文含义 (例如: 多点饭)");
+            if(!cn) return;
+            
+            const unit = units.find(u => u.id === unitId);
+            unit.chips.push({en, cn});
+            
+            // 重新渲染该卡片的 chips 区域
+            const container = document.getElementById(`chips-${unitId}`);
+            // 创建新 chip DOM
+            const newChip = document.createElement('div');
+            newChip.className = 'chip';
+            newChip.innerText = en;
+            newChip.onclick = function() { selectChip(this, unitId, en, cn) };
+            
+            // 插入到 "Add" 按钮之前
+            const btnWrapper = container.querySelector('.add-btn-wrapper');
+            container.insertBefore(newChip, btnWrapper);
+            
+            // 自动选中
+            selectChip(newChip, unitId, en, cn);
+        }
+
+        // --- 模式切换 ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+        }
+
+        function toggleEmergency() {
+            const overlay = document.getElementById('emergencyOverlay');
+            overlay.classList.toggle('active');
+        }
+
+        function toggleQuizMode() {
+            document.body.classList.toggle('quiz-mode');
+        }
+        
+        // --- 随机抽查 ---
+        let currentRandomAnswer = "";
+        function showRandomCard() {
+            const allSentences = [];
+            units.forEach(u => {
+                u.combos.forEach(c => allSentences.push({en: c.en, cn: c.cn, type: 'combo'}));
+                u.chips.forEach(c => allSentences.push({en: u.pattern.replace(/\[.*?\]/, c.en), cn: `(场景: ${u.titleCn}) ${c.cn}`, type: 'pattern'}));
+            });
+            
+            const randomItem = allSentences[Math.floor(Math.random() * allSentences.length)];
+            currentRandomAnswer = randomItem.en;
+            
+            document.getElementById('modalQuestion').innerText = randomItem.cn;
+            document.getElementById('randomModal').style.display = 'flex';
+        }
+        
+        function revealRandomAnswer() {
+            const el = document.getElementById('modalQuestion');
+            el.innerText = currentRandomAnswer;
+            el.style.color = "var(--primary)";
+            speak(currentRandomAnswer);
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // --- 页面加载 ---
+        window.onload = function() {
+            renderUnits();
+        };
+
+    </script>
+</body>
+</html>

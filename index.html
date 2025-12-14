@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Survival English Guide v19.0</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Survival English Guide v20.0</title>
     <style>
         /* --- CSS 变量 --- */
         :root {
@@ -18,10 +19,11 @@
             --chip-bg: #ffffff;
             --chip-border: #d1d1d6;
             --nav-bg: rgba(255,255,255,0.95);
-            --shadow: rgba(0,0,0,0.06);
+            --shadow: rgba(0,0,0,0.08);
             --display-area: #f2f2f7;
             --danger: #ff3b30;
             --accent: #5856d6;
+            --header-height: 140px;
         }
 
         [data-theme="dark"] {
@@ -42,13 +44,13 @@
         }
 
         /* --- 基础布局 --- */
-        html { overflow: hidden; /* 禁止外层滚动 */ height: 100%; }
+        html, body { height: 100%; overflow: hidden; } /* 锁死外层，防止整个页面橡皮筋效果 */
+        
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             background-color: var(--bg-body); 
             color: var(--text-main); 
             margin: 0; padding: 0;
-            height: 100%;
             display: flex;
             flex-direction: column;
             transition: background 0.3s, color 0.3s; 
@@ -57,13 +59,13 @@
         
         /* --- 顶部控制台 --- */
         .header-container { 
-            flex: 0 0 auto; /* 固定高度 */
+            flex: 0 0 auto;
             background: var(--nav-bg); 
             backdrop-filter: blur(15px); 
             z-index: 1000; 
             border-bottom: 1px solid var(--border); 
             box-shadow: 0 4px 15px var(--shadow); 
-            padding-top: env(safe-area-inset-top); /* 适配刘海屏 */
+            padding-top: env(safe-area-inset-top);
         }
         
         .top-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; max-width: 650px; margin: 0 auto; }
@@ -78,100 +80,121 @@
 
         .nav-scroll { display: flex; overflow-x: auto; padding: 0 15px 12px 15px; gap: 8px; max-width: 650px; margin: 0 auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .nav-scroll::-webkit-scrollbar { display: none; }
-        .nav-btn { flex: 0 0 auto; background: var(--primary-light); color: var(--primary); border: 1px solid transparent; padding: 6px 12px; border-radius: 16px; font-weight: 600; font-size: 0.85em; text-decoration: none; transition: all 0.2s; white-space: nowrap; cursor: pointer;}
+        .nav-btn { flex: 0 0 auto; background: var(--primary-light); color: var(--primary); border: 1px solid transparent; padding: 6px 12px; border-radius: 16px; font-weight: 600; font-size: 0.85em; text-decoration: none; transition: all 0.2s; white-space: nowrap; cursor: pointer; }
         [data-theme="dark"] .nav-btn { border-color: var(--border); }
-        .nav-btn:hover, .nav-btn:active { background: var(--primary); color: white; }
+        .nav-btn.active-nav { background: var(--primary); color: white; }
 
         /* --- 主内容区 (横向滑动容器) --- */
         #content-area {
-            flex: 1; /* 占满剩余空间 */
-            display: flex; /* 横向排列 */
-            overflow-x: auto; /* 允许横向滚动 */
-            overflow-y: hidden; /* 禁止纵向 */
-            scroll-snap-type: x mandatory; /* 强制吸附 */
-            -webkit-overflow-scrolling: touch; /* iOS顺滑滚动 */
-            padding: 20px 0; /* 上下留白 */
-            gap: 20px;
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory; /* 强制吸附，产生阻尼感 */
+            -webkit-overflow-scrolling: touch;
+            padding: 20px 7.5vw; /* 左右留出 7.5vw 的安全边距，防止误触返回 */
+            gap: 15px;
             scroll-behavior: smooth;
-            align-items: flex-start; /* 顶部对齐 */
+            align-items: flex-start;
         }
         
-        /* 隐藏滚动条 */
         #content-area::-webkit-scrollbar { display: none; }
 
         /* --- 单元卡片 --- */
         .unit-card { 
-            flex: 0 0 90vw; /* 宽度占屏幕90% */
+            flex: 0 0 85vw; /* 宽度固定为视口的85% */
             max-width: 500px;
             background: var(--bg-card); 
             border-radius: 24px; 
             padding: 25px; 
-            box-shadow: 0 8px 25px var(--shadow); 
+            box-shadow: 0 8px 30px var(--shadow); 
             border: 1px solid var(--border); 
-            scroll-snap-align: center; /* 吸附到中心 */
-            margin-left: 5vw; /* 第一个卡片左边距 */
+            scroll-snap-align: center; /* 吸附中心 */
             box-sizing: border-box;
-            height: fit-content; /* 高度自适应 */
-            max-height: 85vh; /* 防止太长溢出 */
-            overflow-y: auto; /* 卡片内部内容过多可滚动 */
+            height: 95%; /* 撑满高度，留点余地 */
+            max-height: 80vh; 
+            overflow-y: auto; /* 内部内容可垂直滚动 */
+            overflow-x: hidden; /* 禁止内部横向滚动 */
             position: relative;
+            transition: transform 0.2s;
         }
-        .unit-card:last-child { margin-right: 5vw; /* 最后一个卡片右边距 */ }
+
+        /* 隐藏卡片内部滚动条但保留功能 */
+        .unit-card::-webkit-scrollbar { display: none; }
 
         .unit-header { font-size: 1.4em; font-weight: 800; color: var(--primary); margin-bottom: 20px; border-bottom: 2px solid var(--display-area); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         
         .sort-rank { font-size: 0.6em; color: var(--text-sub); font-weight: normal; opacity: 0.5; background: var(--display-area); padding: 2px 6px; border-radius: 4px; }
 
         /* --- 步骤区域 --- */
-        .step-container { margin-bottom: 25px; }
+        .step-container { margin-bottom: 25px; width: 100%; } /* 确保不溢出 */
         .step-label { font-size: 0.75em; color: var(--text-sub); font-weight: 700; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
-        .pattern-box { font-family: "Menlo", monospace; color: #d63031; background: #ffeaea; padding: 3px 6px; border-radius: 4px; font-size: 1.1em; margin-left: 5px; border: 1px solid #ffcccc; display: inline-block; margin-top: 4px; transition: opacity 0.3s; }
+        
+        /* 自动换行关键 */
+        .pattern-box { 
+            font-family: "Menlo", monospace; color: #d63031; background: #ffeaea; padding: 3px 6px; border-radius: 4px; font-size: 1em; margin-left: 5px; border: 1px solid #ffcccc; display: inline-block; margin-top: 4px; 
+            white-space: normal; word-wrap: break-word; /* 强制换行 */
+        }
         [data-theme="dark"] .pattern-box { background: #3e1a1a; border-color: #5c1e1e; color: #ff6b6b; }
 
         /* --- 主句显示区 --- */
-        .display-area { background-color: var(--display-area); padding: 18px; border-radius: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 15px; transition: background 0.3s; border: 1px solid var(--border); }
-        .text-content { flex-grow: 1; }
-        .english-sentence { font-size: 1.3em; font-weight: 600; line-height: 1.4; color: var(--text-main); margin-bottom: 5px; transition: all 0.3s ease; }
+        .display-area { 
+            background-color: var(--display-area); padding: 18px; border-radius: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 15px; transition: background 0.3s; border: 1px solid var(--border); 
+            width: 100%; box-sizing: border-box; /* 防止溢出 */
+        }
+        .text-content { flex-grow: 1; min-width: 0; /* Flexbox text wrap fix */ }
+        .english-sentence { 
+            font-size: 1.3em; font-weight: 600; line-height: 1.3; color: var(--text-main); margin-bottom: 5px; 
+            white-space: normal; word-wrap: break-word; /* 强制换行 */
+        }
         .highlight { color: var(--primary); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 4px; cursor: pointer; }
-        .translation { color: var(--text-sub); font-size: 0.95em; }
+        .translation { color: var(--text-sub); font-size: 0.95em; white-space: normal; }
         
         /* --- 按钮通用 --- */
-        .btn-audio { background: var(--bg-card); border: 1px solid var(--border); border-radius: 50%; width: 42px; height: 42px; min-width: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2em; transition: transform 0.1s; box-shadow: 0 2px 5px var(--shadow); color: var(--primary); }
+        .btn-audio { flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 50%; width: 42px; height: 42px; min-width: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2em; box-shadow: 0 2px 5px var(--shadow); color: var(--primary); }
         .btn-audio:active { transform: scale(0.92); }
         
         /* --- 词汇点击区 --- */
-        .chips-container { display: flex; flex-wrap: wrap; gap: 10px; }
-        .chip { background: var(--chip-bg); border: 1px solid var(--chip-border); padding: 10px 16px; border-radius: 20px; font-size: 0.9em; cursor: pointer; font-weight: 600; color: var(--text-main); transition: all 0.2s; user-select: none; }
+        .chips-container { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; }
+        .chip { 
+            background: var(--chip-bg); border: 1px solid var(--chip-border); padding: 10px 16px; border-radius: 20px; font-size: 0.9em; cursor: pointer; font-weight: 600; color: var(--text-main); transition: all 0.2s; user-select: none; 
+            max-width: 100%; white-space: normal; word-wrap: break-word; /* 防止单词太长撑开 */
+        }
         .chip:hover { transform: translateY(-1px); border-color: var(--primary); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(0,122,255,0.3); transform: scale(1.02); }
         
         .add-btn-wrapper { position: relative; display: inline-block; }
         .add-chip-btn { border: 1px dashed var(--text-sub); color: var(--text-sub); background: transparent; padding: 10px 14px; }
         
-        /* 气泡提示 (调整位置到下方) */
+        /* 气泡提示 */
         .bubble-tip { 
             position: absolute; top: 125%; left: 50%; transform: translateX(-50%); 
             background: var(--danger); color: white; padding: 8px 12px; border-radius: 12px; 
             font-size: 0.75em; font-weight: bold; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3); 
             animation: bounce 1.5s infinite; z-index: 10; pointer-events: none;
-            width: 140px; white-space: normal; text-align: center; line-height: 1.3;
-            opacity: 0.9;
+            width: 140px; white-space: normal; text-align: center; line-height: 1.3; opacity: 0.9;
         }
         .bubble-tip::after { content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: transparent transparent var(--danger) transparent; }
         @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(6px); } }
 
         /* --- 连招总结 (Combo) --- */
-        .combo-box { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 20px; border-radius: 16px; margin-top: 25px; position: relative; box-shadow: 0 8px 15px rgba(0,0,0,0.2); }
+        .combo-box { 
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 20px; border-radius: 16px; margin-top: 25px; position: relative; box-shadow: 0 8px 15px rgba(0,0,0,0.2); 
+            width: 100%; box-sizing: border-box;
+        }
         [data-theme="dark"] .combo-box { background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%); border: 1px solid #38383a; }
         .combo-title { font-size: 0.8em; font-weight: bold; opacity: 0.8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; color: #ecf0f1; }
-        .combo-text { font-size: 1.1em; font-weight: 600; line-height: 1.5; padding-right: 45px; margin-bottom: 12px; transition: all 0.3s; }
-        .structure-box { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; font-size: 0.85em; color: #bdc3c7; border: 1px dashed rgba(255,255,255,0.3); transition: all 0.3s; }
-        .struct-tag { display: inline-block; background: #e67e22; color: white; padding: 1px 5px; border-radius: 3px; font-size: 0.85em; margin-right: 4px; font-weight: bold; }
+        .combo-text { 
+            font-size: 1.1em; font-weight: 600; line-height: 1.5; padding-right: 45px; margin-bottom: 12px; transition: all 0.3s; 
+            white-space: normal; word-wrap: break-word;
+        }
+        .structure-box { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; font-size: 0.85em; color: #bdc3c7; border: 1px dashed rgba(255,255,255,0.3); transition: all 0.3s; white-space: normal; }
+        .struct-tag { display: inline-block; background: #e67e22; color: white; padding: 1px 5px; border-radius: 3px; font-size: 0.85em; margin-right: 4px; font-weight: bold; margin-bottom: 4px; }
         .struct-arrow { margin: 0 4px; color: #ecf0f1; }
         .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2em; box-shadow: 0 4px 8px rgba(39, 174, 96, 0.4); }
         
-        /* --- 悬浮控制组 (移除了上下滚动按钮) --- */
-        .float-controls { position: fixed; bottom: 30px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; align-items: flex-end; }
+        /* --- 悬浮控制组 --- */
+        .float-controls { position: fixed; bottom: 80px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; align-items: flex-end; }
         
         .fab-quiz { background: var(--danger); color: white; padding: 12px 20px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; border: none; }
         .fab-quiz:active { transform: scale(0.95); }
@@ -213,10 +236,13 @@
         .btn-reveal { background: var(--primary); color: white; }
         .btn-close { background: var(--border); color: var(--text-main); }
 
-        footer { text-align: center; color: var(--text-sub); font-size: 0.8em; margin-bottom: 20px; }
-        
-        /* 隐藏无用的Footer，因为现在是横向滑动 */
-        .footer-in-slide { margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--border); width: 90vw; margin-left: 5vw; scroll-snap-align: center; text-align: center; }
+        /* 底部版权 - 放在页面最下方，不随卡片滑动 */
+        .fixed-footer { 
+            text-align: center; color: var(--text-sub); font-size: 0.8em; 
+            padding: 15px; border-top: 1px solid var(--border); 
+            background: var(--bg-body);
+            flex: 0 0 auto;
+        }
     </style>
 </head>
 <body>
@@ -394,17 +420,18 @@
             </div>
         </div>
 
-        <div class="footer-in-slide">
-            <p>&copy; <span id="year"></span> Henry's Survival English Guide. All rights reserved.</p>
-            <p style="font-size: 0.9em; opacity: 0.7;">Current Time: <span id="datetime"></span></p>
         </div>
+
+    <div class="fixed-footer">
+        <p>&copy; <span id="year"></span> Henry's Survival English Guide. All rights reserved.</p>
+        <p style="font-size: 0.9em; opacity: 0.7;">Current Time: <span id="datetime"></span></p>
     </div>
 
     <script>
         // === 核心逻辑 ===
         let usageData = {};
         let currentRandomUnit = null;
-        let pressTimer; // 长按计时器
+        let pressTimer;
 
         // 1. 初始化
         window.onload = function() {
@@ -425,7 +452,26 @@
                     restoreSelection(i, 2);
                 }
             }
+            
+            // IntersectionObserver for Haptics (Vibration)
+            setupHaptics();
         };
+        
+        // Haptic Feedback Logic
+        function setupHaptics() {
+            if (!("vibrate" in navigator)) return;
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.7) {
+                        // 只有当卡片大部分进入视口时震动
+                        navigator.vibrate(5); // 极轻微震动
+                    }
+                });
+            }, { threshold: 0.7, root: document.getElementById('content-area') });
+            
+            document.querySelectorAll('.unit-card').forEach(card => observer.observe(card));
+        }
 
         // 2. 紧急模式
         function toggleEmergency() {
@@ -441,7 +487,6 @@
         function autoSortUnits() {
             const container = document.getElementById('content-area');
             const cards = Array.from(container.getElementsByClassName('unit-card'));
-            const footer = container.querySelector('.footer-in-slide');
 
             cards.sort((a, b) => {
                 const idA = parseInt(a.id.replace('u', ''));
@@ -452,7 +497,7 @@
                 return usageA - usageB; 
             });
 
-            cards.forEach(card => container.insertBefore(card, footer));
+            cards.forEach(card => container.appendChild(card));
         }
 
         function incrementUsage(unitNum) {
@@ -560,7 +605,6 @@
             for(let card of cards) {
                 const text = card.innerText.toLowerCase();
                 const keys = card.getAttribute('data-keywords') || "";
-                // 注意：横向布局下隐藏卡片不会破坏布局，但flex gap会保留，看起来还行
                 card.style.display = (text.includes(filter) || keys.includes(filter)) ? "" : "none";
             }
         }
@@ -601,7 +645,7 @@
                 pressTimer = setTimeout(() => {
                     if(confirm(`管理 "${data.eng}":\n点击[确定]修改，点击[取消]继续。`)) {
                         const newTxt = prompt("修改英文 (留空则删除):", data.eng);
-                        if(newTxt === null) return; // 取消
+                        if(newTxt === null) return; 
                         updateCustomChipInStorage(data, newTxt);
                         if(newTxt === "") {
                             btn.remove();
@@ -631,10 +675,8 @@
             const key = `custom_chips_u${oldData.unitNum}_s${oldData.stepNum}`;
             let list = JSON.parse(localStorage.getItem(key) || "[]");
             if(newEng === "") {
-                // 删除
                 list = list.filter(item => item.eng !== oldData.eng);
             } else {
-                // 修改
                 const idx = list.findIndex(item => item.eng === oldData.eng);
                 if(idx > -1) list[idx].eng = newEng;
             }
@@ -652,7 +694,7 @@
             if(displayEl) displayEl.innerText = engWord;
             
             let fullCn = "";
-            // 通用逻辑 
+            // 通用逻辑 (请务必保留之前版本的完整翻译逻辑)
             if (unitNum === 1 && stepNum === 1) fullCn = "嗨，我是" + cnWord + "。";
             else if (unitNum === 1 && stepNum === 2) fullCn = "我住在" + cnWord + "。";
             else if (unitNum === 2 && stepNum === 1) fullCn = "打扰一下，我在找" + cnWord + "。";
@@ -665,6 +707,16 @@
             else if (unitNum === 5 && stepNum === 2) fullCn = "我还想要" + cnWord + "。";
             else if (unitNum === 6 && stepNum === 1) fullCn = "我能要一个" + cnWord + "吗？";
             else if (unitNum === 6 && stepNum === 2) fullCn = "要做成" + cnWord + "的。";
+            else if (unitNum === 7 && stepNum === 1) fullCn = "这" + cnWord + "太棒了！";
+            else if (unitNum === 7 && stepNum === 2) fullCn = "我来帮忙" + cnWord + "。";
+            else if (unitNum === 8 && stepNum === 1) fullCn = "我们好久没" + cnWord + "了。";
+            else if (unitNum === 8 && stepNum === 2) fullCn = "你最近" + cnWord + "？";
+            else if (unitNum === 9 && stepNum === 1) fullCn = "我要去" + cnWord + "。";
+            else if (unitNum === 9 && stepNum === 2) fullCn = "请在" + cnWord + "放我下来。";
+            else if (unitNum === 10 && stepNum === 1) fullCn = cnWord + "了！";
+            else if (unitNum === 10 && stepNum === 2) fullCn = "打" + cnWord + "！";
+            else if (unitNum === 11 && stepNum === 1) fullCn = "抱歉，我没" + cnWord + "。";
+            else if (unitNum === 11 && stepNum === 2) fullCn = "你能" + cnWord + "吗？";
             else if (unitNum === 12 && stepNum === 1) fullCn = "我想要" + cnWord + "。";
             else if (unitNum === 12 && stepNum === 2) fullCn = "它" + cnWord + "。";
             else if (unitNum === 13 && stepNum === 1) fullCn = "我想预约" + cnWord + "。";
@@ -675,7 +727,7 @@
             if(transEl) transEl.innerText = fullCn;
 
             let container = element.parentElement;
-            if (container.classList.contains('add-btn-wrapper')) container = container.parentElement;
+            if (container.classList.contains('add-btn-wrapper')) container = container.parentElement.parentElement; 
             
             let chips = container.querySelectorAll('.chip');
             for(let chip of chips) chip.classList.remove('active');

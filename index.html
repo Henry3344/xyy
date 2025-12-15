@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Survival English Guide v25.5</title>
     <style>
-        /* --- V31.1 样式表：红色气泡修复 & 动画优化 --- */
+        /* --- V31.2 样式表：气泡占位修复版 --- */
         :root {
             --bg-body: #f2f2f7; --bg-card: #ffffff; --text-main: #1c1c1e; --text-sub: #8e8e93;
             --primary: #007aff; --primary-light: #e5f1ff; --border: #c6c6c8;
@@ -55,7 +55,6 @@
         .unit-header { font-size: 1.3em; font-weight: 800; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid var(--display-area); padding-bottom: 10px; display: flex; justify-content: space-between; }
         .sort-rank { font-size: 0.6em; color: var(--text-sub); opacity: 0.5; }
 
-        /* 步骤区域 */
         .step-container { margin-bottom: 20px; width: 100%; }
         .step-label { font-size: 0.75em; color: var(--text-sub); font-weight: 700; margin-bottom: 6px; display: block; text-transform: uppercase; }
         .pattern-box { font-family: "Menlo", monospace; color: #d63031; background: #ffeaea; padding: 2px 6px; border-radius: 4px; font-size: 1em; margin-left: 5px; border: 1px solid #ffcccc; display: inline-block; }
@@ -77,19 +76,35 @@
         .chip { background: var(--chip-bg); border: 1px solid var(--chip-border); padding: 6px 12px; border-radius: 16px; font-size: 0.9em; cursor: pointer; font-weight: 600; color: var(--text-main); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
         
-        /* 修复点：给 wrapper 加相对定位，锁住气泡 */
         .add-btn-wrapper { display: inline-block; position: relative; } 
         .add-chip-btn { border: 1px dashed var(--text-sub); background: transparent; padding: 6px 10px; color: var(--text-sub); }
         
+        /* --- 核心修复：气泡改为“占位式” (Flow Layout) --- */
         .bubble-tip { 
-            position: absolute; top: -10px; left: 50%; transform: translateX(-50%) translateY(-100%); 
-            background: var(--danger); color: white; padding: 6px 10px; border-radius: 8px; 
-            font-size: 0.75em; font-weight: bold; width: 140px; text-align: center; pointer-events: none; 
-            animation: bounce 1.5s infinite; z-index: 99; white-space: nowrap;
+            position: relative; /* 关键：回到文档流 */
+            display: block;
+            margin: 0 auto 10px auto; /* 上下留白，把下面内容挤开 */
+            background: var(--danger); color: white; padding: 8px 12px; border-radius: 8px; 
+            font-size: 0.85em; font-weight: bold; 
+            width: fit-content; max-width: 90%; /* 限制宽度 */
+            white-space: normal; word-wrap: break-word; /* 允许换行 */
+            text-align: center; 
+            animation: popIn 0.3s ease-out;
+            box-shadow: 0 4px 10px rgba(255, 59, 48, 0.3);
+            /* 下面三角形 */
         }
-        .bubble-tip.fade-out { opacity: 0; transition: opacity 1s ease; }
-        .bubble-tip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: var(--danger) transparent transparent transparent; }
-        @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(-100%); } 50% { transform: translateX(-50%) translateY(-108%); } }
+        .bubble-tip::after { 
+            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; 
+            border-width: 6px; border-style: solid; border-color: var(--danger) transparent transparent transparent; 
+        }
+        
+        /* 消失动画：折叠高度 */
+        .bubble-tip.fade-out { 
+            opacity: 0; 
+            margin: 0; padding: 0; height: 0; overflow: hidden; /* 核心：空间合并 */
+            transition: all 0.5s ease;
+        }
+        @keyframes popIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         .scroll-hint { position: absolute; bottom: 0; left: 0; width: 100%; text-align: center; color: var(--primary); font-size: 0.85em; padding: 12px 0; background: var(--hint-bg); backdrop-filter: blur(8px); border-radius: 0 0 20px 20px; opacity: 0; pointer-events: none; z-index: 50; transition: opacity 0.3s; font-weight: bold; }
         .scroll-hint.visible { opacity: 1; animation: float-hint 2s ease-in-out infinite; }
@@ -100,7 +115,6 @@
         .combo-title { font-size: 0.8em; font-weight: bold; opacity: 0.8; margin-bottom: 8px; display: flex; justify-content: space-between; }
         .combo-text { padding-right: 40px; font-weight: 600; margin-bottom: 10px; line-height: 1.4; }
         .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; }
-        .combo-struct { font-size: 0.75em; color: #dfe6e9; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; border: 1px solid rgba(255,255,255,0.2); }
 
         .float-controls { position: fixed; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 2000; align-items: flex-end; }
         .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3em; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
@@ -790,7 +804,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V31.1: 完美节奏 + 回调控制版) ===
+        // === 核心逻辑 (V31.2: 气泡占位修复 + 移除句式版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -809,7 +823,7 @@
             injectToolboxDOM(); 
             initSpeechRecognition();
             checkMonthlyReport(); 
-            autoSortUnits();
+            autoSortUnits(); // 排序+无缝循环
             
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
@@ -818,151 +832,86 @@
                 }
             }
             
-            setTimeout(() => { initBubbleTip(); }, 300);
+            // 延时稍长一点，确保 Scroll 完成后再找卡片贴气泡
+            setTimeout(() => { initBubbleTip(); }, 600);
             initScrollHints();
             rebuildActionButtons(); 
-            injectComboStructs(); 
+            // injectComboStructs(); // 已删除
             addFloatingControls(); 
             startSearchAnimation();
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- AI 陪练逻辑优化 ---
-
-        // 关键修改：addBotMsg 支持回调，确保说完再做动作
-        function addBotMsg(text, chips=[], autoMic=false, callback=null) {
-            const body = document.getElementById('chatBody');
-            const d = document.createElement('div'); 
-            d.className='msg bot'; 
-            d.innerText=text; 
-            body.appendChild(d);
+        // --- 修复：气泡逻辑 (找准卡片 + 占位) ---
+        function initBubbleTip() {
+            // 1. 找到屏幕中心的卡片
+            const center = window.innerWidth / 2;
+            let bestCard = null;
+            let minDiff = Infinity;
             
-            if(chips.length > 0){
-                const g = document.createElement('div'); g.className='msg-btn-group';
-                chips.forEach(c=>{
-                    const b=document.createElement('div');b.className='msg-chip';b.innerText=c.text;b.onclick=()=>c.action();g.appendChild(b);
-                });
-                body.appendChild(g);
-            }
-            
-            // 说话 -> 说完 -> (开麦 或 执行回调)
-            speakDirect(text, () => {
-                if(autoMic) startChatListening();
-                if(callback) callback();
-            });
-            
-            body.scrollTop = body.scrollHeight;
-        }
-
-        function processAnswer(spokenText) {
-            aiState.waitingForSpeech = false;
-            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
-            
-            addUserMsg(spokenText);
-            
-            const target = aiState.currentTargetEng.toLowerCase().replace(/[^a-z ]/g, "");
-            const spoken = spokenText.toLowerCase().replace(/[^a-z ]/g, "");
-            const targetWords = target.split(" ");
-            let matchCount = 0;
-            targetWords.forEach(w => { if(spoken.includes(w)) matchCount++; });
-            const accuracy = matchCount / targetWords.length;
-            
-            if(accuracy >= 0.5) {
-                aiState.score++;
-                triggerHaptic();
-                // 成功：先说完夸奖，再等2秒，再下一题
-                addBotMsg("✅ 回答正确！太棒了！", [], false, () => {
-                    setTimeout(() => { 
-                        aiState.currentStep++; 
-                        askQuestion(); 
-                    }, 2000); 
-                });
-            } else {
-                triggerHaptic();
-                if(navigator.vibrate) navigator.vibrate(100);
-                // 失败：先说完纠正，再等3秒，再下一题
-                addBotMsg(`❌ 差点意思，正确读法是：\n"${aiState.currentTargetEng}"`, [], false, () => {
-                    speakDirect(aiState.currentTargetEng, () => { // 读一遍正确答案
-                        setTimeout(() => {
-                            aiState.currentStep++; 
-                            askQuestion(); 
-                        }, 3000);
-                    });
-                });
-            }
-            aiState.total++;
-        }
-
-        function endChat(completed) {
-            aiState.active = false;
-            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
-            if(recognition) try { recognition.abort(); } catch(e){}
-            document.getElementById('chatMicBtn').classList.remove('active');
-            
-            let msg = "练习结束，下次继续！";
-            if(completed && aiState.total > 0) {
-                const pct = Math.round((aiState.score / aiState.total) * 100);
-                msg = `练习完成！🎉\n正确率 ${pct}%。继续加油！`;
-            }
-            
-            // 结束语说完 -> 等 6秒 -> 关闭
-            addBotMsg(msg, [], false, () => {
-                setTimeout(() => {
-                    const overlay = document.getElementById('chatOverlay');
-                    if(overlay) overlay.style.display = 'none';
-                }, 6000); 
-            });
-        }
-
-        function askQuestion() {
-            if(!aiState.active) return;
-            const u = aiState.currentUnit; const s = aiState.currentStep;
-            
-            // 修复：必须实时获取 DOM (防止循环模式下的 ID 冲突或 clone 问题)
-            // 在循环模式下，可能有多个 ID 相同的元素 (虽然 clone 移除了 ID，但为了保险我们用 querySelector)
-            // 最稳妥是用 getElementById，因为 clone 移除了 id
-            const wordEl = document.getElementById(`u${u}-s${s}-word`);
-            const transEl = document.getElementById(`u${u}-s${s}-trans`);
-            
-            if(!wordEl || s > 2) { endChat(true); return; }
-
-            const targetEng = wordEl.parentElement.innerText; 
-            aiState.currentTargetEng = targetEng;
-
-            // 优先用缓存拼装整句，没有缓存读屏幕
-            let targetCn = transEl.innerText;
-            const savedData = JSON.parse(localStorage.getItem(`u${u}-s${s}`));
-            if(savedData) targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix);
-            
-            aiState.currentTargetCn = targetCn;
-            
-            addBotMsg(`Please translate:\n"${targetCn}"`, [], true); 
-            
-            aiState.waitingForSpeech = true;
-            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
-            aiState.silenceTimer = setTimeout(() => {
-                if(aiState.waitingForSpeech && aiState.active) {
-                    speakDirect("Are you there?", () => { startChatListening(); });
+            // 只找 Real Cards，不找 clone
+            document.querySelectorAll('.unit-card:not(.clone)').forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const cardCenter = rect.left + rect.width / 2;
+                const diff = Math.abs(center - cardCenter);
+                if(diff < minDiff) {
+                    minDiff = diff;
+                    bestCard = card;
                 }
-            }, 20000); 
+            });
+
+            if (!bestCard) return;
+
+            // 2. 找到 Step 1 的容器
+            const container = bestCard.querySelector('.step-container .chips-container');
+            
+            if (container) {
+                if(container.querySelector('.bubble-tip')) return;
+
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble-tip';
+                bubble.innerText = '没找到？点我添加，还能发音！';
+                
+                // 3. 关键：插在最前面 (prepend)，配合 CSS relative，它会占据一行空间
+                container.prepend(bubble);
+
+                // 4. 15秒后自动折叠消失
+                setTimeout(() => {
+                    dismissBubble(bubble);
+                }, 15000);
+            }
+        }
+
+        function dismissBubble(element) {
+            if(!element) return;
+            element.classList.add('fade-out');
+            // 动画结束后移除 DOM
+            setTimeout(() => {
+                element.remove();
+            }, 600); // 略大于 CSS transition 时间
         }
 
         // --- 其他逻辑保持不变 ---
         
-        function injectComboStructs() {
-            const cards = document.querySelectorAll('.unit-card');
-            cards.forEach(card => {
-                const comboBox = card.querySelector('.combo-box');
-                if (!comboBox || comboBox.querySelector('.combo-struct')) return;
-                const p1 = card.querySelector('.step-container:nth-of-type(1) .pattern-box')?.innerText || "Step 1";
-                const p2 = card.querySelector('.step-container:nth-of-type(2) .pattern-box')?.innerText || "Step 2";
-                const div = document.createElement('div');
-                div.className = 'combo-struct';
-                div.innerText = `💡 这是 [${p1}] + [${p2}] 的句式`;
-                const title = comboBox.querySelector('.combo-title');
-                if (title) title.parentNode.insertBefore(div, title.nextSibling);
+        function autoSortUnits() {
+            const container = document.getElementById('content-area');
+            const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); 
+            const hour = new Date().getHours();
+            let timeWeights = {};
+            if (hour >= 5 && hour < 10) { timeWeights = { 1: 50, 9: 40, 4: 30 }; } 
+            else if (hour >= 11 && hour < 14) { timeWeights = { 6: 50, 7: 40, 5: 30 }; } 
+            else if (hour >= 17 && hour < 21) { timeWeights = { 8: 50, 7: 40, 6: 30 }; } 
+            else if (hour >= 21 || hour < 4) { timeWeights = { 9: 60, 10: 50, 3: 40 }; }
+            cards.sort((a, b) => {
+                const idA = parseInt(a.id.replace('u', ''));
+                const idB = parseInt(b.id.replace('u', ''));
+                let scoreA = usageData[idA] || 0; let scoreB = usageData[idB] || 0;
+                scoreA += (timeWeights[idA] || 0); scoreB += (timeWeights[idB] || 0);
+                return scoreB - scoreA; 
             });
+            container.innerHTML = ""; cards.forEach(card => container.appendChild(card));
+            initInfiniteLoop(container, cards);
         }
 
         function initInfiniteLoop(container, cards) {
@@ -983,26 +932,6 @@
                 if (sw - (sl + cw) < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = firstCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); }
                 if (sl < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = lastCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); }
             };
-        }
-
-        function autoSortUnits() {
-            const container = document.getElementById('content-area');
-            const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); 
-            const hour = new Date().getHours();
-            let timeWeights = {};
-            if (hour >= 5 && hour < 10) { timeWeights = { 1: 50, 9: 40, 4: 30 }; } 
-            else if (hour >= 11 && hour < 14) { timeWeights = { 6: 50, 7: 40, 5: 30 }; } 
-            else if (hour >= 17 && hour < 21) { timeWeights = { 8: 50, 7: 40, 6: 30 }; } 
-            else if (hour >= 21 || hour < 4) { timeWeights = { 9: 60, 10: 50, 3: 40 }; }
-            cards.sort((a, b) => {
-                const idA = parseInt(a.id.replace('u', ''));
-                const idB = parseInt(b.id.replace('u', ''));
-                let scoreA = usageData[idA] || 0; let scoreB = usageData[idB] || 0;
-                scoreA += (timeWeights[idA] || 0); scoreB += (timeWeights[idB] || 0);
-                return scoreB - scoreA; 
-            });
-            container.innerHTML = ""; cards.forEach(card => container.appendChild(card));
-            initInfiniteLoop(container, cards);
         }
 
         function rebuildActionButtons() {
@@ -1046,38 +975,55 @@
             if (cleanSpoken.includes(simpleTarget) || simpleTarget.includes(cleanSpoken)) { showToast(`🎉 太棒了！完美发音！\n"${spoken}"`); triggerHaptic(); } 
             else { showToast(`🤔 再试一次，听起来像：\n"${spoken}"`); }
         }
+        
+        // AI 陪练相关
+        function addBotMsg(text, chips=[], autoMic=false, callback=null) {
+            const body = document.getElementById('chatBody');
+            const d = document.createElement('div'); d.className='msg bot'; d.innerText=text; body.appendChild(d);
+            if(chips.length>0){ const g = document.createElement('div'); g.className='msg-btn-group'; chips.forEach(c=>{const b=document.createElement('div');b.className='msg-chip';b.innerText=c.text;b.onclick=()=>c.action();g.appendChild(b);}); body.appendChild(g); }
+            speakDirect(text, ()=>{ if(autoMic) startChatListening(); if(callback) callback(); });
+            body.scrollTop = body.scrollHeight;
+        }
+        function processAnswer(spokenText) {
+            aiState.waitingForSpeech = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
+            addUserMsg(spokenText);
+            const target = aiState.currentTargetEng.toLowerCase().replace(/[^a-z ]/g, ""); const spoken = spokenText.toLowerCase().replace(/[^a-z ]/g, ""); const targetWords = target.split(" ");
+            let matchCount = 0; targetWords.forEach(w => { if(spoken.includes(w)) matchCount++; });
+            const accuracy = matchCount / targetWords.length;
+            if(accuracy >= 0.5) { aiState.score++; triggerHaptic(); addBotMsg("✅ 回答正确！太棒了！", [], false, () => { setTimeout(() => { aiState.currentStep++; askQuestion(); }, 2000); }); } 
+            else { triggerHaptic(); if(navigator.vibrate) navigator.vibrate(100); addBotMsg(`❌ 差点意思，正确读法是：\n"${aiState.currentTargetEng}"`, [], false, () => { speakDirect(aiState.currentTargetEng, () => { setTimeout(() => { aiState.currentStep++; askQuestion(); }, 3000); }); }); }
+            aiState.total++;
+        }
+        function endChat(completed) {
+            aiState.active = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer); if(recognition) try { recognition.abort(); } catch(e){} document.getElementById('chatMicBtn').classList.remove('active');
+            let msg = "练习结束，下次继续！"; if(completed && aiState.total > 0) { const pct = Math.round((aiState.score / aiState.total) * 100); msg = `练习完成！🎉\n正确率 ${pct}%。继续加油！`; }
+            addBotMsg(msg, [], false, () => { setTimeout(() => { const overlay = document.getElementById('chatOverlay'); if(overlay) overlay.style.display = 'none'; }, 6000); });
+        }
+        function askQuestion() {
+            if(!aiState.active) return;
+            const u = aiState.currentUnit; const s = aiState.currentStep;
+            const wordEl = document.getElementById(`u${u}-s${s}-word`); const transEl = document.getElementById(`u${u}-s${s}-trans`);
+            if(!wordEl || s > 2) { endChat(true); return; }
+            const targetEng = wordEl.parentElement.innerText; aiState.currentTargetEng = targetEng;
+            let targetCn = transEl.innerText;
+            const savedData = JSON.parse(localStorage.getItem(`u${u}-s${s}`));
+            if(savedData) targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix);
+            aiState.currentTargetCn = targetCn;
+            addBotMsg(`Please translate:\n"${targetCn}"`, [], true); 
+            aiState.waitingForSpeech = true;
+            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
+            aiState.silenceTimer = setTimeout(() => { if(aiState.waitingForSpeech && aiState.active) { speakDirect("Are you there?", () => { startChatListening(); }); } }, 20000); 
+        }
+        function manualMicClick() { if(aiState.waitingForSpeech) startChatListening(); else showToast("Wait for my question!"); }
+        function initSpeechRecognition() { if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) { const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; recognition = new SpeechRecognition(); recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1; recognition.onresult = (e) => { console.log(e.results[0][0].transcript); }; } }
+        function speakDirect(text, callback) { window.speechSynthesis.cancel(); const hasEnglishContext = /[a-zA-Z]{2,}/.test(text); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = hasEnglishContext ? 'en-US' : 'zh-CN'; utterance.rate = 0.9; if(callback) utterance.onend = callback; window.speechSynthesis.speak(utterance); }
         function injectChatDOM() { const div = document.createElement('div'); div.id = 'chatOverlay'; div.className = 'chat-overlay'; div.innerHTML = `<div class="chat-header"><span>🤖 AI Oral Tutor</span><span onclick="toggleChat()" style="cursor:pointer;font-size:1.2em;">✕</span></div><div class="chat-body" id="chatBody"></div><div class="chat-footer"><button id="chatMicBtn" class="mic-wave" onclick="manualMicClick()">🎙️</button><button class="nav-btn" onclick="endChat(false)" style="background:#ff3b30;color:white;border:none;">End</button></div>`; document.body.appendChild(div); }
         function addUserMsg(text) { const b=document.getElementById('chatBody'); const d=document.createElement('div'); d.className='msg user'; d.innerText=text; b.appendChild(d); b.scrollTop=b.scrollHeight; }
         function startChatListening() { if (!recognition) return; if (!aiState.active) return; const btn = document.getElementById('chatMicBtn'); btn.classList.add('active'); try { recognition.start(); } catch(e) {} recognition.onresult = (event) => { const last = event.results.length - 1; const text = event.results[last][0].transcript; processAnswer(text); }; recognition.onend = () => { btn.classList.remove('active'); }; }
-        function manualMicClick() { if(aiState.waitingForSpeech) startChatListening(); else showToast("Wait for my question!"); }
-        
-        function getFullChineseSentence(u, s, cnWord, suffix) {
-            let cw = cnWord; let sfx = suffix || "。"; let full = "";
-            if(sfx === '吗' || sfx === '?') sfx = "吗？";
-            switch(u) {
-                case 1: full = (s===1) ? `嗨，我是${cw}。` : `我住在${cw}。`; break;
-                case 2: full = (s===1) ? `打扰一下，我在找${cw}。` : `能告诉我${cw}${sfx}`; break;
-                case 3: full = (s===1) ? `我能借用一下您的${cw}${sfx}` : `真的很有${cw}。`; break; 
-                case 4: full = (s===1) ? `我想${cw}。` : `这是我的${cw}。`; break;
-                case 5: full = (s===1) ? `我想用${cw}支付。` : `你们提供${cw}${sfx}`; break;
-                case 6: full = (s===1) ? `我想要${cw}。` : `请不要${cw}。`; break;
-                case 7: full = (s===1) ? `咱们${cw}吧。` : `今天${cw}。`; break;
-                case 8: full = (s===1) ? `好久不见！${cw}怎么样？` : `我们应该${cw}。`; break;
-                case 9: full = (s===1) ? `我要去${cw}。` : `就在${cw}下车。`; break;
-                case 10: full = (s===1) ? `我需要${cw}。` : `我感到${cw}。`; break;
-                case 11: full = (s===1) ? `能${cw}吗？` : `我不${cw}。`; break;
-                case 12: full = (s===1) ? `我想${cw}。` : `它${cw}。`; break;
-                case 13: full = (s===1) ? `我想${cw}。` : `在${cw}。`; break;
-                default: full = cw + sfx;
-            }
-            if(u===3 && s===2) { if(cw.includes('急')) full = "真的很紧急。"; if(cw.includes('快')) full = "会很快就好。"; }
-            return full;
-        }
+        function getFullChineseSentence(u, s, cnWord, suffix) { let cw = cnWord; let sfx = suffix || "。"; let full = ""; if(sfx === '吗' || sfx === '?') sfx = "吗？"; switch(u) { case 1: full = (s===1) ? `嗨，我是${cw}。` : `我住在${cw}。`; break; case 2: full = (s===1) ? `打扰一下，我在找${cw}。` : `能告诉我${cw}${sfx}`; break; case 3: full = (s===1) ? `我能借用一下您的${cw}${sfx}` : `真的很有${cw}。`; break; case 4: full = (s===1) ? `我想${cw}。` : `这是我的${cw}。`; break; case 5: full = (s===1) ? `我想用${cw}支付。` : `你们提供${cw}${sfx}`; break; case 6: full = (s===1) ? `我想要${cw}。` : `请不要${cw}。`; break; case 7: full = (s===1) ? `咱们${cw}吧。` : `今天${cw}。`; break; case 8: full = (s===1) ? `好久不见！${cw}怎么样？` : `我们应该${cw}。`; break; case 9: full = (s===1) ? `我要去${cw}。` : `就在${cw}下车。`; break; case 10: full = (s===1) ? `我需要${cw}。` : `我感到${cw}。`; break; case 11: full = (s===1) ? `能${cw}吗？` : `我不${cw}。`; break; case 12: full = (s===1) ? `我想${cw}。` : `它${cw}。`; break; case 13: full = (s===1) ? `我想${cw}。` : `在${cw}。`; break; default: full = cw + sfx; } if(u===3 && s===2) { if(cw.includes('急')) full = "真的很紧急。"; if(cw.includes('快')) full = "会很快就好。"; } return full; }
         function startAiSession() { aiState.active = true; aiState.score = 0; aiState.total = 0; document.getElementById('chatBody').innerHTML = ''; addBotMsg("Hi there! I'm your AI tutor. Want to practice English?", [{ text: "Yes, let's go!", action: askForScenario }, { text: "Not now", action: () => { toggleChat(); aiState.active = false; } }]); }
         function askForScenario() { addUserMsg("Yes, let's go!"); let ops = []; for(let i=1; i<=13; i++) { const c = document.getElementById(`u${i}`); if(c) { const name = c.getAttribute('data-name'); ops.push({ text: name, action: () => startUnitPractice(i) }); } } addBotMsg("Great! Which scenario do you want to practice?", ops); }
         function startUnitPractice(uid) { addUserMsg(`Unit ${uid}`); aiState.currentUnit = uid; aiState.currentStep = 1; addBotMsg("Awesome choice! Let's start!"); setTimeout(askQuestion, 1500); }
-        function initSpeechRecognition() { if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) { const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; recognition = new SpeechRecognition(); recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1; recognition.onresult = (e) => { console.log(e.results[0][0].transcript); }; } }
-        function speakDirect(text, callback) { window.speechSynthesis.cancel(); const hasEnglishContext = /[a-zA-Z]{2,}/.test(text); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = hasEnglishContext ? 'en-US' : 'zh-CN'; utterance.rate = 0.9; if(callback) utterance.onend = callback; window.speechSynthesis.speak(utterance); }
         function startSearchAnimation() { const input = document.getElementById('searchBox'); let allKeywords = []; document.querySelectorAll('.unit-card').forEach(c => { const keys = c.getAttribute('data-keywords').split(' '); allKeywords.push(...keys); }); allKeywords = allKeywords.filter(k => /^[\u4e00-\u9fa5]{2,}$/.test(k) && k.length < 5); allKeywords = [...new Set(allKeywords)]; let idx = 0; setInterval(() => { if(document.activeElement === input && input.value !== "") return; input.style.color = 'transparent'; setTimeout(() => { const word = allKeywords[idx % allKeywords.length]; input.setAttribute('placeholder', `🔍 搜"${word}"试试...`); input.style.color = 'var(--text-main)'; idx++; }, 500); }, 4000); }
         function addFloatingControls() { const c=document.querySelector('.float-controls'); const b=document.createElement('button'); b.className='fab-robot'; b.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>'; b.title="AI 陪练"; b.onclick=()=>{ triggerHaptic(); toggleChat(); if(document.getElementById('chatBody').innerHTML.trim()==="") startAiSession(); }; c.insertBefore(b, c.firstChild); const t=document.createElement('button'); t.className='fab-tools'; t.innerHTML='🧰'; t.onclick=openToolbox; c.insertBefore(t, c.firstChild); }
         function resetIdleTimer() { if(aiState.active) return; if(aiState.idleTimer) clearTimeout(aiState.idleTimer); aiState.idleTimer = setTimeout(() => { document.getElementById('robotBadge').style.display = 'block'; const robotBtn = document.querySelector('.fab-robot'); if(robotBtn) { showToast("🤖 嘿！想练练口语吗？点我！"); triggerHaptic(); } }, 60000); }
@@ -1118,6 +1064,7 @@
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
         function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
     </script>
+
 </body>
 </html>
       

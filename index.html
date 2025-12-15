@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#1c1c1e">
     
     <style>
-        /* === V37.2 防崩溃样式表 === */
+        /* === V37.3 完全复活版样式 === */
         :root {
             --bg-body: #f2f2f7; --bg-card: #ffffff; --text-main: #1c1c1e; --text-sub: #8e8e93;
             --primary: #007aff; --primary-light: #e5f1ff; --border: #c6c6c8;
@@ -70,6 +70,7 @@
         .highlight { color: var(--primary); text-decoration: underline; text-decoration-thickness: 3px; cursor: pointer; }
         .translation { color: var(--text-sub); font-size: 0.9em; white-space: normal; }
 
+        /* 核心修复：Step 旁边的小按钮 */
         .action-group { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
         .btn-mini { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1em; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); box-shadow: 0 1px 3px var(--shadow); transition: all 0.2s; }
         .btn-mini:active { transform: scale(0.92); }
@@ -82,6 +83,7 @@
         .add-btn-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; } 
         .add-chip-btn { border: 1px dashed var(--text-sub); background: transparent; padding: 6px 10px; color: var(--text-sub); }
         
+        /* 核心修复：红色气泡提示 */
         .bubble-tip { position: relative; display: block; margin-top: 10px; background: var(--danger); color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.8em; font-weight: bold; width: max-content; max-width: 200px; white-space: normal; line-height: 1.3; text-align: center; animation: popUp 0.3s ease-out; box-shadow: 0 4px 10px rgba(255, 59, 48, 0.4); z-index: 200; }
         .bubble-tip::after { content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: transparent transparent var(--danger) transparent; }
         .bubble-tip.fade-out { opacity: 0; margin-top: 0; padding: 0; height: 0; overflow: hidden; transition: all 0.5s ease; }
@@ -96,7 +98,6 @@
         .combo-title { font-size: 0.8em; font-weight: bold; opacity: 0.8; margin-bottom: 8px; display: flex; justify-content: space-between; }
         .combo-text { padding-right: 40px; font-weight: 600; margin-bottom: 10px; line-height: 1.4; }
         
-        /* 核心修复：喇叭和乌龟的样式 */
         .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; z-index: 20; }
         .btn-slow { position: absolute; top: 15px; right: 60px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; z-index: 20; }
 
@@ -220,6 +221,7 @@
                         <div class="english-sentence">Hi, I'm <span class="highlight" id="u1-s1-word">your new neighbor</span>.</div>
                         <div class="translation" id="u1-s1-trans">嗨，我是你的新邻居。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u1-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u1-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(1, 1, 'Hi, I\'m', '.')">+</button></div>
@@ -233,6 +235,7 @@
                         <div class="english-sentence">I live in <span class="highlight" id="u1-s2-word">Apt 302</span>.</div>
                         <div class="translation" id="u1-s2-trans">我住在302室。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u1-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u1-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(1, 2, 'I live in', '.')">+</button></div>
@@ -241,7 +244,7 @@
 
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">Hi, I'm your new neighbor. I live in Apt 302.</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -252,7 +255,6 @@
                 <span>询问位置</span>
                 <span class="sort-rank">#2</span>
             </div>
-            
             <div class="step-container">
                 <span class="step-label">Step 1: 寻找 <span class="pattern-box">I'm looking for ...</span></span>
                 <div class="display-area">
@@ -260,12 +262,12 @@
                         <div class="english-sentence">Excuse me, I'm looking for <span class="highlight" id="u2-s1-word">the subway</span>.</div>
                         <div class="translation" id="u2-s1-trans">打扰一下，我在找地铁站。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u2-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u2-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(2, 1, 'Excuse me, I\'m looking for', '.')">+</button></div>
                 </div>
             </div>
-
             <div class="step-container">
                 <span class="step-label">Step 2: 询问 <span class="pattern-box">Can you tell me ...?</span></span>
                 <div class="display-area">
@@ -273,15 +275,15 @@
                         <div class="english-sentence">Can you tell me <span class="highlight" id="u2-s2-word">where it is</span>?</div>
                         <div class="translation" id="u2-s2-trans">能告诉我它在哪吗？</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u2-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u2-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(2, 2, 'Can you tell me', '?')">+</button></div>
                 </div>
             </div>
-
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">Excuse me, I'm looking for the subway. Can you tell me where it is?</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -299,6 +301,7 @@
                         <div class="english-sentence">Could I borrow <span class="highlight" id="u3-s1-word">your phone charger</span>?</div>
                         <div class="translation" id="u3-s1-trans">我能借用一下您的手机充电器吗？</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u3-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u3-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(3, 1, 'Could I borrow', '?')">+</button></div>
@@ -311,6 +314,7 @@
                         <div class="english-sentence">It's really <span class="highlight" id="u3-s2-word">urgent</span>.</div>
                         <div class="translation" id="u3-s2-trans">真的很紧急。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u3-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u3-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(3, 2, 'It\'s really', '.')">+</button></div>
@@ -318,7 +322,7 @@
             </div>
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">Could I borrow your phone charger? It's really urgent.</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -336,6 +340,7 @@
                         <div class="english-sentence">I'd like to <span class="highlight" id="u4-s1-word">deposit cash</span>.</div>
                         <div class="translation" id="u4-s1-trans">我想存现金。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u4-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u4-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(4, 1, 'I\'d like to', '.')">+</button></div>
@@ -348,6 +353,7 @@
                         <div class="english-sentence">Here is my <span class="highlight" id="u4-s2-word">ID card</span>.</div>
                         <div class="translation" id="u4-s2-trans">这是我的身份证。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u4-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u4-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(4, 2, 'Here is my', '.')">+</button></div>
@@ -355,7 +361,7 @@
             </div>
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">I'd like to deposit cash. Here is my ID card.</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -373,6 +379,7 @@
                         <div class="english-sentence">I'll pay with <span class="highlight" id="u5-s1-word">credit card</span>.</div>
                         <div class="translation" id="u5-s1-trans">我想用信用卡支付。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u5-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u5-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(5, 1, 'I\'ll pay with', '.')">+</button></div>
@@ -385,6 +392,7 @@
                         <div class="english-sentence">Do you offer <span class="highlight" id="u5-s2-word">a receipt</span>?</div>
                         <div class="translation" id="u5-s2-trans">你们提供收据吗？</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u5-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u5-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(5, 2, 'Do you offer', '?')">+</button></div>
@@ -392,7 +400,7 @@
             </div>
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">I'll pay with credit card. Do you offer a receipt?</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -409,18 +417,20 @@
                         <div class="english-sentence">I'd like <span class="highlight" id="u6-s1-word">the menu</span>.</div>
                         <div class="translation" id="u6-s1-trans">我想要菜单。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u6-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u6-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(6, 1, 'I\'d like', '.')">+</button></div>
                 </div>
             </div>
             <div class="step-container">
-                <span class="step-label">Step 2: 忌口/要求 <span class="pattern-box">Please don't ...</span></span>
+                <span class="step-label">Step 2: 忌口 <span class="pattern-box">Please don't ...</span></span>
                 <div class="display-area">
                     <div class="text-content">
                         <div class="english-sentence">Please don't <span class="highlight" id="u6-s2-word">add sugar</span>.</div>
                         <div class="translation" id="u6-s2-trans">请不要加糖。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u6-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u6-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(6, 2, 'Please don\'t', '.')">+</button></div>
@@ -428,7 +438,7 @@
             </div>
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">I'd like the menu. Please don't add sugar.</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -446,6 +456,7 @@
                         <div class="english-sentence">Let's <span class="highlight" id="u7-s1-word">split the bill</span>.</div>
                         <div class="translation" id="u7-s1-trans">咱们平摊吧。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u7-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u7-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(7, 1, 'Let\'s', '.')">+</button></div>
@@ -458,6 +469,7 @@
                         <div class="english-sentence">It's <span class="highlight" id="u7-s2-word">on me</span>.</div>
                         <div class="translation" id="u7-s2-trans">今天我请客。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u7-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u7-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(7, 2, 'It\'s', '.')">+</button></div>
@@ -465,7 +477,7 @@
             </div>
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">Let's split the bill. It's on me today.</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -483,6 +495,7 @@
                         <div class="english-sentence">Long time <span class="highlight" id="u8-s1-word">no see</span>!</div>
                         <div class="translation" id="u8-s1-trans">好久不见！</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u8-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u8-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(8, 1, 'Long time', '!')">+</button></div>
@@ -495,6 +508,7 @@
                         <div class="english-sentence">We should <span class="highlight" id="u8-s2-word">catch up</span>.</div>
                         <div class="translation" id="u8-s2-trans">我们应该叙叙旧。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u8-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u8-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(8, 2, 'We should', '.')">+</button></div>
@@ -502,7 +516,7 @@
             </div>
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">Long time no see! We should catch up.</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -520,6 +534,7 @@
                         <div class="english-sentence">I'm going to <span class="highlight" id="u9-s1-word">JFK airport</span>.</div>
                         <div class="translation" id="u9-s1-trans">我要去JFK机场。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u9-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u9-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(9, 1, 'I\'m going to', '.')">+</button></div>
@@ -532,6 +547,7 @@
                         <div class="english-sentence">Drop me off <span class="highlight" id="u9-s2-word">right here</span>.</div>
                         <div class="translation" id="u9-s2-trans">就在这下车。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u9-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u9-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(9, 2, 'Drop me off', '.')">+</button></div>
@@ -539,7 +555,7 @@
             </div>
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">I'm going to JFK airport. Drop me off right here.</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -557,6 +573,7 @@
                         <div class="english-sentence">I need <span class="highlight" id="u10-s1-word">a doctor</span>.</div>
                         <div class="translation" id="u10-s1-trans">我需要医生。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u10-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u10-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(10, 1, 'I need', '.')">+</button></div>
@@ -569,6 +586,7 @@
                         <div class="english-sentence">I feel <span class="highlight" id="u10-s2-word">dizzy</span>.</div>
                         <div class="translation" id="u10-s2-trans">我感到头晕。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u10-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u10-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(10, 2, 'I feel', '.')">+</button></div>
@@ -576,7 +594,7 @@
             </div>
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">I need a doctor. I feel dizzy.</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -594,6 +612,7 @@
                         <div class="english-sentence">Could you <span class="highlight" id="u11-s1-word">speak slowly</span>?</div>
                         <div class="translation" id="u11-s1-trans">能说慢点吗？</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u11-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u11-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(11, 1, 'Could you', '?')">+</button></div>
@@ -606,6 +625,7 @@
                         <div class="english-sentence">I don't <span class="highlight" id="u11-s2-word">understand</span>.</div>
                         <div class="translation" id="u11-s2-trans">我听不懂。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u11-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u11-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(11, 2, 'I don\'t', '.')">+</button></div>
@@ -613,7 +633,7 @@
             </div>
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">Could you speak slowly? I don't understand.</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -631,6 +651,7 @@
                         <div class="english-sentence">I'd like to <span class="highlight" id="u12-s1-word">return this</span>.</div>
                         <div class="translation" id="u12-s1-trans">我想退这个。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u12-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u12-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(12, 1, 'I\'d like to', '.')">+</button></div>
@@ -643,6 +664,7 @@
                         <div class="english-sentence">Because it <span class="highlight" id="u12-s2-word">is broken</span>.</div>
                         <div class="translation" id="u12-s2-trans">因为它坏了。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u12-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u12-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(12, 2, 'Because it', '.')">+</button></div>
@@ -650,7 +672,7 @@
             </div>
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">I'd like to return this. Because it is broken.</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -668,6 +690,7 @@
                         <div class="english-sentence">I'd like to <span class="highlight" id="u13-s1-word">book a table</span>.</div>
                         <div class="translation" id="u13-s1-trans">我想订位。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u13-s1-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u13-s1-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(13, 1, 'I\'d like to', '.')">+</button></div>
@@ -680,6 +703,7 @@
                         <div class="english-sentence">For <span class="highlight" id="u13-s2-word">7:00 PM</span>.</div>
                         <div class="translation" id="u13-s2-trans">在晚上7点。</div>
                     </div>
+                    <button class="btn-mini" onclick="speakWholeSentence('u13-s2-word')">🔊</button>
                 </div>
                 <div class="chips-container" id="u13-s2-chips">
                     <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(13, 2, 'For', '.')">+</button></div>
@@ -687,7 +711,7 @@
             </div>
             <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子（示例）</div>
+                <div class="combo-title">🚀 完整句子</div>
                 <div class="combo-text">I'd like to book a table. For 7:00 PM.</div>
             </div>
             <div class="scroll-hint">向下滑动显示更多 ↓</div>
@@ -731,7 +755,7 @@
         © <span id="year">2025</span> Henry's Survival English Guide.
     </div>
     <script>
-        // === 核心逻辑 (V37.2: 防崩溃稳定版) ===
+        // === 核心逻辑 (V37.3: 完全体复活版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -742,7 +766,7 @@
         
         let aiState = { active: false, currentUnit: null, currentStep: 0, score: 0, total: 0, currentTargetEng: "", currentTargetCn: "", waitingForSpeech: false, silenceTimer: null, idleTimer: null };
 
-        // 🔥 超全生活场景词库 (已严格检查语法，防报错)
+        // 🔥 超全生活场景词库 (已严格检查语法)
         const extraVocab = {
             1: { 1: [{e:"new neighbor", c:"新邻居"}, {e:"from 3B", c:"3B的住户"}, {e:"just moved in", c:"刚搬来的"}, {e:"Henry", c:"Henry"}, {e:"living downstairs", c:"住楼下的"}, {e:"the new guy", c:"新来的那个"}], 2: [{e:"down the hall", c:"走廊尽头"}, {e:"upstairs", c:"楼上"}, {e:"next door", c:"隔壁"}, {e:"in unit 402", c:"402室"}, {e:"across the street", c:"马路对面"}] },
             2: { 1: [{e:"the subway", c:"地铁站"}, {e:"the restroom", c:"洗手间"}, {e:"the exit", c:"出口"}, {e:"an elevator", c:"电梯"}, {e:"a pharmacy", c:"药房"}, {e:"the bus stop", c:"公交站"}], 2: [{e:"where it is", c:"它在哪"}, {e:"which floor", c:"在几楼"}, {e:"the direction", c:"方向"}, {e:"how to get there", c:"怎么走"}] },
@@ -759,26 +783,38 @@
             13: { 1: [{e:"book a table", c:"订位"}, {e:"make a reservation", c:"预约"}, {e:"cancel my appointment", c:"取消预约"}, {e:"reschedule", c:"改期"}], 2: [{e:"7:00 PM", c:"晚上7点"}, {e:"noon", c:"中午"}, {e:"tomorrow morning", c:"明早"}, {e:"next Monday", c:"下周一"}] }
         };
 
+        // --- 核心：Step 旁小喇叭的逻辑 ---
+        function speakWholeSentence(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                // 找到父级 step-container
+                const container = el.closest('.display-area');
+                if (container) {
+                    const fullText = container.querySelector('.english-sentence').innerText;
+                    speakDirect(fullText);
+                }
+            }
+        }
+
         window.onload = function() {
             // 基础初始化
             try { document.getElementById('year').innerText = new Date().getFullYear(); } catch(e){}
             loadTheme();
             
-            // 安全加载数据 (关键修复：防止因旧数据导致崩盘)
+            // 安全加载数据
             try { loadXP(); } catch(e) { console.log('XP reset'); userXP=0; }
             try { loadUsageData(); } catch(e) { console.log('Usage reset'); usageData={}; }
             try { loadCustomChips(); } catch(e) { console.log('Chips reset'); }
 
             // 功能注入
             injectExtraChips();
-            injectSmartKeywords(); // 强力搜索
+            injectSmartKeywords(); 
             injectShowCardDOM();
             injectChatDOM();
             injectToolboxDOM(); 
             initSpeechRecognition();
-            checkMonthlyReport(); 
             
-            // 🚀 核心：硬核注入底部按钮 (喇叭 + 乌龟) - 必须在排序前！
+            // 🚀 核心：硬核注入底部按钮 (大喇叭 + 乌龟)
             injectLogicButtons();
             
             // 排序与循环
@@ -792,14 +828,11 @@
                 }
             }
             
-            // 后续效果
-            setTimeout(() => { initBubbleTip(); }, 1000);
+            // 红色气泡与滚动提示
+            setTimeout(() => { initBubbleTip(); }, 1500); // 延迟一点显示，确保加载
             initScrollHints();
-            rebuildActionButtons(); 
             
-            // 全局点击监听 (保底策略)
-            initGlobalClickListeners(); 
-            
+            // 悬浮球注入
             addFloatingControls(); 
             startSmartSearchAnimation();
             
@@ -811,7 +844,7 @@
         function loadXP() {
             const stored = localStorage.getItem('user_xp');
             userXP = stored ? parseInt(stored) : 0;
-            if(isNaN(userXP)) userXP = 0; // 防止NaN
+            if(isNaN(userXP)) userXP = 0;
             updateLevelDisplay();
         }
         function gainXP(amount = 1) {
@@ -836,15 +869,13 @@
         function injectLogicButtons() {
             const boxes = document.querySelectorAll('.combo-box');
             boxes.forEach(box => {
-                // 清理旧按钮防止重复
                 box.querySelectorAll('.combo-audio-btn, .btn-slow').forEach(b => b.remove());
                 
                 // 1. 创建普通喇叭 🔊
                 const btnNormal = document.createElement('button');
                 btnNormal.className = 'combo-audio-btn';
                 btnNormal.innerHTML = '🔊'; 
-                btnNormal.style.zIndex = "20"; // 层级拉高
-                // 直接写入属性，克隆免疫
+                btnNormal.style.zIndex = "20"; 
                 btnNormal.setAttribute('onclick', 'handleLogicClick(event, this, 1.0)'); 
                 box.appendChild(btnNormal);
 
@@ -852,7 +883,7 @@
                 const btnSlow = document.createElement('button');
                 btnSlow.className = 'btn-slow';
                 btnSlow.innerHTML = '🐢'; 
-                btnSlow.style.zIndex = "20"; // 层级拉高
+                btnSlow.style.zIndex = "20"; 
                 btnSlow.setAttribute('onclick', 'handleLogicClick(event, this, 0.6)'); 
                 box.appendChild(btnSlow);
             });
@@ -860,15 +891,13 @@
 
         // --- 🚀 全局处理函数 (支持语速参数) ---
         window.handleLogicClick = function(e, btn, rate) {
-            e.stopPropagation(); // 阻止冒泡，防止误触
-            gainXP(1); // 增加经验
-            if(navigator.vibrate) navigator.vibrate(15); // 震动反馈
+            e.stopPropagation();
+            gainXP(1);
+            if(navigator.vibrate) navigator.vibrate(15);
             
-            // 点击缩放动画
             btn.style.transform = "scale(0.9)";
             setTimeout(() => btn.style.transform = "scale(1)", 150);
 
-            // 寻找同框内的文本
             const container = btn.closest('.combo-box');
             if (container) {
                 const textEl = container.querySelector('.combo-text');
@@ -878,9 +907,8 @@
             }
         }
 
-        // --- 🔍 智能搜索覆盖 (Smart Keywords) ---
+        // --- 🔍 智能搜索覆盖 ---
         function injectSmartKeywords() {
-            // 基础映射 (包含你要求的内急、外卖等)
             const baseMap = {
                 1: "neighbor hello hi greeting 搬家 装修 新来 陌生人 问候",
                 2: "map where lost direction 迷路 导航 地图 怎么走 位置",
@@ -897,7 +925,6 @@
                 13: "schedule time book reserve 预约 时间 订位 改期"
             };
             
-            // 扩展映射 (从 extraVocab 里提取中文)
             for (let u in extraVocab) {
                 let keywords = baseMap[u] || "";
                 for (let s in extraVocab[u]) {
@@ -913,9 +940,10 @@
             }
         }
 
-        // --- 场景搜索引导 (纯实用向) ---
+        // --- 场景搜索引导 ---
         function startSmartSearchAnimation() {
             const input = document.getElementById('searchBox');
+            if(!input) return;
             const hour = new Date().getHours();
             
             let prompts = [
@@ -973,7 +1001,16 @@
             if(callback) utterance.onend = callback; 
             window.speechSynthesis.speak(utterance); 
         }
-        function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
+        function speakWholeSentence(wordId) {
+            const el = document.getElementById(wordId);
+            if (el) {
+                const container = el.closest('.display-area');
+                if (container) {
+                    const text = container.querySelector('.english-sentence').innerText;
+                    speakDirect(text);
+                }
+            }
+        }
 
         // --- 核心修复：注入单词药丸 (Pills) ---
         function injectExtraChips() {
@@ -1000,13 +1037,12 @@
             }
         }
 
-        // --- 核心修复：循环与排序 ---
+        // --- 核心修复：排序与循环布局 ---
         function autoSortUnits() {
-            // V37.2 采用稳定排序，不进行复杂的 DOM 克隆，防止崩溃
             const container = document.getElementById('content-area');
             const cards = Array.from(document.querySelectorAll('.unit-card'));
             
-            // 根据使用频率排序 (usageData)
+            // 根据使用频率排序
             cards.sort((a, b) => {
                 const idA = a.id.replace('u','');
                 const idB = b.id.replace('u','');
@@ -1016,7 +1052,7 @@
             // 重新插入 DOM
             cards.forEach(card => container.appendChild(card));
             
-            // 插入末尾占位符
+            // 插入末尾占位符 (防止最后一个卡片被挡住)
             let spacer = document.getElementById('end-spacer');
             if(!spacer) {
                 spacer = document.createElement('div');
@@ -1041,7 +1077,7 @@
         // --- 悬浮球与工具箱 ---
         function addFloatingControls() { 
             const c=document.querySelector('.float-controls'); 
-            if(!c) return; // 防错
+            if(!c) return;
             const w=document.createElement('div'); w.style.position='relative'; 
             const b=document.createElement('div'); b.id='robotBubble'; b.className='robot-speech-bubble'; b.innerText='嘿！想练练口语吗？点我！'; w.appendChild(b); 
             const btn=document.createElement('button'); btn.className='fab-robot'; btn.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>'; btn.title="AI 陪练"; 
@@ -1081,6 +1117,26 @@
         function triggerHaptic(){if(navigator.vibrate)navigator.vibrate(15);}
         function initScrollHints(){const cards=document.querySelectorAll('.unit-card');cards.forEach(card=>{if(card.scrollHeight>card.clientHeight)card.querySelector('.scroll-hint')?.classList.add('visible');card.addEventListener('scroll',function(){this.querySelector('.scroll-hint')?.classList.remove('visible');});});}
         
+        // --- 核心修复：红色气泡生成 ---
+        function initBubbleTip() {
+            // 在第一个 Unit 的第一个 Step 里生成
+            const container = document.querySelector('#u1 .step-container');
+            if(container && !document.querySelector('.bubble-tip')) {
+                const tip = document.createElement('div');
+                tip.className = 'bubble-tip';
+                tip.innerText = '👇 点这里替换单词';
+                // 插入到 chips 容器前
+                const chips = container.querySelector('.chips-container');
+                if(chips) container.insertBefore(tip, chips);
+                
+                // 3秒后自动消失
+                setTimeout(() => {
+                    tip.classList.add('fade-out');
+                    setTimeout(() => tip.remove(), 1000);
+                }, 4000);
+            }
+        }
+
         function addCustomChip(u,s,p,x){triggerHaptic();const e=prompt("English:");if(!e)return;const c=prompt("Chinese:");if(!c)return;const d={unitNum:u,stepNum:s,eng:e,cn:c,prefix:p,suffix:x};const k=`custom_chips_u${u}_s${s}`;let l=JSON.parse(localStorage.getItem(k)||"[]");l.push(d);localStorage.setItem(k,JSON.stringify(l));renderAndClickChip(d,true);}
         function toggleEmergency(){triggerHaptic();document.getElementById('emergencyOverlay').classList.toggle('active');}
         function loadUsageData(){ try { usageData=JSON.parse(localStorage.getItem('unit_usage')||"{}"); } catch(e){ usageData={}; } }
@@ -1111,8 +1167,7 @@
         function resetIdleTimer() { if(aiState.active) return; if(aiState.idleTimer) clearTimeout(aiState.idleTimer); aiState.idleTimer = setTimeout(triggerIdleAlert, 60000); }
         let idleLoopTimer = null;
         function triggerIdleAlert() { if(aiState.active) return; document.getElementById('robotBadge').style.display = 'block'; const bubble = document.getElementById('robotBubble'); if(bubble) { bubble.classList.add('visible'); triggerHaptic(); setTimeout(() => { bubble.classList.remove('visible'); idleLoopTimer = setTimeout(triggerIdleAlert, 60000); }, 10000); } }
-        function initBubbleTip() { /* 仅作为占位，防报错 */ }
-        function rebuildActionButtons() { /* 仅作为占位，防报错 */ }
+        function rebuildActionButtons() { /* 占位，防止报错 */ }
     </script>
 </body>
 </html>

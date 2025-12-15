@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Survival English Guide v25.5</title>
     <style>
-        /* --- V31.6 样式表：强阻尼 + 机器人气泡 --- */
+        /* --- V33.4 样式表：点击穿透 + 底部避让版 --- */
         :root {
             --bg-body: #f2f2f7; --bg-card: #ffffff; --text-main: #1c1c1e; --text-sub: #8e8e93;
             --primary: #007aff; --primary-light: #e5f1ff; --border: #c6c6c8;
@@ -44,15 +44,16 @@
         #content-area::-webkit-scrollbar { display: none; }
         .snap-spacer { flex: 0 0 7.5vw; } 
         
-        /* 核心修改：增加 scroll-snap-stop: always 实现强阻尼 */
         .unit-card { 
             flex: 0 0 85vw; max-width: 500px; background: var(--bg-card); 
             border-radius: 20px; padding: 20px; box-shadow: 0 8px 30px var(--shadow); 
             border: 1px solid var(--border); 
             scroll-snap-align: center; 
-            scroll-snap-stop: always; /* 关键：强制每次只滑一张 */
+            scroll-snap-stop: always; 
             height: 98%; max-height: 85vh; overflow-y: auto; position: relative; 
-            padding-bottom: 60px; box-sizing: border-box; 
+            /* 核心修改：底部增加到 120px，保证内容能滑出按钮遮挡区 */
+            padding-bottom: 120px; 
+            box-sizing: border-box; 
         }
         .unit-header { font-size: 1.3em; font-weight: 800; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid var(--display-area); padding-bottom: 10px; display: flex; justify-content: space-between; }
         .sort-rank { font-size: 0.6em; color: var(--text-sub); opacity: 0.5; }
@@ -81,7 +82,6 @@
         .add-btn-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; } 
         .add-chip-btn { border: 1px dashed var(--text-sub); background: transparent; padding: 6px 10px; color: var(--text-sub); }
         
-        /* 红色气泡 (卡片内) */
         .bubble-tip { 
             position: relative; display: block; margin-top: 10px; 
             background: var(--danger); color: white; padding: 8px 12px; border-radius: 8px; 
@@ -109,16 +109,30 @@
         .combo-text { padding-right: 40px; font-weight: 600; margin-bottom: 10px; line-height: 1.4; }
         .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; }
 
-        /* 悬浮球区域 */
-        .float-controls { position: fixed; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; align-items: flex-end; }
-        .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3em; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative; }
+        /* --- 核心修复：悬浮球穿透设置 --- */
+        .float-controls { 
+            position: fixed; bottom: 40px; right: 20px; 
+            display: flex; flex-direction: column; gap: 15px; 
+            z-index: 2000; align-items: flex-end; 
+            /* 关键：容器不挡鼠标，只有里面的按钮挡鼠标 */
+            pointer-events: none; 
+        }
+        
+        .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { 
+            width: 42px; height: 42px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.3em; border: none; cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative;
+            /* 关键：按钮自身恢复点击 */
+            pointer-events: auto; 
+        }
+        
         .fab-quiz { background: var(--danger); color: white; width: auto; padding: 8px 16px; border-radius: 30px; font-size: 0.85em; }
         .fab-random { background: var(--accent); color: white; }
         
         .fab-robot { background: #000; color: white; border: 2px solid #00ff00; }
-        /* 机器人气泡：指向右侧的机器人 */
         .robot-speech-bubble {
-            position: absolute; bottom: 0; right: 55px; /* 在机器人左侧 */
+            position: absolute; bottom: 0; right: 55px; 
             background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);
             padding: 8px 12px; border-radius: 12px 12px 0 12px; 
             font-size: 0.85em; font-weight: bold; 
@@ -127,13 +141,11 @@
             opacity: 0; transform: translateX(10px); transition: all 0.3s ease; pointer-events: none;
         }
         .robot-speech-bubble.visible { opacity: 1; transform: translateX(0); }
-        /* 箭头指向右边 */
         .robot-speech-bubble::after {
             content: ''; position: absolute; bottom: 10px; right: -6px;
             border-width: 6px; border-style: solid; 
-            border-color: transparent transparent transparent var(--bg-card); /* 指向右 */
+            border-color: transparent transparent transparent var(--bg-card); 
         }
-        /* 夜间模式适配箭头 */
         [data-theme="dark"] .robot-speech-bubble::after { border-left-color: var(--bg-card); }
 
         .robot-badge { position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: #ff3b30; border-radius: 50%; border: 2px solid #fff; display: none; }
@@ -819,7 +831,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V33.3: 底部喇叭硬核修复版) ===
+        // === 核心逻辑 (V33.4: 样式穿透修复版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -860,7 +872,7 @@
             // 🚀 1. 先注入底部喇叭 (硬核替换)
             injectLogicButtons();
             
-            // 2. 再排序 (这样克隆出的卡片也会带有好使的喇叭)
+            // 2. 再排序
             autoSortUnits(); 
             
             for (let i = 1; i <= 13; i++) {
@@ -880,47 +892,34 @@
         };
 
         // --- 🚀 核心修复：硬核注入底部喇叭 ---
-        // 直接在 HTML 属性里写 onclick，克隆也不怕！
         function injectLogicButtons() {
             const boxes = document.querySelectorAll('.combo-box');
             boxes.forEach(box => {
-                // 1. 删掉旧的
                 const oldBtn = box.querySelector('.combo-audio-btn');
                 if (oldBtn) oldBtn.remove();
-                
-                // 2. 创建新的
                 const newBtn = document.createElement('button');
                 newBtn.className = 'combo-audio-btn';
-                newBtn.innerHTML = '🔊'; // 或者用你的图标
-                newBtn.style.zIndex = "10"; // 确保在上层
-                
-                // 3. 关键：直接写入 onclick 属性
+                newBtn.innerHTML = '🔊'; 
+                newBtn.style.zIndex = "10"; 
                 newBtn.setAttribute('onclick', 'handleLogicClick(event, this)');
-                
                 box.appendChild(newBtn);
             });
         }
 
         // --- 🚀 全局处理函数 ---
-        // 必须挂在 window 上，确保 onclick 属性找得到
         window.handleLogicClick = function(e, btn) {
             e.stopPropagation();
             if(navigator.vibrate) navigator.vibrate(15);
-            
-            // 点击反馈动画
             btn.style.transform = "scale(0.9)";
             setTimeout(() => btn.style.transform = "scale(1)", 150);
-
             const container = btn.closest('.combo-box');
             if (container) {
                 const textEl = container.querySelector('.combo-text');
-                if (textEl) {
-                    speakDirect(textEl.innerText);
-                }
+                if (textEl) speakDirect(textEl.innerText);
             }
         }
 
-        // --- 其他逻辑 (保持 V33.0 稳定版) ---
+        // --- 其他逻辑 ---
         function startSmartSearchAnimation() {
             const input = document.getElementById('searchBox');
             const hour = new Date().getHours();

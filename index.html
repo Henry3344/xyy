@@ -1053,18 +1053,49 @@
         }
         function askForScenario() { addUserMsg("Yes, let's go!"); let ops = []; for(let i=1; i<=13; i++) { const c = document.getElementById(`u${i}`); if(c) { const name = c.getAttribute('data-name'); ops.push({ text: name, action: () => startUnitPractice(i) }); } } addBotMsg("Great! Which scenario do you want to practice?", ops); }
         function startUnitPractice(uid) { addUserMsg(`Unit ${uid}`); aiState.currentUnit = uid; aiState.currentStep = 1; addBotMsg("Awesome choice! Let's start!"); setTimeout(askQuestion, 1500); }
+        // --- 修复版：askQuestion (防止无缓存时直接结束) ---
         function askQuestion() {
             if(!aiState.active) return;
-            const u = aiState.currentUnit; const s = aiState.currentStep;
-            const savedData = JSON.parse(localStorage.getItem(`u${u}-s${s}`));
-            if(!savedData || s > 2) { endChat(true); return; }
+            const u = aiState.currentUnit;
+            const s = aiState.currentStep;
+            
+            // 1. 先找 DOM 元素，如果找不到元素，或者步骤超过2，才算结束
             const wordEl = document.getElementById(`u${u}-s${s}-word`);
-            const targetEng = wordEl.parentElement.innerText; aiState.currentTargetEng = targetEng;
-            const targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix); aiState.currentTargetCn = targetCn;
+            const transEl = document.getElementById(`u${u}-s${s}-trans`);
+            
+            if(!wordEl || s > 2) {
+                endChat(true); return;
+            }
+
+            // 2. 获取英文 (直接读屏幕上的，最准)
+            const targetEng = wordEl.parentElement.innerText; 
+            aiState.currentTargetEng = targetEng;
+
+            // 3. 获取中文 (优先读缓存构造完美句子，如果没有缓存，就读屏幕上的默认句子)
+            let targetCn = transEl.innerText; // 默认读屏幕
+            const savedData = JSON.parse(localStorage.getItem(`u${u}-s${s}`));
+            
+            if(savedData) {
+                // 如果有缓存，用算法重新拼装，确保是整句
+                targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix);
+            }
+            
+            aiState.currentTargetCn = targetCn;
+            
+            // 4. 提问 (true 表示说完自动开麦)
             addBotMsg(`Please translate:\n"${targetCn}"`, [], true); 
+            
             aiState.waitingForSpeech = true;
+            
+            // 5. 沉默检测 (20秒)
             if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
-            aiState.silenceTimer = setTimeout(() => { if(aiState.waitingForSpeech && aiState.active) { speakDirect("Are you there?", () => { startChatListening(); }); } }, 20000); 
+            aiState.silenceTimer = setTimeout(() => {
+                if(aiState.waitingForSpeech && aiState.active) {
+                    speakDirect("Are you there?", () => {
+                        startChatListening(); // 再次自动开启
+                    });
+                }
+            }, 20000); 
         }
         function startChatListening() {
             if (!recognition) return; if (!aiState.active) return;

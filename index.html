@@ -7,20 +7,20 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Survival English Guide v25.5</title>
     <style>
-        /* --- V30.0 样式表：无缝循环适配 --- */
+        /* --- V31.0 样式表：修复动画、遮挡与逻辑构造 --- */
         :root {
             --bg-body: #f2f2f7; --bg-card: #ffffff; --text-main: #1c1c1e; --text-sub: #8e8e93;
             --primary: #007aff; --primary-light: #e5f1ff; --border: #c6c6c8;
             --chip-bg: #ffffff; --chip-border: #d1d1d6; --nav-bg: rgba(255,255,255,0.95);
             --shadow: rgba(0,0,0,0.08); --display-area: #f2f2f7; --danger: #ff3b30; --accent: #5856d6;
-            --hint-bg: rgba(255, 255, 255, 0.7);
+            --hint-bg: rgba(255, 255, 255, 0.85);
         }
         [data-theme="dark"] {
             --bg-body: #000000; --bg-card: #1c1c1e; --text-main: #ffffff; --text-sub: #aeaeb2;
             --primary: #0a84ff; --primary-light: #1c1c1e; --border: #38383a; --chip-bg: #2c2c2e;
             --chip-border: #3a3a3c; --nav-bg: rgba(28,28,30,0.95); --shadow: rgba(255,255,255,0.05);
             --display-area: #2c2c2e; --danger: #ff453a; --accent: #5e5ce6;
-            --hint-bg: rgba(28, 28, 30, 0.7);
+            --hint-bg: rgba(28, 28, 30, 0.85);
         }
 
         html, body { 
@@ -38,64 +38,37 @@
         .header-actions { display: flex; gap: 12px; }
         .icon-btn { background: none; border: 1px solid var(--border); color: var(--text-main); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .icon-btn.danger { border-color: var(--danger); color: var(--danger); }
-        
         .search-row { padding: 0 15px 8px 15px; max-width: 650px; margin: 0 auto; }
         .search-input { width: 100%; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); box-sizing: border-box; outline: none; transition: color 0.5s; }
         .search-input.fade-text { color: transparent; }
-
         .nav-scroll { display: flex; overflow-x: auto; padding: 0 15px 10px 15px; gap: 8px; max-width: 650px; margin: 0 auto; scrollbar-width: none; }
         .nav-scroll::-webkit-scrollbar { display: none; }
         .nav-btn { flex: 0 0 auto; background: var(--primary-light); color: var(--primary); padding: 5px 10px; border-radius: 14px; font-weight: 600; font-size: 0.8em; text-decoration: none; cursor: pointer; }
         [data-theme="dark"] .nav-btn { border: 1px solid var(--border); }
         .nav-btn.active-nav { background: var(--primary); color: white; }
 
-        /* 内容区 - 核心滚动容器 */
-        #content-area { 
-            flex: 1; display: flex; 
-            overflow-x: auto; 
-            scroll-snap-type: x mandatory; 
-            padding: 15px 0; /* 移除左右的大padding，由spacer控制，防止定位偏差 */
-            gap: 15px; 
-            align-items: flex-start;
-            scroll-behavior: smooth; /* 默认平滑，JS中会动态切换 */
-        }
+        /* 内容区 */
+        #content-area { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 15px 0; gap: 15px; align-items: flex-start; scroll-behavior: smooth; }
         #content-area::-webkit-scrollbar { display: none; }
-        
-        /* 占位符 (让第一个和最后一个卡片能居中) */
         .snap-spacer { flex: 0 0 7.5vw; } 
-
-        .unit-card { 
-            flex: 0 0 85vw; max-width: 500px; background: var(--bg-card); 
-            border-radius: 20px; padding: 20px; box-shadow: 0 8px 30px var(--shadow); 
-            border: 1px solid var(--border); scroll-snap-align: center; 
-            height: 98%; max-height: 85vh; overflow-y: auto; position: relative; 
-            padding-bottom: 60px; box-sizing: border-box; 
-        }
+        .unit-card { flex: 0 0 85vw; max-width: 500px; background: var(--bg-card); border-radius: 20px; padding: 20px; box-shadow: 0 8px 30px var(--shadow); border: 1px solid var(--border); scroll-snap-align: center; height: 98%; max-height: 85vh; overflow-y: auto; position: relative; padding-bottom: 60px; box-sizing: border-box; }
         .unit-header { font-size: 1.3em; font-weight: 800; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid var(--display-area); padding-bottom: 10px; display: flex; justify-content: space-between; }
         .sort-rank { font-size: 0.6em; color: var(--text-sub); opacity: 0.5; }
 
+        /* 步骤区域 */
         .step-container { margin-bottom: 20px; width: 100%; }
         .step-label { font-size: 0.75em; color: var(--text-sub); font-weight: 700; margin-bottom: 6px; display: block; text-transform: uppercase; }
         .pattern-box { font-family: "Menlo", monospace; color: #d63031; background: #ffeaea; padding: 2px 6px; border-radius: 4px; font-size: 1em; margin-left: 5px; border: 1px solid #ffcccc; display: inline-block; }
         [data-theme="dark"] .pattern-box { background: #3e1a1a; border-color: #5c1e1e; color: #ff6b6b; }
 
-        .display-area { 
-            background-color: var(--display-area); padding: 12px; border-radius: 12px; margin-bottom: 10px; 
-            display: flex; align-items: center; justify-content: space-between; gap: 8px;
-            border: 1px solid var(--border); width: 100%; box-sizing: border-box; 
-        }
+        .display-area { background-color: var(--display-area); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--border); width: 100%; box-sizing: border-box; }
         .text-content { flex-grow: 1; min-width: 0; margin-right: 4px; }
         .english-sentence { font-size: 1.2em; font-weight: 600; line-height: 1.25; color: var(--text-main); margin-bottom: 4px; white-space: normal; word-wrap: break-word; }
         .highlight { color: var(--primary); text-decoration: underline; text-decoration-thickness: 3px; cursor: pointer; }
         .translation { color: var(--text-sub); font-size: 0.9em; white-space: normal; }
 
         .action-group { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
-        .btn-mini { 
-            width: 32px; height: 32px; border-radius: 50%; cursor: pointer; 
-            display: flex; align-items: center; justify-content: center; font-size: 1em; 
-            border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); 
-            box-shadow: 0 1px 3px var(--shadow); transition: all 0.2s;
-        }
+        .btn-mini { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1em; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); box-shadow: 0 1px 3px var(--shadow); transition: all 0.2s; }
         .btn-mini:active { transform: scale(0.92); }
         .btn-mini.listening { background: var(--danger); color: white; border-color: var(--danger); animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,59,48,0.4); } 70% { box-shadow: 0 0 0 6px rgba(255,59,48,0); } 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); } }
@@ -111,34 +84,55 @@
         .bubble-tip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: var(--danger) transparent transparent transparent; }
         @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(-100%); } 50% { transform: translateX(-50%) translateY(-108%); } }
 
-        .scroll-hint { position: absolute; bottom: 0; left: 0; width: 100%; text-align: center; color: var(--primary); font-size: 0.8em; padding: 12px 0; background: var(--hint-bg); backdrop-filter: blur(8px); border-radius: 0 0 20px 20px; opacity: 0; pointer-events: none; z-index: 50; transition: opacity 0.3s; }
-        .scroll-hint.visible { opacity: 1; }
+        /* --- 修复点：下滑动画 --- */
+        .scroll-hint { 
+            position: absolute; bottom: 0; left: 0; width: 100%; text-align: center; 
+            color: var(--primary); font-size: 0.85em; padding: 12px 0; 
+            background: var(--hint-bg); backdrop-filter: blur(8px); 
+            border-radius: 0 0 20px 20px; opacity: 0; pointer-events: none; 
+            z-index: 50; transition: opacity 0.3s; 
+            font-weight: bold;
+        }
+        .scroll-hint.visible { 
+            opacity: 1; 
+            animation: float-hint 2s ease-in-out infinite; /* 加回跳动动画 */
+        }
+        @keyframes float-hint {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(5px); }
+        }
 
         .divider { height: 1px; background: var(--border); margin: 20px 0; border: none; }
-        .combo-box { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px; border-radius: 16px; margin-top: 20px; position: relative; }
-        .combo-title { font-size: 0.8em; font-weight: bold; opacity: 0.8; margin-bottom: 8px; }
-        .combo-text { padding-right: 40px; font-weight: 600; margin-bottom: 10px; }
-        .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; }
         
+        /* 底部功能区 & 新增句式标签 */
+        .combo-box { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px; border-radius: 16px; margin-top: 20px; position: relative; }
+        .combo-title { font-size: 0.8em; font-weight: bold; opacity: 0.8; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .combo-text { padding-right: 40px; font-weight: 600; margin-bottom: 10px; line-height: 1.4; }
+        .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; }
+        /* 新增：句式结构标签 */
+        .combo-struct { font-size: 0.75em; color: #dfe6e9; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; border: 1px solid rgba(255,255,255,0.2); }
+
         .float-controls { position: fixed; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 2000; align-items: flex-end; }
-        .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { 
-            width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3em; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
-        }
+        .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3em; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .fab-quiz { background: var(--danger); color: white; width: auto; padding: 8px 16px; border-radius: 30px; font-size: 0.85em; }
         .fab-random { background: var(--accent); color: white; }
         .fab-robot { background: #000; color: white; border: 2px solid #00ff00; position: relative; }
         .robot-badge { position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: #ff3b30; border-radius: 50%; border: 2px solid #fff; display: none; }
         .fab-tools { background: #ff9f0a; color: white; }
 
+        /* --- 修复点：特训模式 (Quiz Mode) --- */
         .quiz-active-text, body.quiz-mode .quiz-default-text { display: none; }
         body.quiz-mode .quiz-active-text { display: inline; }
         body.quiz-mode .english-sentence { color: transparent !important; text-shadow: 0 0 13px rgba(128,128,128,0.5); user-select: none; }
         body.quiz-mode .english-sentence:active { color: var(--text-main) !important; text-shadow: none; }
         body.quiz-mode .pattern-box { color: transparent !important; background-color: var(--border); }
         body.quiz-mode .pattern-box:active { color: #d63031 !important; background-color: #ffeaea; }
+        /* 新增：连 combo-text 也一起遮挡 */
+        body.quiz-mode .combo-text { color: transparent !important; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        body.quiz-mode .combo-text:active { color: white !important; text-shadow: none; }
 
+        /* 弹窗通用样式 */
         .emergency-overlay, .modal-overlay, .show-card-overlay, .tool-overlay, .chat-overlay { display: none; }
-
         .emergency-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; flex-direction: column; padding: 20px; box-sizing: border-box; }
         .emergency-overlay.active { display: flex; }
         .emergency-close { position: absolute; top: 20px; right: 20px; color: white; font-size: 2em; cursor: pointer; }
@@ -809,7 +803,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V30.1: 双向无缝循环 + 纯正口音修复版) ===
+        // === 核心逻辑 (V31.0: 句式解析 + 动画修复版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -843,107 +837,95 @@
             setTimeout(() => { initBubbleTip(); }, 300);
             initScrollHints();
             rebuildActionButtons(); 
+            
+            // 🚀 新增：自动生成句式结构标签
+            injectComboStructs(); 
+            
             addFloatingControls(); 
             startSearchAnimation();
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 🚀 核心升级：双向无缝循环 (Bi-directional Loop) ---
+        // --- 🚀 新增功能：自动生成句式结构 (Combo Struct) ---
+        function injectComboStructs() {
+            const cards = document.querySelectorAll('.unit-card');
+            cards.forEach(card => {
+                // 找到 combo box
+                const comboBox = card.querySelector('.combo-box');
+                if (!comboBox) return;
+                
+                // 避免重复添加
+                if (comboBox.querySelector('.combo-struct')) return;
+
+                // 抓取 Pattern 1 & 2
+                const p1 = card.querySelector('.step-container:nth-of-type(1) .pattern-box')?.innerText || "Step 1";
+                const p2 = card.querySelector('.step-container:nth-of-type(2) .pattern-box')?.innerText || "Step 2";
+                
+                // 插入标签
+                const div = document.createElement('div');
+                div.className = 'combo-struct';
+                div.innerText = `💡 这是 [${p1}] + [${p2}] 的句式`;
+                
+                // 插在 title 后面
+                const title = comboBox.querySelector('.combo-title');
+                if (title) title.parentNode.insertBefore(div, title.nextSibling);
+            });
+        }
+
+        // --- 双向无缝循环 ---
         function initInfiniteLoop(container, cards) {
-            // 1. 清理旧的 spacer 和 clone
             container.querySelectorAll('.snap-spacer, .unit-card.clone').forEach(el => el.remove());
-
-            if (cards.length < 2) return; // 卡片太少不循环
-
-            const cardWidth = cards[0].offsetWidth; // 假设卡片等宽
-            const gap = 15; // CSS gap
-
-            // 2. 克隆首尾
+            if (cards.length < 2) return; 
             const firstCard = cards[0];
             const lastCard = cards[cards.length - 1];
-            
             const cloneFirst = firstCard.cloneNode(true);
             const cloneLast = lastCard.cloneNode(true);
-            
-            // 标记 clone 并移除 ID 防止冲突
             [cloneFirst, cloneLast].forEach(el => {
-                el.classList.add('clone');
-                el.id = "";
+                el.classList.add('clone'); el.id = "";
                 el.querySelectorAll('[id]').forEach(c => c.removeAttribute('id'));
             });
-
-            // 3. 插入 DOM 结构：[Spacer] [Clone Last] [Real 1...N] [Clone First] [Spacer]
-            const spacerStart = document.createElement('div');
-            spacerStart.className = 'snap-spacer';
-            
-            const spacerEnd = document.createElement('div');
-            spacerEnd.className = 'snap-spacer';
-
+            const spacerStart = document.createElement('div'); spacerStart.className = 'snap-spacer';
+            const spacerEnd = document.createElement('div'); spacerEnd.className = 'snap-spacer';
             container.insertBefore(spacerStart, container.firstChild);
-            container.insertBefore(cloneLast, container.firstChild.nextSibling); // 插在 spacer 后
+            container.insertBefore(cloneLast, container.firstChild.nextSibling); 
             container.appendChild(cloneFirst);
             container.appendChild(spacerEnd);
-
-            // 4. 初始定位：瞬间跳到 Real Card 1 (跳过 Spacer + Clone Last)
-            // 计算偏移量：Spacer宽度 + CloneLast宽度 + 2个gap
-            // 由于 display:flex，计算起来可能受 spacer flex-basis 影响
-            // 最稳妥是用 scrollIntoView 但需要禁用动画
             
-            // 强制瞬间定位到真正的第一个卡片
             requestAnimationFrame(() => {
                 container.style.scrollBehavior = 'auto';
-                // 偏移量 = 左侧 Spacer(7.5vw) + CloneLast(85vw) + Gap(15px) * 2 roughly
-                // 更精准的方法是直接定位元素
-                const offset = firstCard.offsetLeft - container.offsetLeft - (window.innerWidth * 0.075); // 减去左padding
+                const offset = firstCard.offsetLeft - container.offsetLeft - (window.innerWidth * 0.075);
                 container.scrollLeft = offset;
-                
-                // 恢复平滑滚动
                 setTimeout(() => { container.style.scrollBehavior = 'smooth'; }, 50);
             });
 
-            // 5. 监听滚动 (双向传送)
             container.onscroll = () => {
                 const scrollLeft = container.scrollLeft;
                 const scrollWidth = container.scrollWidth;
                 const clientWidth = container.clientWidth;
-                
-                // 阈值宽松一点，防止卡顿
                 const buffer = 10;
-
-                // A. 往右滑到底 (看到 Clone First) -> 跳回 Real First
-                // 判定：接近末尾
                 if (scrollWidth - (scrollLeft + clientWidth) < buffer) {
                     container.style.scrollBehavior = 'auto';
-                    // 跳到 Real First (它在 Clone Last 后面)
-                    // 位置大约是：Spacer + CloneLast + Gap
                     container.scrollLeft = firstCard.offsetLeft - (window.innerWidth * 0.075); 
                     requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); });
                 }
-
-                // B. 往左滑到头 (看到 Clone Last) -> 跳回 Real Last
-                // 判定：接近 0
                 if (scrollLeft < buffer) {
                     container.style.scrollBehavior = 'auto';
-                    // 跳到 Real Last
                     container.scrollLeft = lastCard.offsetLeft - (window.innerWidth * 0.075);
                     requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); });
                 }
             };
         }
 
-        // 修改 autoSortUnits 以触发循环
         function autoSortUnits() {
             const container = document.getElementById('content-area');
-            const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); // 只取真身
-            
+            const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); 
             const hour = new Date().getHours();
             let timeWeights = {};
             if (hour >= 5 && hour < 10) { timeWeights = { 1: 50, 9: 40, 4: 30 }; } 
             else if (hour >= 11 && hour < 14) { timeWeights = { 6: 50, 7: 40, 5: 30 }; } 
             else if (hour >= 17 && hour < 21) { timeWeights = { 8: 50, 7: 40, 6: 30 }; } 
             else if (hour >= 21 || hour < 4) { timeWeights = { 9: 60, 10: 50, 3: 40 }; }
-
             cards.sort((a, b) => {
                 const idA = parseInt(a.id.replace('u', ''));
                 const idB = parseInt(b.id.replace('u', ''));
@@ -953,35 +935,23 @@
                 scoreB += (timeWeights[idB] || 0);
                 return scoreB - scoreA; 
             });
-
-            // 重新排列 DOM (先只放真身)
             container.innerHTML = ""; 
             cards.forEach(card => container.appendChild(card));
-            
-            // 构建双向循环
             initInfiniteLoop(container, cards);
         }
 
-        // --- 🚀 核心升级：TTS 口音修复 (Accent Fix) ---
+        // --- TTS 口音修复 ---
         function speakDirect(text, callback) {
             window.speechSynthesis.cancel();
-            
-            // 逻辑修正：
-            // 如果包含至少2个连续的英文字母，就认为是英语指令（即使里面夹杂了中文引用）
-            // 比如 "Please translate '你好'" -> 有英文 -> 用美音读
-            // 只有纯中文或极少英文（如变量名）才用中文读
             const hasEnglishContext = /[a-zA-Z]{2,}/.test(text);
-            
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = hasEnglishContext ? 'en-US' : 'zh-CN'; 
             utterance.rate = 0.9; 
-            
             if(callback) utterance.onend = callback;
             window.speechSynthesis.speak(utterance);
         }
 
-        // --- 其他逻辑保持 V29.2 ---
-        
+        // --- UI ---
         function rebuildActionButtons() {
             for(let i=1; i<=13; i++) {
                 const card = document.getElementById(`u${i}`);
@@ -993,27 +963,23 @@
                         const s = index + 1;
                         const oldBtns = displayArea.querySelectorAll('button');
                         oldBtns.forEach(b => b.remove());
-                        
                         let group = displayArea.querySelector('.action-group');
                         if(!group) {
                             group = document.createElement('div');
                             group.className = 'action-group';
                             displayArea.appendChild(group);
                         }
-                        
                         const btnAudio = createMiniBtn('🔊', () => {
                             const wordEl = document.getElementById(`u${i}-s${s}-word`);
                             if(wordEl) speakWholeSentence(wordEl.id, "", "");
                         });
                         group.appendChild(btnAudio);
-
                         const btnMic = createMiniBtn('🎙️', function(e) {
                             const wordEl = document.getElementById(`u${i}-s${s}-word`);
                             if(wordEl) startSimpleListening(this, wordEl.parentElement.innerText);
                         });
                         btnMic.classList.add('btn-mic');
                         group.appendChild(btnMic);
-
                         const btnShow = createMiniBtn('👁️', () => {
                             const wordEl = document.getElementById(`u${i}-s${s}-word`);
                             const transEl = document.getElementById(`u${i}-s${s}-trans`);
@@ -1166,6 +1132,7 @@
         function updateUnit(unitNum,stepNum,engWord,cnWord,prefixEng,suffixCn,element,playSound=true){triggerHaptic();incrementUsage(unitNum);const wordId=`u${unitNum}-s${stepNum}-word`;const displayEl=document.getElementById(wordId);if(displayEl)displayEl.innerText=engWord;const fullCn=getFullChineseSentence(unitNum,stepNum,cnWord,suffixCn);document.getElementById(`u${unitNum}-s${stepNum}-trans`).innerText=fullCn;let container=element.parentElement;container.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));if(element.classList.contains('chip'))element.classList.add('active');localStorage.setItem(`u${unitNum}-s${stepNum}`,JSON.stringify({engWord,cnWord,prefix:prefixEng,suffix:suffixCn}));if(playSound)speakDirect(engWord);}
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
         function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
+        function speakDirect(text,callback){window.speechSynthesis.cancel();const isChinese=/[\u4e00-\u9fa5]/.test(text);const utterance=new SpeechSynthesisUtterance(text);utterance.lang=isChinese?'zh-CN':'en-US';utterance.rate=0.9;if(callback)utterance.onend=callback;window.speechSynthesis.speak(utterance);}
     </script>
 </body>
 </html>

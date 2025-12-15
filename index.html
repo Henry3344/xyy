@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Survival English Guide v25.5</title>
     <style>
-        /* --- V29.1 修复版 CSS --- */
+        /* --- V30.0 样式表：无缝循环适配 --- */
         :root {
             --bg-body: #f2f2f7; --bg-card: #ffffff; --text-main: #1c1c1e; --text-sub: #8e8e93;
             --primary: #007aff; --primary-light: #e5f1ff; --border: #c6c6c8;
@@ -49,10 +49,21 @@
         [data-theme="dark"] .nav-btn { border: 1px solid var(--border); }
         .nav-btn.active-nav { background: var(--primary); color: white; }
 
-        /* 内容区 */
-        #content-area { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 15px 7.5vw; gap: 15px; align-items: flex-start; }
+        /* 内容区 - 核心滚动容器 */
+        #content-area { 
+            flex: 1; display: flex; 
+            overflow-x: auto; 
+            scroll-snap-type: x mandatory; 
+            padding: 15px 0; /* 移除左右的大padding，由spacer控制，防止定位偏差 */
+            gap: 15px; 
+            align-items: flex-start;
+            scroll-behavior: smooth; /* 默认平滑，JS中会动态切换 */
+        }
         #content-area::-webkit-scrollbar { display: none; }
         
+        /* 占位符 (让第一个和最后一个卡片能居中) */
+        .snap-spacer { flex: 0 0 7.5vw; } 
+
         .unit-card { 
             flex: 0 0 85vw; max-width: 500px; background: var(--bg-card); 
             border-radius: 20px; padding: 20px; box-shadow: 0 8px 30px var(--shadow); 
@@ -68,21 +79,16 @@
         .pattern-box { font-family: "Menlo", monospace; color: #d63031; background: #ffeaea; padding: 2px 6px; border-radius: 4px; font-size: 1em; margin-left: 5px; border: 1px solid #ffcccc; display: inline-block; }
         [data-theme="dark"] .pattern-box { background: #3e1a1a; border-color: #5c1e1e; color: #ff6b6b; }
 
-        /* --- 核心优化：Display Area & Compact Buttons --- */
         .display-area { 
             background-color: var(--display-area); padding: 12px; border-radius: 12px; margin-bottom: 10px; 
             display: flex; align-items: center; justify-content: space-between; gap: 8px;
             border: 1px solid var(--border); width: 100%; box-sizing: border-box; 
         }
         .text-content { flex-grow: 1; min-width: 0; margin-right: 4px; }
-        .english-sentence { 
-            font-size: 1.2em; font-weight: 600; line-height: 1.25; color: var(--text-main); margin-bottom: 4px; 
-            white-space: normal; word-wrap: break-word; 
-        }
+        .english-sentence { font-size: 1.2em; font-weight: 600; line-height: 1.25; color: var(--text-main); margin-bottom: 4px; white-space: normal; word-wrap: break-word; }
         .highlight { color: var(--primary); text-decoration: underline; text-decoration-thickness: 3px; cursor: pointer; }
         .translation { color: var(--text-sub); font-size: 0.9em; white-space: normal; }
 
-        /* 按钮组 */
         .action-group { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
         .btn-mini { 
             width: 32px; height: 32px; border-radius: 50%; cursor: pointer; 
@@ -94,14 +100,12 @@
         .btn-mini.listening { background: var(--danger); color: white; border-color: var(--danger); animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,59,48,0.4); } 70% { box-shadow: 0 0 0 6px rgba(255,59,48,0); } 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); } }
 
-        /* Chips */
         .chips-container { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
         .chip { background: var(--chip-bg); border: 1px solid var(--chip-border); padding: 6px 12px; border-radius: 16px; font-size: 0.9em; cursor: pointer; font-weight: 600; color: var(--text-main); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
         .add-btn-wrapper { display: inline-block; }
         .add-chip-btn { border: 1px dashed var(--text-sub); background: transparent; padding: 6px 10px; color: var(--text-sub); }
         
-        /* 气泡 & 提示 */
         .bubble-tip { position: absolute; top: -10px; left: 50%; transform: translateX(-50%) translateY(-100%); background: var(--danger); color: white; padding: 6px 10px; border-radius: 8px; font-size: 0.75em; font-weight: bold; width: 140px; text-align: center; pointer-events: none; animation: bounce 1.5s infinite; z-index: 99; }
         .bubble-tip.fade-out { opacity: 0; }
         .bubble-tip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: var(--danger) transparent transparent transparent; }
@@ -110,16 +114,13 @@
         .scroll-hint { position: absolute; bottom: 0; left: 0; width: 100%; text-align: center; color: var(--primary); font-size: 0.8em; padding: 12px 0; background: var(--hint-bg); backdrop-filter: blur(8px); border-radius: 0 0 20px 20px; opacity: 0; pointer-events: none; z-index: 50; transition: opacity 0.3s; }
         .scroll-hint.visible { opacity: 1; }
 
-        /* 底部功能区 */
         .divider { height: 1px; background: var(--border); margin: 20px 0; border: none; }
         .combo-box { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px; border-radius: 16px; margin-top: 20px; position: relative; }
         .combo-title { font-size: 0.8em; font-weight: bold; opacity: 0.8; margin-bottom: 8px; }
         .combo-text { padding-right: 40px; font-weight: 600; margin-bottom: 10px; }
         .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; }
         
-        /* 悬浮球 & 弹窗 */
         .float-controls { position: fixed; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 2000; align-items: flex-end; }
-        
         .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { 
             width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3em; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
         }
@@ -129,7 +130,6 @@
         .robot-badge { position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: #ff3b30; border-radius: 50%; border: 2px solid #fff; display: none; }
         .fab-tools { background: #ff9f0a; color: white; }
 
-        /* 特训模式 */
         .quiz-active-text, body.quiz-mode .quiz-default-text { display: none; }
         body.quiz-mode .quiz-active-text { display: inline; }
         body.quiz-mode .english-sentence { color: transparent !important; text-shadow: 0 0 13px rgba(128,128,128,0.5); user-select: none; }
@@ -137,12 +137,8 @@
         body.quiz-mode .pattern-box { color: transparent !important; background-color: var(--border); }
         body.quiz-mode .pattern-box:active { color: #d63031 !important; background-color: #ffeaea; }
 
-        /* 弹窗通用样式 */
-        .emergency-overlay, .modal-overlay, .show-card-overlay, .tool-overlay, .chat-overlay {
-            display: none; /* 关键：默认必须隐藏 */
-        }
+        .emergency-overlay, .modal-overlay, .show-card-overlay, .tool-overlay, .chat-overlay { display: none; }
 
-        /* 应急模式 */
         .emergency-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; flex-direction: column; padding: 20px; box-sizing: border-box; }
         .emergency-overlay.active { display: flex; }
         .emergency-close { position: absolute; top: 20px; right: 20px; color: white; font-size: 2em; cursor: pointer; }
@@ -150,7 +146,6 @@
         .emergency-text { font-size: 2.2em; color: #ff3b30; font-weight: bold; margin-bottom: 10px; }
         .emergency-sub { font-size: 1.2em; color: #aaa; }
 
-        /* 聊天窗口 */
         .chat-overlay { position: fixed; bottom: 90px; right: 20px; width: 85vw; max-width: 350px; height: 60vh; background: var(--bg-card); border-radius: 20px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); flex-direction: column; z-index: 9999; border: 1px solid var(--border); overflow: hidden; }
         .chat-header { padding: 12px 15px; background: var(--bg-body); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-weight: bold; align-items: center; }
         .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--bg-body); }
@@ -163,13 +158,11 @@
         .mic-wave { width: 45px; height: 45px; border-radius: 50%; background: var(--danger); color: white; border: none; font-size: 1.2em; display: flex; align-items: center; justify-content: center; }
         .mic-wave.active { animation: pulse 1.5s infinite; }
 
-        /* 全屏卡片 */
         .show-card-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
         .show-card-text { font-size: 3em; font-weight: 800; line-height: 1.2; margin-bottom: 15px; word-wrap: break-word; }
         .show-card-sub { font-size: 1.5em; color: var(--text-sub); }
         .show-card-hint { position: absolute; bottom: 30px; opacity: 0.5; font-size: 0.8em; }
 
-        /* 工具箱 */
         .tool-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: flex-end; justify-content: center; }
         .tool-card { background: var(--bg-card); width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 25px; box-sizing: border-box; }
         .tool-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
@@ -183,7 +176,6 @@
         .tip-box { background: var(--display-area); padding: 10px; border-radius: 10px; text-align: center; border: 1px solid var(--border); }
         .tip-val { font-size: 1.1em; font-weight: 800; color: var(--primary); display: block; }
 
-        /* Modal & Toast */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 5000; align-items: center; justify-content: center; }
         .modal-card { background: var(--bg-card); width: 85%; max-width: 400px; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid var(--border); }
         .modal-title { font-size: 1.2em; font-weight: bold; margin-bottom: 20px; }
@@ -193,7 +185,6 @@
         .btn-close { background: var(--border); color: var(--text-main); }
         .speech-result-toast { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.9em; z-index: 11000; display: none; text-align: center; max-width: 80%; }
 
-        /* 底部版权 */
         .fixed-footer { flex: 0 0 auto; text-align: center; color: var(--text-sub); font-size: 0.6em; padding: 3px 0; border-top: 1px solid var(--border); background: var(--bg-body); opacity: 0.5; }
     </style>
 
@@ -818,24 +809,13 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V29.2: 中文反馈 + 听音纠错版) ===
+        // === 核心逻辑 (V30.0: 无缝循环 + 沉浸式体验版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
         let recognition = null; 
         
-        let aiState = {
-            active: false,
-            currentUnit: null,
-            currentStep: 0,
-            score: 0,
-            total: 0,
-            currentTargetEng: "",
-            currentTargetCn: "",
-            waitingForSpeech: false,
-            silenceTimer: null,
-            idleTimer: null
-        };
+        let aiState = { active: false, currentUnit: null, currentStep: 0, score: 0, total: 0, currentTargetEng: "", currentTargetCn: "", waitingForSpeech: false, silenceTimer: null, idleTimer: null };
 
         window.onload = function() {
             document.getElementById('year').innerText = new Date().getFullYear();
@@ -846,11 +826,13 @@
             injectShowCardDOM();
             injectChatDOM();
             injectToolboxDOM(); 
-            
             initSpeechRecognition();
             checkMonthlyReport(); 
+            
+            // 核心：先排序，再构建循环
             autoSortUnits();
             
+            // 恢复选择状态
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
                     restoreSelection(i, 1);
@@ -860,22 +842,97 @@
             
             setTimeout(() => { initBubbleTip(); }, 300);
             initScrollHints();
-            
             rebuildActionButtons(); 
             addFloatingControls(); 
             startSearchAnimation();
-            
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 1. UI 布局优化：紧凑按钮组 ---
+        // --- 🚀 新增：无缝循环逻辑 ---
+        function initInfiniteLoop(container, cards) {
+            // 1. 清理旧的 spacer 和 clone
+            container.querySelectorAll('.snap-spacer, .unit-card.clone').forEach(el => el.remove());
+
+            if (cards.length === 0) return;
+
+            // 2. 添加头部 spacer (为了居中)
+            const spacerStart = document.createElement('div');
+            spacerStart.className = 'snap-spacer';
+            container.insertBefore(spacerStart, container.firstChild);
+
+            // 3. 克隆第一张卡片 (Ghost Card)
+            const firstCard = cards[0];
+            const cloneCard = firstCard.cloneNode(true);
+            cloneCard.classList.add('clone');
+            cloneCard.id = ''; // 移除 ID 避免冲突
+            // 移除 clone 里的 id 属性，防止 JS 报错
+            cloneCard.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+            // 视觉上稍微变暗一点点，或者加个标记 (可选，这里保持一致以欺骗视觉)
+            container.appendChild(cloneCard);
+
+            // 4. 添加尾部 spacer
+            const spacerEnd = document.createElement('div');
+            spacerEnd.className = 'snap-spacer';
+            container.appendChild(spacerEnd);
+
+            // 5. 监听滚动 (瞬间传送)
+            container.onscroll = () => {
+                // 计算滚动距离 + 容器宽度
+                const scrollRight = container.scrollLeft + container.offsetWidth;
+                const totalWidth = container.scrollWidth;
+                
+                // 阈值：当距离终点很近时 (约半张卡片宽度)
+                if (totalWidth - scrollRight < 20) {
+                    // 瞬间跳回第一张卡片的位置
+                    // 此时第一张卡片在 spacer 后面，所以是 spacer 的宽度
+                    container.style.scrollBehavior = 'auto'; // 关闭平滑
+                    container.scrollLeft = spacerStart.offsetWidth; 
+                    // 强制重绘后再开启平滑 (可选，但为了性能通常不需要马上开启)
+                    requestAnimationFrame(() => {
+                        container.style.scrollBehavior = 'smooth';
+                    });
+                }
+            };
+        }
+
+        // 修改 autoSortUnits 以触发循环构建
+        function autoSortUnits() {
+            const container = document.getElementById('content-area');
+            // 获取所有非 clone 的卡片
+            const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)'));
+            
+            const hour = new Date().getHours();
+            let timeWeights = {};
+            if (hour >= 5 && hour < 10) { timeWeights = { 1: 50, 9: 40, 4: 30 }; } 
+            else if (hour >= 11 && hour < 14) { timeWeights = { 6: 50, 7: 40, 5: 30 }; } 
+            else if (hour >= 17 && hour < 21) { timeWeights = { 8: 50, 7: 40, 6: 30 }; } 
+            else if (hour >= 21 || hour < 4) { timeWeights = { 9: 60, 10: 50, 3: 40 }; }
+
+            cards.sort((a, b) => {
+                const idA = parseInt(a.id.replace('u', ''));
+                const idB = parseInt(b.id.replace('u', ''));
+                let scoreA = usageData[idA] || 0;
+                let scoreB = usageData[idB] || 0;
+                scoreA += (timeWeights[idA] || 0);
+                scoreB += (timeWeights[idB] || 0);
+                return scoreB - scoreA; 
+            });
+
+            // 重新插入 DOM
+            cards.forEach(card => container.appendChild(card));
+            
+            // 构建循环
+            initInfiniteLoop(container, cards);
+        }
+
+        // --- 其他逻辑保持 V29.2 ---
+        
         function rebuildActionButtons() {
             for(let i=1; i<=13; i++) {
                 const card = document.getElementById(`u${i}`);
                 if(!card) continue;
                 const steps = card.querySelectorAll('.step-container');
-                
                 steps.forEach((step, index) => {
                     const displayArea = step.querySelector('.display-area');
                     if(displayArea) {
@@ -890,14 +947,12 @@
                             displayArea.appendChild(group);
                         }
                         
-                        // 喇叭
                         const btnAudio = createMiniBtn('🔊', () => {
                             const wordEl = document.getElementById(`u${i}-s${s}-word`);
                             if(wordEl) speakWholeSentence(wordEl.id, "", "");
                         });
                         group.appendChild(btnAudio);
 
-                        // 麦克风 (单句跟读)
                         const btnMic = createMiniBtn('🎙️', function(e) {
                             const wordEl = document.getElementById(`u${i}-s${s}-word`);
                             if(wordEl) startSimpleListening(this, wordEl.parentElement.innerText);
@@ -905,7 +960,6 @@
                         btnMic.classList.add('btn-mic');
                         group.appendChild(btnMic);
 
-                        // 举牌
                         const btnShow = createMiniBtn('👁️', () => {
                             const wordEl = document.getElementById(`u${i}-s${s}-word`);
                             const transEl = document.getElementById(`u${i}-s${s}-trans`);
@@ -916,81 +970,44 @@
                 });
             }
         }
-
         function createMiniBtn(icon, onClick) {
             const btn = document.createElement('button');
-            btn.className = 'btn-mini';
-            btn.innerHTML = icon;
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                triggerHaptic();
-                onClick.call(btn, e);
-            };
+            btn.className = 'btn-mini'; btn.innerHTML = icon;
+            btn.onclick = (e) => { e.stopPropagation(); triggerHaptic(); onClick.call(btn, e); };
             return btn;
         }
-
-        // --- 2. 核心修复：单句跟读逻辑 (中文提示) ---
         let simpleTarget = "";
         function startSimpleListening(btn, text) {
-            if (!recognition) { alert("浏览器不支持语音识别"); return; }
+            if (!recognition) { alert("Browser not supported"); return; }
             triggerHaptic();
             simpleTarget = text.toLowerCase().replace(/[.,?!]/g, '').trim(); 
-            
             recognition.onresult = (e) => {
                 const spoken = e.results[e.results.length-1][0].transcript;
                 handleSimpleResult(spoken);
                 btn.classList.remove('listening');
             };
             recognition.onend = () => btn.classList.remove('listening');
-            
-            // 重置其他按钮状态
             document.querySelectorAll('.btn-mic').forEach(b => b.classList.remove('listening'));
             btn.classList.add('listening');
-            
-            try { 
-                recognition.start(); 
-                showToast("🎤 请大声朗读..."); // 改为中文
-            } catch(e){}
+            try { recognition.start(); showToast("🎤 请大声朗读..."); } catch(e){}
         }
-
         function handleSimpleResult(spoken) {
             const cleanSpoken = spoken.toLowerCase().replace(/[.,?!]/g, '').trim();
-            // 模糊匹配：只要包含目标句，或者目标句包含识别结果（防止短语识别不全）就算对
             if (cleanSpoken.includes(simpleTarget) || simpleTarget.includes(cleanSpoken)) { 
-                showToast(`🎉 太棒了！完美发音！\n"${spoken}"`); 
-                triggerHaptic();
+                showToast(`🎉 太棒了！完美发音！\n"${spoken}"`); triggerHaptic();
             } else {
-                // 失败提示：带上“听起来像...”
                 showToast(`🤔 再试一次，听起来像：\n"${spoken}"`);
             }
         }
-
-        // --- 3. AI 陪练逻辑 ---
-
         function injectChatDOM() {
             const div = document.createElement('div');
-            div.id = 'chatOverlay';
-            div.className = 'chat-overlay';
-            div.innerHTML = `
-                <div class="chat-header">
-                    <span>🤖 AI Oral Tutor</span>
-                    <span onclick="toggleChat()" style="cursor:pointer;font-size:1.2em;">✕</span>
-                </div>
-                <div class="chat-body" id="chatBody"></div>
-                <div class="chat-footer">
-                    <button id="chatMicBtn" class="mic-wave" onclick="manualMicClick()">🎙️</button>
-                    <button class="nav-btn" onclick="endChat(false)" style="background:#ff3b30;color:white;border:none;">End</button>
-                </div>
-            `;
+            div.id = 'chatOverlay'; div.className = 'chat-overlay';
+            div.innerHTML = `<div class="chat-header"><span>🤖 AI Oral Tutor</span><span onclick="toggleChat()" style="cursor:pointer;font-size:1.2em;">✕</span></div><div class="chat-body" id="chatBody"></div><div class="chat-footer"><button id="chatMicBtn" class="mic-wave" onclick="manualMicClick()">🎙️</button><button class="nav-btn" onclick="endChat(false)" style="background:#ff3b30;color:white;border:none;">End</button></div>`;
             document.body.appendChild(div);
         }
-
         function getFullChineseSentence(u, s, cnWord, suffix) {
-            let cw = cnWord;
-            let sfx = suffix || "。"; 
-            let full = "";
+            let cw = cnWord; let sfx = suffix || "。"; let full = "";
             if(sfx === '吗' || sfx === '?') sfx = "吗？";
-
             switch(u) {
                 case 1: full = (s===1) ? `嗨，我是${cw}。` : `我住在${cw}。`; break;
                 case 2: full = (s===1) ? `打扰一下，我在找${cw}。` : `能告诉我${cw}${sfx}`; break;
@@ -1007,230 +1024,58 @@
                 case 13: full = (s===1) ? `我想${cw}。` : `在${cw}。`; break;
                 default: full = cw + sfx;
             }
-            if(u===3 && s===2) {
-                if(cw.includes('急')) full = "真的很紧急。";
-                if(cw.includes('快')) full = "会很快就好。";
-            }
+            if(u===3 && s===2) { if(cw.includes('急')) full = "真的很紧急。"; if(cw.includes('快')) full = "会很快就好。"; }
             return full;
         }
-
         function startAiSession() {
-            aiState.active = true;
-            aiState.score = 0;
-            aiState.total = 0;
-            document.getElementById('chatBody').innerHTML = '';
-            addBotMsg("Hi there! I'm your AI tutor. Want to practice English?", [
-                { text: "Yes, let's go!", action: askForScenario },
-                { text: "Not now", action: () => { toggleChat(); aiState.active = false; } }
-            ]);
+            aiState.active = true; aiState.score = 0; aiState.total = 0; document.getElementById('chatBody').innerHTML = '';
+            addBotMsg("Hi there! I'm your AI tutor. Want to practice English?", [{ text: "Yes, let's go!", action: askForScenario }, { text: "Not now", action: () => { toggleChat(); aiState.active = false; } }]);
         }
-
-        function askForScenario() {
-            addUserMsg("Yes, let's go!");
-            let options = [];
-            for(let i=1; i<=13; i++) {
-                const card = document.getElementById(`u${i}`);
-                if(card) {
-                    const name = card.getAttribute('data-name');
-                    options.push({ text: name, action: () => startUnitPractice(i) });
-                }
-            }
-            addBotMsg("Great! Which scenario do you want to practice?", options);
-        }
-
-        function startUnitPractice(unitId) {
-            addUserMsg(`Unit ${unitId}`);
-            aiState.currentUnit = unitId;
-            aiState.currentStep = 1;
-            addBotMsg("Awesome choice! Let's start!");
-            setTimeout(askQuestion, 1500);
-        }
-
+        function askForScenario() { addUserMsg("Yes, let's go!"); let ops = []; for(let i=1; i<=13; i++) { const c = document.getElementById(`u${i}`); if(c) { const name = c.getAttribute('data-name'); ops.push({ text: name, action: () => startUnitPractice(i) }); } } addBotMsg("Great! Which scenario do you want to practice?", ops); }
+        function startUnitPractice(uid) { addUserMsg(`Unit ${uid}`); aiState.currentUnit = uid; aiState.currentStep = 1; addBotMsg("Awesome choice! Let's start!"); setTimeout(askQuestion, 1500); }
         function askQuestion() {
             if(!aiState.active) return;
-            const u = aiState.currentUnit;
-            const s = aiState.currentStep;
-            
+            const u = aiState.currentUnit; const s = aiState.currentStep;
             const savedData = JSON.parse(localStorage.getItem(`u${u}-s${s}`));
-            if(!savedData || s > 2) {
-                endChat(true); return;
-            }
-
+            if(!savedData || s > 2) { endChat(true); return; }
             const wordEl = document.getElementById(`u${u}-s${s}-word`);
-            const targetEng = wordEl.parentElement.innerText;
-            aiState.currentTargetEng = targetEng;
-
-            const targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix);
-            aiState.currentTargetCn = targetCn;
-            
+            const targetEng = wordEl.parentElement.innerText; aiState.currentTargetEng = targetEng;
+            const targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix); aiState.currentTargetCn = targetCn;
             addBotMsg(`Please translate:\n"${targetCn}"`, [], true); 
-            
             aiState.waitingForSpeech = true;
-            
             if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
-            aiState.silenceTimer = setTimeout(() => {
-                if(aiState.waitingForSpeech && aiState.active) {
-                    speakDirect("Are you there?", () => {
-                        startChatListening(); 
-                    });
-                }
-            }, 20000); 
+            aiState.silenceTimer = setTimeout(() => { if(aiState.waitingForSpeech && aiState.active) { speakDirect("Are you there?", () => { startChatListening(); }); } }, 20000); 
         }
-
         function startChatListening() {
-            if (!recognition) return;
-            if (!aiState.active) return;
-
-            const btn = document.getElementById('chatMicBtn');
-            btn.classList.add('active');
-            
+            if (!recognition) return; if (!aiState.active) return;
+            const btn = document.getElementById('chatMicBtn'); btn.classList.add('active');
             try { recognition.start(); } catch(e) {}
-            
-            recognition.onresult = (event) => {
-                const last = event.results.length - 1;
-                const text = event.results[last][0].transcript;
-                processAnswer(text);
-            };
-            
-            recognition.onend = () => {
-                btn.classList.remove('active');
-            };
+            recognition.onresult = (event) => { const last = event.results.length - 1; const text = event.results[last][0].transcript; processAnswer(text); };
+            recognition.onend = () => { btn.classList.remove('active'); };
         }
-
         function processAnswer(spokenText) {
-            aiState.waitingForSpeech = false;
-            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
-            
+            aiState.waitingForSpeech = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
             addUserMsg(spokenText);
-            
-            const target = aiState.currentTargetEng.toLowerCase().replace(/[^a-z ]/g, "");
-            const spoken = spokenText.toLowerCase().replace(/[^a-z ]/g, "");
-            const targetWords = target.split(" ");
-            let matchCount = 0;
-            targetWords.forEach(w => { if(spoken.includes(w)) matchCount++; });
+            const target = aiState.currentTargetEng.toLowerCase().replace(/[^a-z ]/g, ""); const spoken = spokenText.toLowerCase().replace(/[^a-z ]/g, ""); const targetWords = target.split(" ");
+            let matchCount = 0; targetWords.forEach(w => { if(spoken.includes(w)) matchCount++; });
             const accuracy = matchCount / targetWords.length;
-            
-            if(accuracy >= 0.5) {
-                aiState.score++;
-                triggerHaptic();
-                addBotMsg("✅ 回答正确！太棒了！"); 
-                aiState.currentStep++;
-                setTimeout(askQuestion, 2000);
-            } else {
-                triggerHaptic();
-                if(navigator.vibrate) navigator.vibrate(100);
-                addBotMsg(`❌ 差点意思，正确读法是：\n"${aiState.currentTargetEng}"`);
-                speakDirect(aiState.currentTargetEng); 
-                aiState.currentStep++;
-                setTimeout(askQuestion, 4000);
-            }
+            if(accuracy >= 0.5) { aiState.score++; triggerHaptic(); addBotMsg("✅ 回答正确！太棒了！"); aiState.currentStep++; setTimeout(askQuestion, 2000); } 
+            else { triggerHaptic(); if(navigator.vibrate) navigator.vibrate(100); addBotMsg(`❌ 差点意思，正确读法是：\n"${aiState.currentTargetEng}"`); speakDirect(aiState.currentTargetEng); aiState.currentStep++; setTimeout(askQuestion, 4000); }
             aiState.total++;
         }
-
         function endChat(completed) {
-            aiState.active = false;
-            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
-            if(recognition) try { recognition.abort(); } catch(e){}
-            document.getElementById('chatMicBtn').classList.remove('active');
-            
-            let msg = "练习结束，下次继续！";
-            if(completed && aiState.total > 0) {
-                const pct = Math.round((aiState.score / aiState.total) * 100);
-                msg = `练习完成！🎉\n正确率 ${pct}%。继续加油！`;
-            }
-            
-            addBotMsg(msg, [], false);
-            
-            setTimeout(() => {
-                const overlay = document.getElementById('chatOverlay');
-                if(overlay) overlay.style.display = 'none';
-            }, 3000); 
+            aiState.active = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer); if(recognition) try { recognition.abort(); } catch(e){} document.getElementById('chatMicBtn').classList.remove('active');
+            let msg = "练习结束，下次继续！"; if(completed && aiState.total > 0) { const pct = Math.round((aiState.score / aiState.total) * 100); msg = `练习完成！🎉\n正确率 ${pct}%。继续加油！`; }
+            addBotMsg(msg, [], false); setTimeout(() => { const overlay = document.getElementById('chatOverlay'); if(overlay) overlay.style.display = 'none'; }, 3000); 
         }
-
-        function manualMicClick() {
-            if(aiState.waitingForSpeech) startChatListening();
-            else showToast("Wait for my question!");
-        }
-
-        // --- 通用部分 ---
-        function initSpeechRecognition() {
-            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-                recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1;
-                // 默认 handler
-                recognition.onresult = (e) => { console.log(e.results[0][0].transcript); };
-            }
-        }
-        function speakDirect(text, callback) {
-            window.speechSynthesis.cancel();
-            const isChinese = /[\u4e00-\u9fa5]/.test(text);
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = isChinese ? 'zh-CN' : 'en-US'; 
-            utterance.rate = 0.9; 
-            if(callback) utterance.onend = callback;
-            window.speechSynthesis.speak(utterance);
-        }
-        function startSearchAnimation() {
-            const input = document.getElementById('searchBox');
-            let allKeywords = [];
-            document.querySelectorAll('.unit-card').forEach(c => {
-                const keys = c.getAttribute('data-keywords').split(' ');
-                allKeywords.push(...keys);
-            });
-            allKeywords = allKeywords.filter(k => /^[\u4e00-\u9fa5]{2,}$/.test(k) && k.length < 5);
-            allKeywords = [...new Set(allKeywords)];
-            let idx = 0;
-            setInterval(() => {
-                if(document.activeElement === input && input.value !== "") return;
-                input.style.color = 'transparent';
-                setTimeout(() => {
-                    const word = allKeywords[idx % allKeywords.length];
-                    input.setAttribute('placeholder', `🔍 搜"${word}"试试...`);
-                    input.style.color = 'var(--text-main)';
-                    idx++;
-                }, 500);
-            }, 4000);
-        }
-        function addFloatingControls() {
-            const container = document.querySelector('.float-controls');
-            const btn = document.createElement('button');
-            btn.className = 'fab-robot';
-            btn.innerHTML = '🤖<div class="robot-badge" id="robotBadge"></div>';
-            btn.title = "AI 陪练";
-            btn.onclick = () => { 
-                triggerHaptic(); toggleChat(); 
-                if(document.getElementById('chatBody').innerHTML.trim() === "") startAiSession(); 
-            };
-            container.insertBefore(btn, container.firstChild);
-        }
-        function resetIdleTimer() {
-            if(aiState.active) return;
-            if(aiState.idleTimer) clearTimeout(aiState.idleTimer);
-            aiState.idleTimer = setTimeout(() => {
-                document.getElementById('robotBadge').style.display = 'block';
-                const robotBtn = document.querySelector('.fab-robot');
-                if(robotBtn) { showToast("🤖 嘿！想练练口语吗？点我！"); triggerHaptic(); }
-            }, 60000); 
-        }
-        function toggleChat() {
-            const el = document.getElementById('chatOverlay');
-            const isHidden = el.style.display === 'none' || el.style.display === '';
-            el.style.display = isHidden ? 'flex' : 'none';
-            document.getElementById('robotBadge').style.display = 'none';
-            if(isHidden) { const body = document.getElementById('chatBody'); body.scrollTop = body.scrollHeight; }
-        }
-        function addBotMsg(text, chips=[], autoMic=false) {
-            const body = document.getElementById('chatBody');
-            const d = document.createElement('div'); d.className='msg bot'; d.innerText=text; body.appendChild(d);
-            if(chips.length>0){
-                const g = document.createElement('div'); g.className='msg-btn-group';
-                chips.forEach(c=>{const b=document.createElement('div');b.className='msg-chip';b.innerText=c.text;b.onclick=()=>c.action();g.appendChild(b);});
-                body.appendChild(g);
-            }
-            speakDirect(text, ()=>{ if(autoMic) startChatListening(); });
-            body.scrollTop = body.scrollHeight;
-        }
+        function manualMicClick() { if(aiState.waitingForSpeech) startChatListening(); else showToast("Wait for my question!"); }
+        function initSpeechRecognition() { if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) { const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; recognition = new SpeechRecognition(); recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1; recognition.onresult = (e) => { console.log(e.results[0][0].transcript); }; } }
+        function speakDirect(text, callback) { window.speechSynthesis.cancel(); const isChinese = /[\u4e00-\u9fa5]/.test(text); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = isChinese ? 'zh-CN' : 'en-US'; utterance.rate = 0.9; if(callback) utterance.onend = callback; window.speechSynthesis.speak(utterance); }
+        function startSearchAnimation() { const input = document.getElementById('searchBox'); let allKeywords = []; document.querySelectorAll('.unit-card').forEach(c => { const keys = c.getAttribute('data-keywords').split(' '); allKeywords.push(...keys); }); allKeywords = allKeywords.filter(k => /^[\u4e00-\u9fa5]{2,}$/.test(k) && k.length < 5); allKeywords = [...new Set(allKeywords)]; let idx = 0; setInterval(() => { if(document.activeElement === input && input.value !== "") return; input.style.color = 'transparent'; setTimeout(() => { const word = allKeywords[idx % allKeywords.length]; input.setAttribute('placeholder', `🔍 搜"${word}"试试...`); input.style.color = 'var(--text-main)'; idx++; }, 500); }, 4000); }
+        function addFloatingControls() { const c=document.querySelector('.float-controls'); const b=document.createElement('button'); b.className='fab-robot'; b.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>'; b.title="AI 陪练"; b.onclick=()=>{ triggerHaptic(); toggleChat(); if(document.getElementById('chatBody').innerHTML.trim()==="") startAiSession(); }; c.insertBefore(b, c.firstChild); const t=document.createElement('button'); t.className='fab-tools'; t.innerHTML='🧰'; t.onclick=openToolbox; c.insertBefore(t, c.firstChild); }
+        function resetIdleTimer() { if(aiState.active) return; if(aiState.idleTimer) clearTimeout(aiState.idleTimer); aiState.idleTimer = setTimeout(() => { document.getElementById('robotBadge').style.display = 'block'; const robotBtn = document.querySelector('.fab-robot'); if(robotBtn) { showToast("🤖 嘿！想练练口语吗？点我！"); triggerHaptic(); } }, 60000); }
+        function toggleChat() { const el = document.getElementById('chatOverlay'); const isHidden = el.style.display === 'none' || el.style.display === ''; el.style.display = isHidden ? 'flex' : 'none'; document.getElementById('robotBadge').style.display = 'none'; if(isHidden) { const body = document.getElementById('chatBody'); body.scrollTop = body.scrollHeight; } }
+        function addBotMsg(text, chips=[], autoMic=false) { const body = document.getElementById('chatBody'); const d = document.createElement('div'); d.className='msg bot'; d.innerText=text; body.appendChild(d); if(chips.length>0){ const g = document.createElement('div'); g.className='msg-btn-group'; chips.forEach(c=>{const b=document.createElement('div');b.className='msg-chip';b.innerText=c.text;b.onclick=()=>c.action();g.appendChild(b);}); body.appendChild(g); } speakDirect(text, ()=>{ if(autoMic) startChatListening(); }); body.scrollTop = body.scrollHeight; }
         function addUserMsg(text) { const b=document.getElementById('chatBody'); const d=document.createElement('div'); d.className='msg user'; d.innerText=text; b.appendChild(d); b.scrollTop=b.scrollHeight; }
         function injectToolboxDOM(){if(document.getElementById('toolOverlay'))return;const d=document.createElement('div');d.id='toolOverlay';d.className='tool-overlay';d.onclick=(e)=>{if(e.target===d)d.style.display='none';};d.innerHTML=`<div class="tool-card"><div class="tool-tabs"><div class="tool-tab active" onclick="switchTool(0)">🌡️ 换算</div><div class="tool-tab" onclick="switchTool(1)">💵 小费</div></div><div class="tool-section active" id="tool-calc"><div class="calc-row"><input type="number" class="calc-input" id="inp-f" placeholder="°F" oninput="convert('f')"><span class="calc-label">°F</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-c" placeholder="°C" oninput="convert('c')"><span class="calc-label">°C</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-lb" placeholder="lb" oninput="convert('lb')"><span class="calc-label">lb</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-kg" placeholder="kg" oninput="convert('kg')"><span class="calc-label">kg</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-oz" placeholder="oz" oninput="convert('oz')"><span class="calc-label">oz</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-ml" placeholder="ml" oninput="convert('ml')"><span class="calc-label">ml</span></div></div><div class="tool-section" id="tool-tip"><div class="calc-row" style="justify-content:center;"><span style="font-weight:bold;">消费 $</span><input type="number" class="calc-input" id="inp-bill" placeholder="0.00" style="width:150px;" oninput="calcTip()"></div><div class="tip-grid"><div class="tip-box"><span class="tip-pct">15%</span><span class="tip-val" id="tip-15">$0</span></div><div class="tip-box"><span class="tip-pct">18%</span><span class="tip-val" id="tip-18">$0</span></div><div class="tip-box"><span class="tip-pct">20%</span><span class="tip-val" id="tip-20">$0</span></div></div></div></div>`;document.body.appendChild(d);}
         function switchTool(idx){triggerHaptic();document.querySelectorAll('.tool-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));document.querySelectorAll('.tool-section').forEach((s,i)=>s.classList.toggle('active',i===idx));}
@@ -1238,15 +1083,7 @@
         function calcTip(){const b=parseFloat(document.getElementById('inp-bill').value)||0;document.getElementById('tip-15').innerText='$'+(b*1.15).toFixed(2);document.getElementById('tip-18').innerText='$'+(b*1.18).toFixed(2);document.getElementById('tip-20').innerText='$'+(b*1.20).toFixed(2);}
         function openToolbox(){triggerHaptic();document.getElementById('toolOverlay').style.display='flex';}
         function closeToolbox(){document.getElementById('toolOverlay').style.display='none';}
-        function addFloatingControls() {
-            const c=document.querySelector('.float-controls');
-            const b=document.createElement('button'); b.className='fab-robot'; b.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>';
-            b.onclick=()=>{triggerHaptic();toggleChat();if(document.getElementById('chatBody').innerHTML==="")startAiSession();};
-            c.insertBefore(b, c.firstChild);
-            const t=document.createElement('button'); t.className='fab-tools'; t.innerHTML='🧰';
-            t.onclick=openToolbox; c.insertBefore(t, c.firstChild);
-        }
-        function injectSmartKeywords(){/*...同上*/}
+        function injectSmartKeywords(){/*省略*/}
         function injectShowCardDOM(){if(!document.getElementById('showCardOverlay')){const d=document.createElement('div');d.id='showCardOverlay';d.className='show-card-overlay';d.onclick=closeShowCard;d.innerHTML=`<div class="show-card-text" id="showCardEng"></div><div class="show-card-sub" id="showCardCn"></div><div class="show-card-hint">点击任意处关闭</div>`;document.body.appendChild(d);}}
         function openShowCard(e,c){document.getElementById('showCardEng').innerText=e;document.getElementById('showCardCn').innerText=c;document.getElementById('showCardOverlay').style.display='flex';}
         function closeShowCard(){document.getElementById('showCardOverlay').style.display='none';}
@@ -1258,7 +1095,6 @@
         function addCustomChip(u,s,p,x){triggerHaptic();const e=prompt("English:");if(!e)return;const c=prompt("Chinese:");if(!c)return;const d={unitNum:u,stepNum:s,eng:e,cn:c,prefix:p,suffix:x};const k=`custom_chips_u${u}_s${s}`;let l=JSON.parse(localStorage.getItem(k)||"[]");l.push(d);localStorage.setItem(k,JSON.stringify(l));renderAndClickChip(d,true);}
         function toggleEmergency(){triggerHaptic();document.getElementById('emergencyOverlay').classList.toggle('active');}
         function loadUsageData(){usageData=JSON.parse(localStorage.getItem('unit_usage')||"{}");}
-        function autoSortUnits(){const c=document.getElementById('content-area');const cards=Array.from(c.getElementsByClassName('unit-card'));cards.sort((a,b)=>{const idA=parseInt(a.id.replace('u',''));const idB=parseInt(b.id.replace('u',''));return (usageData[idB]||0)-(usageData[idA]||0);});cards.forEach(card=>c.appendChild(card));}
         function incrementUsage(u){usageData[u]=(usageData[u]||0)+1;localStorage.setItem('unit_usage',JSON.stringify(usageData));}
         function checkMonthlyReport(){/*...*/ }
         function showMonthlySummary(m){/*...*/ }
@@ -1268,14 +1104,15 @@
         function scrollToUnit(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}
         function toggleTheme(){triggerHaptic();const h=document.documentElement;const n=h.getAttribute('data-theme')==='light'?'dark':'light';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);}
         function loadTheme(){const s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s);}
-        function filterUnits(){/*简略*/}
+        function filterUnits(){const filter=document.getElementById('searchBox').value.toLowerCase();const cards=document.getElementsByClassName('unit-card');for(let card of cards){const text=card.innerText.toLowerCase();const keys=card.getAttribute('data-keywords')||"";card.style.display=(text.includes(filter)||keys.includes(filter))?"":"none";} document.getElementById('content-area').scrollTo(0,0);}
         function loadCustomChips(){for(let u=1;u<=13;u++)for(let s=1;s<=2;s++)JSON.parse(localStorage.getItem(`custom_chips_u${u}_s${s}`)||"[]").forEach(d=>renderAndClickChip(d,false));}
         function renderAndClickChip(d,t){const c=document.getElementById(`u${d.unitNum}-s${d.stepNum}-chips`);if(!c)return;const b=document.createElement('div');b.className='chip';b.innerText=d.eng;b.onclick=()=>{updateUnit(d.unitNum,d.stepNum,d.eng,d.cn,d.prefix,d.suffix,b);};const w=c.querySelector('.add-btn-wrapper');c.insertBefore(b,w||c.firstChild);if(t)b.click();}
-        function updateCustomChipInStorage(d,n){/*简略*/}
+        function updateCustomChipInStorage(d,n){const k=`custom_chips_u${d.unitNum}_s${d.stepNum}`;let l=JSON.parse(localStorage.getItem(k)||"[]");if(n==="")l=l.filter(i=>i.eng!==d.eng);else{const i=l.findIndex(x=>x.eng===d.eng);if(i>-1)l[i].eng=n;}localStorage.setItem(k,JSON.stringify(l));}
         function toggleQuizMode(){triggerHaptic();document.body.classList.toggle('quiz-mode');}
         function updateUnit(unitNum,stepNum,engWord,cnWord,prefixEng,suffixCn,element,playSound=true){triggerHaptic();incrementUsage(unitNum);const wordId=`u${unitNum}-s${stepNum}-word`;const displayEl=document.getElementById(wordId);if(displayEl)displayEl.innerText=engWord;const fullCn=getFullChineseSentence(unitNum,stepNum,cnWord,suffixCn);document.getElementById(`u${unitNum}-s${stepNum}-trans`).innerText=fullCn;let container=element.parentElement;container.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));if(element.classList.contains('chip'))element.classList.add('active');localStorage.setItem(`u${unitNum}-s${stepNum}`,JSON.stringify({engWord,cnWord,prefix:prefixEng,suffix:suffixCn}));if(playSound)speakDirect(engWord);}
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
         function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
+        function speakDirect(text,callback){window.speechSynthesis.cancel();const isChinese=/[\u4e00-\u9fa5]/.test(text);const utterance=new SpeechSynthesisUtterance(text);utterance.lang=isChinese?'zh-CN':'en-US';utterance.rate=0.9;if(callback)utterance.onend=callback;window.speechSynthesis.speak(utterance);}
     </script>
 </body>
 </html>

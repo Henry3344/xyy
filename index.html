@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Survival English Guide v25.5</title>
     <style>
-        /* --- V31.0 样式表：修复动画、遮挡与逻辑构造 --- */
+        /* --- V31.1 样式表：红色气泡修复 & 动画优化 --- */
         :root {
             --bg-body: #f2f2f7; --bg-card: #ffffff; --text-main: #1c1c1e; --text-sub: #8e8e93;
             --primary: #007aff; --primary-light: #e5f1ff; --border: #c6c6c8;
@@ -76,40 +76,30 @@
         .chips-container { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
         .chip { background: var(--chip-bg); border: 1px solid var(--chip-border); padding: 6px 12px; border-radius: 16px; font-size: 0.9em; cursor: pointer; font-weight: 600; color: var(--text-main); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .add-btn-wrapper { display: inline-block; }
+        
+        /* 修复点：给 wrapper 加相对定位，锁住气泡 */
+        .add-btn-wrapper { display: inline-block; position: relative; } 
         .add-chip-btn { border: 1px dashed var(--text-sub); background: transparent; padding: 6px 10px; color: var(--text-sub); }
         
-        .bubble-tip { position: absolute; top: -10px; left: 50%; transform: translateX(-50%) translateY(-100%); background: var(--danger); color: white; padding: 6px 10px; border-radius: 8px; font-size: 0.75em; font-weight: bold; width: 140px; text-align: center; pointer-events: none; animation: bounce 1.5s infinite; z-index: 99; }
-        .bubble-tip.fade-out { opacity: 0; }
+        .bubble-tip { 
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%) translateY(-100%); 
+            background: var(--danger); color: white; padding: 6px 10px; border-radius: 8px; 
+            font-size: 0.75em; font-weight: bold; width: 140px; text-align: center; pointer-events: none; 
+            animation: bounce 1.5s infinite; z-index: 99; white-space: nowrap;
+        }
+        .bubble-tip.fade-out { opacity: 0; transition: opacity 1s ease; }
         .bubble-tip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: var(--danger) transparent transparent transparent; }
         @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(-100%); } 50% { transform: translateX(-50%) translateY(-108%); } }
 
-        /* --- 修复点：下滑动画 --- */
-        .scroll-hint { 
-            position: absolute; bottom: 0; left: 0; width: 100%; text-align: center; 
-            color: var(--primary); font-size: 0.85em; padding: 12px 0; 
-            background: var(--hint-bg); backdrop-filter: blur(8px); 
-            border-radius: 0 0 20px 20px; opacity: 0; pointer-events: none; 
-            z-index: 50; transition: opacity 0.3s; 
-            font-weight: bold;
-        }
-        .scroll-hint.visible { 
-            opacity: 1; 
-            animation: float-hint 2s ease-in-out infinite; /* 加回跳动动画 */
-        }
-        @keyframes float-hint {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(5px); }
-        }
+        .scroll-hint { position: absolute; bottom: 0; left: 0; width: 100%; text-align: center; color: var(--primary); font-size: 0.85em; padding: 12px 0; background: var(--hint-bg); backdrop-filter: blur(8px); border-radius: 0 0 20px 20px; opacity: 0; pointer-events: none; z-index: 50; transition: opacity 0.3s; font-weight: bold; }
+        .scroll-hint.visible { opacity: 1; animation: float-hint 2s ease-in-out infinite; }
+        @keyframes float-hint { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
 
         .divider { height: 1px; background: var(--border); margin: 20px 0; border: none; }
-        
-        /* 底部功能区 & 新增句式标签 */
         .combo-box { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px; border-radius: 16px; margin-top: 20px; position: relative; }
         .combo-title { font-size: 0.8em; font-weight: bold; opacity: 0.8; margin-bottom: 8px; display: flex; justify-content: space-between; }
         .combo-text { padding-right: 40px; font-weight: 600; margin-bottom: 10px; line-height: 1.4; }
         .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; }
-        /* 新增：句式结构标签 */
         .combo-struct { font-size: 0.75em; color: #dfe6e9; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; display: inline-block; margin-top: 5px; border: 1px solid rgba(255,255,255,0.2); }
 
         .float-controls { position: fixed; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 2000; align-items: flex-end; }
@@ -120,18 +110,15 @@
         .robot-badge { position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: #ff3b30; border-radius: 50%; border: 2px solid #fff; display: none; }
         .fab-tools { background: #ff9f0a; color: white; }
 
-        /* --- 修复点：特训模式 (Quiz Mode) --- */
         .quiz-active-text, body.quiz-mode .quiz-default-text { display: none; }
         body.quiz-mode .quiz-active-text { display: inline; }
         body.quiz-mode .english-sentence { color: transparent !important; text-shadow: 0 0 13px rgba(128,128,128,0.5); user-select: none; }
         body.quiz-mode .english-sentence:active { color: var(--text-main) !important; text-shadow: none; }
         body.quiz-mode .pattern-box { color: transparent !important; background-color: var(--border); }
         body.quiz-mode .pattern-box:active { color: #d63031 !important; background-color: #ffeaea; }
-        /* 新增：连 combo-text 也一起遮挡 */
         body.quiz-mode .combo-text { color: transparent !important; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
         body.quiz-mode .combo-text:active { color: white !important; text-shadow: none; }
 
-        /* 弹窗通用样式 */
         .emergency-overlay, .modal-overlay, .show-card-overlay, .tool-overlay, .chat-overlay { display: none; }
         .emergency-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; flex-direction: column; padding: 20px; box-sizing: border-box; }
         .emergency-overlay.active { display: flex; }
@@ -803,7 +790,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V31.0: 句式解析 + 动画修复版) ===
+        // === 核心逻辑 (V31.1: 完美节奏 + 回调控制版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -822,11 +809,8 @@
             injectToolboxDOM(); 
             initSpeechRecognition();
             checkMonthlyReport(); 
-            
-            // 核心：排序 -> 构建双向循环
             autoSortUnits();
             
-            // 恢复选择状态
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
                     restoreSelection(i, 1);
@@ -837,83 +821,167 @@
             setTimeout(() => { initBubbleTip(); }, 300);
             initScrollHints();
             rebuildActionButtons(); 
-            
-            // 🚀 新增：自动生成句式结构标签
             injectComboStructs(); 
-            
             addFloatingControls(); 
             startSearchAnimation();
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 🚀 新增功能：自动生成句式结构 (Combo Struct) ---
+        // --- AI 陪练逻辑优化 ---
+
+        // 关键修改：addBotMsg 支持回调，确保说完再做动作
+        function addBotMsg(text, chips=[], autoMic=false, callback=null) {
+            const body = document.getElementById('chatBody');
+            const d = document.createElement('div'); 
+            d.className='msg bot'; 
+            d.innerText=text; 
+            body.appendChild(d);
+            
+            if(chips.length > 0){
+                const g = document.createElement('div'); g.className='msg-btn-group';
+                chips.forEach(c=>{
+                    const b=document.createElement('div');b.className='msg-chip';b.innerText=c.text;b.onclick=()=>c.action();g.appendChild(b);
+                });
+                body.appendChild(g);
+            }
+            
+            // 说话 -> 说完 -> (开麦 或 执行回调)
+            speakDirect(text, () => {
+                if(autoMic) startChatListening();
+                if(callback) callback();
+            });
+            
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function processAnswer(spokenText) {
+            aiState.waitingForSpeech = false;
+            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
+            
+            addUserMsg(spokenText);
+            
+            const target = aiState.currentTargetEng.toLowerCase().replace(/[^a-z ]/g, "");
+            const spoken = spokenText.toLowerCase().replace(/[^a-z ]/g, "");
+            const targetWords = target.split(" ");
+            let matchCount = 0;
+            targetWords.forEach(w => { if(spoken.includes(w)) matchCount++; });
+            const accuracy = matchCount / targetWords.length;
+            
+            if(accuracy >= 0.5) {
+                aiState.score++;
+                triggerHaptic();
+                // 成功：先说完夸奖，再等2秒，再下一题
+                addBotMsg("✅ 回答正确！太棒了！", [], false, () => {
+                    setTimeout(() => { 
+                        aiState.currentStep++; 
+                        askQuestion(); 
+                    }, 2000); 
+                });
+            } else {
+                triggerHaptic();
+                if(navigator.vibrate) navigator.vibrate(100);
+                // 失败：先说完纠正，再等3秒，再下一题
+                addBotMsg(`❌ 差点意思，正确读法是：\n"${aiState.currentTargetEng}"`, [], false, () => {
+                    speakDirect(aiState.currentTargetEng, () => { // 读一遍正确答案
+                        setTimeout(() => {
+                            aiState.currentStep++; 
+                            askQuestion(); 
+                        }, 3000);
+                    });
+                });
+            }
+            aiState.total++;
+        }
+
+        function endChat(completed) {
+            aiState.active = false;
+            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
+            if(recognition) try { recognition.abort(); } catch(e){}
+            document.getElementById('chatMicBtn').classList.remove('active');
+            
+            let msg = "练习结束，下次继续！";
+            if(completed && aiState.total > 0) {
+                const pct = Math.round((aiState.score / aiState.total) * 100);
+                msg = `练习完成！🎉\n正确率 ${pct}%。继续加油！`;
+            }
+            
+            // 结束语说完 -> 等 6秒 -> 关闭
+            addBotMsg(msg, [], false, () => {
+                setTimeout(() => {
+                    const overlay = document.getElementById('chatOverlay');
+                    if(overlay) overlay.style.display = 'none';
+                }, 6000); 
+            });
+        }
+
+        function askQuestion() {
+            if(!aiState.active) return;
+            const u = aiState.currentUnit; const s = aiState.currentStep;
+            
+            // 修复：必须实时获取 DOM (防止循环模式下的 ID 冲突或 clone 问题)
+            // 在循环模式下，可能有多个 ID 相同的元素 (虽然 clone 移除了 ID，但为了保险我们用 querySelector)
+            // 最稳妥是用 getElementById，因为 clone 移除了 id
+            const wordEl = document.getElementById(`u${u}-s${s}-word`);
+            const transEl = document.getElementById(`u${u}-s${s}-trans`);
+            
+            if(!wordEl || s > 2) { endChat(true); return; }
+
+            const targetEng = wordEl.parentElement.innerText; 
+            aiState.currentTargetEng = targetEng;
+
+            // 优先用缓存拼装整句，没有缓存读屏幕
+            let targetCn = transEl.innerText;
+            const savedData = JSON.parse(localStorage.getItem(`u${u}-s${s}`));
+            if(savedData) targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix);
+            
+            aiState.currentTargetCn = targetCn;
+            
+            addBotMsg(`Please translate:\n"${targetCn}"`, [], true); 
+            
+            aiState.waitingForSpeech = true;
+            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
+            aiState.silenceTimer = setTimeout(() => {
+                if(aiState.waitingForSpeech && aiState.active) {
+                    speakDirect("Are you there?", () => { startChatListening(); });
+                }
+            }, 20000); 
+        }
+
+        // --- 其他逻辑保持不变 ---
+        
         function injectComboStructs() {
             const cards = document.querySelectorAll('.unit-card');
             cards.forEach(card => {
-                // 找到 combo box
                 const comboBox = card.querySelector('.combo-box');
-                if (!comboBox) return;
-                
-                // 避免重复添加
-                if (comboBox.querySelector('.combo-struct')) return;
-
-                // 抓取 Pattern 1 & 2
+                if (!comboBox || comboBox.querySelector('.combo-struct')) return;
                 const p1 = card.querySelector('.step-container:nth-of-type(1) .pattern-box')?.innerText || "Step 1";
                 const p2 = card.querySelector('.step-container:nth-of-type(2) .pattern-box')?.innerText || "Step 2";
-                
-                // 插入标签
                 const div = document.createElement('div');
                 div.className = 'combo-struct';
                 div.innerText = `💡 这是 [${p1}] + [${p2}] 的句式`;
-                
-                // 插在 title 后面
                 const title = comboBox.querySelector('.combo-title');
                 if (title) title.parentNode.insertBefore(div, title.nextSibling);
             });
         }
 
-        // --- 双向无缝循环 ---
         function initInfiniteLoop(container, cards) {
             container.querySelectorAll('.snap-spacer, .unit-card.clone').forEach(el => el.remove());
             if (cards.length < 2) return; 
-            const firstCard = cards[0];
-            const lastCard = cards[cards.length - 1];
-            const cloneFirst = firstCard.cloneNode(true);
-            const cloneLast = lastCard.cloneNode(true);
-            [cloneFirst, cloneLast].forEach(el => {
-                el.classList.add('clone'); el.id = "";
-                el.querySelectorAll('[id]').forEach(c => c.removeAttribute('id'));
-            });
+            const firstCard = cards[0]; const lastCard = cards[cards.length - 1];
+            const cloneFirst = firstCard.cloneNode(true); const cloneLast = lastCard.cloneNode(true);
+            [cloneFirst, cloneLast].forEach(el => { el.classList.add('clone'); el.id = ""; el.querySelectorAll('[id]').forEach(c => c.removeAttribute('id')); });
             const spacerStart = document.createElement('div'); spacerStart.className = 'snap-spacer';
             const spacerEnd = document.createElement('div'); spacerEnd.className = 'snap-spacer';
             container.insertBefore(spacerStart, container.firstChild);
             container.insertBefore(cloneLast, container.firstChild.nextSibling); 
             container.appendChild(cloneFirst);
             container.appendChild(spacerEnd);
-            
-            requestAnimationFrame(() => {
-                container.style.scrollBehavior = 'auto';
-                const offset = firstCard.offsetLeft - container.offsetLeft - (window.innerWidth * 0.075);
-                container.scrollLeft = offset;
-                setTimeout(() => { container.style.scrollBehavior = 'smooth'; }, 50);
-            });
-
+            requestAnimationFrame(() => { container.style.scrollBehavior = 'auto'; const offset = firstCard.offsetLeft - container.offsetLeft - (window.innerWidth * 0.075); container.scrollLeft = offset; setTimeout(() => { container.style.scrollBehavior = 'smooth'; }, 50); });
             container.onscroll = () => {
-                const scrollLeft = container.scrollLeft;
-                const scrollWidth = container.scrollWidth;
-                const clientWidth = container.clientWidth;
-                const buffer = 10;
-                if (scrollWidth - (scrollLeft + clientWidth) < buffer) {
-                    container.style.scrollBehavior = 'auto';
-                    container.scrollLeft = firstCard.offsetLeft - (window.innerWidth * 0.075); 
-                    requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); });
-                }
-                if (scrollLeft < buffer) {
-                    container.style.scrollBehavior = 'auto';
-                    container.scrollLeft = lastCard.offsetLeft - (window.innerWidth * 0.075);
-                    requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); });
-                }
+                const sl = container.scrollLeft; const sw = container.scrollWidth; const cw = container.clientWidth; const buf = 10;
+                if (sw - (sl + cw) < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = firstCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); }
+                if (sl < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = lastCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); }
             };
         }
 
@@ -929,29 +997,14 @@
             cards.sort((a, b) => {
                 const idA = parseInt(a.id.replace('u', ''));
                 const idB = parseInt(b.id.replace('u', ''));
-                let scoreA = usageData[idA] || 0;
-                let scoreB = usageData[idB] || 0;
-                scoreA += (timeWeights[idA] || 0);
-                scoreB += (timeWeights[idB] || 0);
+                let scoreA = usageData[idA] || 0; let scoreB = usageData[idB] || 0;
+                scoreA += (timeWeights[idA] || 0); scoreB += (timeWeights[idB] || 0);
                 return scoreB - scoreA; 
             });
-            container.innerHTML = ""; 
-            cards.forEach(card => container.appendChild(card));
+            container.innerHTML = ""; cards.forEach(card => container.appendChild(card));
             initInfiniteLoop(container, cards);
         }
 
-        // --- TTS 口音修复 ---
-        function speakDirect(text, callback) {
-            window.speechSynthesis.cancel();
-            const hasEnglishContext = /[a-zA-Z]{2,}/.test(text);
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = hasEnglishContext ? 'en-US' : 'zh-CN'; 
-            utterance.rate = 0.9; 
-            if(callback) utterance.onend = callback;
-            window.speechSynthesis.speak(utterance);
-        }
-
-        // --- UI ---
         function rebuildActionButtons() {
             for(let i=1; i<=13; i++) {
                 const card = document.getElementById(`u${i}`);
@@ -961,41 +1014,18 @@
                     const displayArea = step.querySelector('.display-area');
                     if(displayArea) {
                         const s = index + 1;
-                        const oldBtns = displayArea.querySelectorAll('button');
-                        oldBtns.forEach(b => b.remove());
+                        const oldBtns = displayArea.querySelectorAll('button'); oldBtns.forEach(b => b.remove());
                         let group = displayArea.querySelector('.action-group');
-                        if(!group) {
-                            group = document.createElement('div');
-                            group.className = 'action-group';
-                            displayArea.appendChild(group);
-                        }
-                        const btnAudio = createMiniBtn('🔊', () => {
-                            const wordEl = document.getElementById(`u${i}-s${s}-word`);
-                            if(wordEl) speakWholeSentence(wordEl.id, "", "");
-                        });
-                        group.appendChild(btnAudio);
-                        const btnMic = createMiniBtn('🎙️', function(e) {
-                            const wordEl = document.getElementById(`u${i}-s${s}-word`);
-                            if(wordEl) startSimpleListening(this, wordEl.parentElement.innerText);
-                        });
-                        btnMic.classList.add('btn-mic');
-                        group.appendChild(btnMic);
-                        const btnShow = createMiniBtn('👁️', () => {
-                            const wordEl = document.getElementById(`u${i}-s${s}-word`);
-                            const transEl = document.getElementById(`u${i}-s${s}-trans`);
-                            if(wordEl && transEl) openShowCard(wordEl.parentElement.innerText, transEl.innerText);
-                        });
-                        group.appendChild(btnShow);
+                        if(!group) { group = document.createElement('div'); group.className = 'action-group'; displayArea.appendChild(group); }
+                        const btnAudio = createMiniBtn('🔊', () => { const wordEl = document.getElementById(`u${i}-s${s}-word`); if(wordEl) speakWholeSentence(wordEl.id, "", ""); }); group.appendChild(btnAudio);
+                        const btnMic = createMiniBtn('🎙️', function(e) { const wordEl = document.getElementById(`u${i}-s${s}-word`); if(wordEl) startSimpleListening(this, wordEl.parentElement.innerText); }); btnMic.classList.add('btn-mic'); group.appendChild(btnMic);
+                        const btnShow = createMiniBtn('👁️', () => { const wordEl = document.getElementById(`u${i}-s${s}-word`); const transEl = document.getElementById(`u${i}-s${s}-trans`); if(wordEl && transEl) openShowCard(wordEl.parentElement.innerText, transEl.innerText); }); group.appendChild(btnShow);
                     }
                 });
             }
         }
-        function createMiniBtn(icon, onClick) {
-            const btn = document.createElement('button');
-            btn.className = 'btn-mini'; btn.innerHTML = icon;
-            btn.onclick = (e) => { e.stopPropagation(); triggerHaptic(); onClick.call(btn, e); };
-            return btn;
-        }
+        function createMiniBtn(icon, onClick) { const btn = document.createElement('button'); btn.className = 'btn-mini'; btn.innerHTML = icon; btn.onclick = (e) => { e.stopPropagation(); triggerHaptic(); onClick.call(btn, e); }; return btn; }
+        
         let simpleTarget = "";
         function startSimpleListening(btn, text) {
             if (!recognition) { alert("Browser not supported"); return; }
@@ -1013,18 +1043,14 @@
         }
         function handleSimpleResult(spoken) {
             const cleanSpoken = spoken.toLowerCase().replace(/[.,?!]/g, '').trim();
-            if (cleanSpoken.includes(simpleTarget) || simpleTarget.includes(cleanSpoken)) { 
-                showToast(`🎉 太棒了！完美发音！\n"${spoken}"`); triggerHaptic();
-            } else {
-                showToast(`🤔 再试一次，听起来像：\n"${spoken}"`);
-            }
+            if (cleanSpoken.includes(simpleTarget) || simpleTarget.includes(cleanSpoken)) { showToast(`🎉 太棒了！完美发音！\n"${spoken}"`); triggerHaptic(); } 
+            else { showToast(`🤔 再试一次，听起来像：\n"${spoken}"`); }
         }
-        function injectChatDOM() {
-            const div = document.createElement('div');
-            div.id = 'chatOverlay'; div.className = 'chat-overlay';
-            div.innerHTML = `<div class="chat-header"><span>🤖 AI Oral Tutor</span><span onclick="toggleChat()" style="cursor:pointer;font-size:1.2em;">✕</span></div><div class="chat-body" id="chatBody"></div><div class="chat-footer"><button id="chatMicBtn" class="mic-wave" onclick="manualMicClick()">🎙️</button><button class="nav-btn" onclick="endChat(false)" style="background:#ff3b30;color:white;border:none;">End</button></div>`;
-            document.body.appendChild(div);
-        }
+        function injectChatDOM() { const div = document.createElement('div'); div.id = 'chatOverlay'; div.className = 'chat-overlay'; div.innerHTML = `<div class="chat-header"><span>🤖 AI Oral Tutor</span><span onclick="toggleChat()" style="cursor:pointer;font-size:1.2em;">✕</span></div><div class="chat-body" id="chatBody"></div><div class="chat-footer"><button id="chatMicBtn" class="mic-wave" onclick="manualMicClick()">🎙️</button><button class="nav-btn" onclick="endChat(false)" style="background:#ff3b30;color:white;border:none;">End</button></div>`; document.body.appendChild(div); }
+        function addUserMsg(text) { const b=document.getElementById('chatBody'); const d=document.createElement('div'); d.className='msg user'; d.innerText=text; b.appendChild(d); b.scrollTop=b.scrollHeight; }
+        function startChatListening() { if (!recognition) return; if (!aiState.active) return; const btn = document.getElementById('chatMicBtn'); btn.classList.add('active'); try { recognition.start(); } catch(e) {} recognition.onresult = (event) => { const last = event.results.length - 1; const text = event.results[last][0].transcript; processAnswer(text); }; recognition.onend = () => { btn.classList.remove('active'); }; }
+        function manualMicClick() { if(aiState.waitingForSpeech) startChatListening(); else showToast("Wait for my question!"); }
+        
         function getFullChineseSentence(u, s, cnWord, suffix) {
             let cw = cnWord; let sfx = suffix || "。"; let full = "";
             if(sfx === '吗' || sfx === '?') sfx = "吗？";
@@ -1047,87 +1073,15 @@
             if(u===3 && s===2) { if(cw.includes('急')) full = "真的很紧急。"; if(cw.includes('快')) full = "会很快就好。"; }
             return full;
         }
-        function startAiSession() {
-            aiState.active = true; aiState.score = 0; aiState.total = 0; document.getElementById('chatBody').innerHTML = '';
-            addBotMsg("Hi there! I'm your AI tutor. Want to practice English?", [{ text: "Yes, let's go!", action: askForScenario }, { text: "Not now", action: () => { toggleChat(); aiState.active = false; } }]);
-        }
+        function startAiSession() { aiState.active = true; aiState.score = 0; aiState.total = 0; document.getElementById('chatBody').innerHTML = ''; addBotMsg("Hi there! I'm your AI tutor. Want to practice English?", [{ text: "Yes, let's go!", action: askForScenario }, { text: "Not now", action: () => { toggleChat(); aiState.active = false; } }]); }
         function askForScenario() { addUserMsg("Yes, let's go!"); let ops = []; for(let i=1; i<=13; i++) { const c = document.getElementById(`u${i}`); if(c) { const name = c.getAttribute('data-name'); ops.push({ text: name, action: () => startUnitPractice(i) }); } } addBotMsg("Great! Which scenario do you want to practice?", ops); }
         function startUnitPractice(uid) { addUserMsg(`Unit ${uid}`); aiState.currentUnit = uid; aiState.currentStep = 1; addBotMsg("Awesome choice! Let's start!"); setTimeout(askQuestion, 1500); }
-        // --- 修复版：askQuestion (防止无缓存时直接结束) ---
-        function askQuestion() {
-            if(!aiState.active) return;
-            const u = aiState.currentUnit;
-            const s = aiState.currentStep;
-            
-            // 1. 先找 DOM 元素，如果找不到元素，或者步骤超过2，才算结束
-            const wordEl = document.getElementById(`u${u}-s${s}-word`);
-            const transEl = document.getElementById(`u${u}-s${s}-trans`);
-            
-            if(!wordEl || s > 2) {
-                endChat(true); return;
-            }
-
-            // 2. 获取英文 (直接读屏幕上的，最准)
-            const targetEng = wordEl.parentElement.innerText; 
-            aiState.currentTargetEng = targetEng;
-
-            // 3. 获取中文 (优先读缓存构造完美句子，如果没有缓存，就读屏幕上的默认句子)
-            let targetCn = transEl.innerText; // 默认读屏幕
-            const savedData = JSON.parse(localStorage.getItem(`u${u}-s${s}`));
-            
-            if(savedData) {
-                // 如果有缓存，用算法重新拼装，确保是整句
-                targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix);
-            }
-            
-            aiState.currentTargetCn = targetCn;
-            
-            // 4. 提问 (true 表示说完自动开麦)
-            addBotMsg(`Please translate:\n"${targetCn}"`, [], true); 
-            
-            aiState.waitingForSpeech = true;
-            
-            // 5. 沉默检测 (20秒)
-            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
-            aiState.silenceTimer = setTimeout(() => {
-                if(aiState.waitingForSpeech && aiState.active) {
-                    speakDirect("Are you there?", () => {
-                        startChatListening(); // 再次自动开启
-                    });
-                }
-            }, 20000); 
-        }
-        function startChatListening() {
-            if (!recognition) return; if (!aiState.active) return;
-            const btn = document.getElementById('chatMicBtn'); btn.classList.add('active');
-            try { recognition.start(); } catch(e) {}
-            recognition.onresult = (event) => { const last = event.results.length - 1; const text = event.results[last][0].transcript; processAnswer(text); };
-            recognition.onend = () => { btn.classList.remove('active'); };
-        }
-        function processAnswer(spokenText) {
-            aiState.waitingForSpeech = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
-            addUserMsg(spokenText);
-            const target = aiState.currentTargetEng.toLowerCase().replace(/[^a-z ]/g, ""); const spoken = spokenText.toLowerCase().replace(/[^a-z ]/g, ""); const targetWords = target.split(" ");
-            let matchCount = 0; targetWords.forEach(w => { if(spoken.includes(w)) matchCount++; });
-            const accuracy = matchCount / targetWords.length;
-            if(accuracy >= 0.5) { aiState.score++; triggerHaptic(); addBotMsg("✅ 回答正确！太棒了！"); aiState.currentStep++; setTimeout(askQuestion, 2000); } 
-            else { triggerHaptic(); if(navigator.vibrate) navigator.vibrate(100); addBotMsg(`❌ 差点意思，正确读法是：\n"${aiState.currentTargetEng}"`); speakDirect(aiState.currentTargetEng); aiState.currentStep++; setTimeout(askQuestion, 4000); }
-            aiState.total++;
-        }
-        function endChat(completed) {
-            aiState.active = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer); if(recognition) try { recognition.abort(); } catch(e){} document.getElementById('chatMicBtn').classList.remove('active');
-            let msg = "练习结束，下次继续！"; if(completed && aiState.total > 0) { const pct = Math.round((aiState.score / aiState.total) * 100); msg = `练习完成！🎉\n正确率 ${pct}%。继续加油！`; }
-            addBotMsg(msg, [], false); setTimeout(() => { const overlay = document.getElementById('chatOverlay'); if(overlay) overlay.style.display = 'none'; }, 3000); 
-        }
-        function manualMicClick() { if(aiState.waitingForSpeech) startChatListening(); else showToast("Wait for my question!"); }
         function initSpeechRecognition() { if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) { const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; recognition = new SpeechRecognition(); recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1; recognition.onresult = (e) => { console.log(e.results[0][0].transcript); }; } }
-        
+        function speakDirect(text, callback) { window.speechSynthesis.cancel(); const hasEnglishContext = /[a-zA-Z]{2,}/.test(text); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = hasEnglishContext ? 'en-US' : 'zh-CN'; utterance.rate = 0.9; if(callback) utterance.onend = callback; window.speechSynthesis.speak(utterance); }
         function startSearchAnimation() { const input = document.getElementById('searchBox'); let allKeywords = []; document.querySelectorAll('.unit-card').forEach(c => { const keys = c.getAttribute('data-keywords').split(' '); allKeywords.push(...keys); }); allKeywords = allKeywords.filter(k => /^[\u4e00-\u9fa5]{2,}$/.test(k) && k.length < 5); allKeywords = [...new Set(allKeywords)]; let idx = 0; setInterval(() => { if(document.activeElement === input && input.value !== "") return; input.style.color = 'transparent'; setTimeout(() => { const word = allKeywords[idx % allKeywords.length]; input.setAttribute('placeholder', `🔍 搜"${word}"试试...`); input.style.color = 'var(--text-main)'; idx++; }, 500); }, 4000); }
         function addFloatingControls() { const c=document.querySelector('.float-controls'); const b=document.createElement('button'); b.className='fab-robot'; b.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>'; b.title="AI 陪练"; b.onclick=()=>{ triggerHaptic(); toggleChat(); if(document.getElementById('chatBody').innerHTML.trim()==="") startAiSession(); }; c.insertBefore(b, c.firstChild); const t=document.createElement('button'); t.className='fab-tools'; t.innerHTML='🧰'; t.onclick=openToolbox; c.insertBefore(t, c.firstChild); }
         function resetIdleTimer() { if(aiState.active) return; if(aiState.idleTimer) clearTimeout(aiState.idleTimer); aiState.idleTimer = setTimeout(() => { document.getElementById('robotBadge').style.display = 'block'; const robotBtn = document.querySelector('.fab-robot'); if(robotBtn) { showToast("🤖 嘿！想练练口语吗？点我！"); triggerHaptic(); } }, 60000); }
         function toggleChat() { const el = document.getElementById('chatOverlay'); const isHidden = el.style.display === 'none' || el.style.display === ''; el.style.display = isHidden ? 'flex' : 'none'; document.getElementById('robotBadge').style.display = 'none'; if(isHidden) { const body = document.getElementById('chatBody'); body.scrollTop = body.scrollHeight; } }
-        function addBotMsg(text, chips=[], autoMic=false) { const body = document.getElementById('chatBody'); const d = document.createElement('div'); d.className='msg bot'; d.innerText=text; body.appendChild(d); if(chips.length>0){ const g = document.createElement('div'); g.className='msg-btn-group'; chips.forEach(c=>{const b=document.createElement('div');b.className='msg-chip';b.innerText=c.text;b.onclick=()=>c.action();g.appendChild(b);}); body.appendChild(g); } speakDirect(text, ()=>{ if(autoMic) startChatListening(); }); body.scrollTop = body.scrollHeight; }
-        function addUserMsg(text) { const b=document.getElementById('chatBody'); const d=document.createElement('div'); d.className='msg user'; d.innerText=text; b.appendChild(d); b.scrollTop=b.scrollHeight; }
         function injectToolboxDOM(){if(document.getElementById('toolOverlay'))return;const d=document.createElement('div');d.id='toolOverlay';d.className='tool-overlay';d.onclick=(e)=>{if(e.target===d)d.style.display='none';};d.innerHTML=`<div class="tool-card"><div class="tool-tabs"><div class="tool-tab active" onclick="switchTool(0)">🌡️ 换算</div><div class="tool-tab" onclick="switchTool(1)">💵 小费</div></div><div class="tool-section active" id="tool-calc"><div class="calc-row"><input type="number" class="calc-input" id="inp-f" placeholder="°F" oninput="convert('f')"><span class="calc-label">°F</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-c" placeholder="°C" oninput="convert('c')"><span class="calc-label">°C</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-lb" placeholder="lb" oninput="convert('lb')"><span class="calc-label">lb</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-kg" placeholder="kg" oninput="convert('kg')"><span class="calc-label">kg</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-oz" placeholder="oz" oninput="convert('oz')"><span class="calc-label">oz</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-ml" placeholder="ml" oninput="convert('ml')"><span class="calc-label">ml</span></div></div><div class="tool-section" id="tool-tip"><div class="calc-row" style="justify-content:center;"><span style="font-weight:bold;">消费 $</span><input type="number" class="calc-input" id="inp-bill" placeholder="0.00" style="width:150px;" oninput="calcTip()"></div><div class="tip-grid"><div class="tip-box"><span class="tip-pct">15%</span><span class="tip-val" id="tip-15">$0</span></div><div class="tip-box"><span class="tip-pct">18%</span><span class="tip-val" id="tip-18">$0</span></div><div class="tip-box"><span class="tip-pct">20%</span><span class="tip-val" id="tip-20">$0</span></div></div></div></div>`;document.body.appendChild(d);}
         function switchTool(idx){triggerHaptic();document.querySelectorAll('.tool-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));document.querySelectorAll('.tool-section').forEach((s,i)=>s.classList.toggle('active',i===idx));}
         function convert(t){const f=document.getElementById('inp-f'),c=document.getElementById('inp-c'),lb=document.getElementById('inp-lb'),kg=document.getElementById('inp-kg'),oz=document.getElementById('inp-oz'),ml=document.getElementById('inp-ml');if(t==='f')c.value=f.value?((f.value-32)*5/9).toFixed(1):'';if(t==='c')f.value=c.value?((c.value*9/5)+32).toFixed(1):'';if(t==='lb')kg.value=lb.value?(lb.value*0.453).toFixed(1):'';if(t==='kg')lb.value=kg.value?(kg.value/0.453).toFixed(1):'';if(t==='oz')ml.value=oz.value?(oz.value*29.57).toFixed(1):'';if(t==='ml')oz.value=ml.value?(ml.value/29.57).toFixed(1):'';}
@@ -1163,7 +1117,6 @@
         function updateUnit(unitNum,stepNum,engWord,cnWord,prefixEng,suffixCn,element,playSound=true){triggerHaptic();incrementUsage(unitNum);const wordId=`u${unitNum}-s${stepNum}-word`;const displayEl=document.getElementById(wordId);if(displayEl)displayEl.innerText=engWord;const fullCn=getFullChineseSentence(unitNum,stepNum,cnWord,suffixCn);document.getElementById(`u${unitNum}-s${stepNum}-trans`).innerText=fullCn;let container=element.parentElement;container.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));if(element.classList.contains('chip'))element.classList.add('active');localStorage.setItem(`u${unitNum}-s${stepNum}`,JSON.stringify({engWord,cnWord,prefix:prefixEng,suffix:suffixCn}));if(playSound)speakDirect(engWord);}
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
         function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
-        function speakDirect(text,callback){window.speechSynthesis.cancel();const isChinese=/[\u4e00-\u9fa5]/.test(text);const utterance=new SpeechSynthesisUtterance(text);utterance.lang=isChinese?'zh-CN':'en-US';utterance.rate=0.9;if(callback)utterance.onend=callback;window.speechSynthesis.speak(utterance);}
     </script>
 </body>
 </html>

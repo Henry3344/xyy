@@ -819,20 +819,77 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V31.6: 机器人循环唤醒版) ===
+        // === 核心逻辑 (V32.0: 场景感知搜索 + 海量词库扩充版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
         let recognition = null; 
         
         let aiState = { active: false, currentUnit: null, currentStep: 0, score: 0, total: 0, currentTargetEng: "", currentTargetCn: "", waitingForSpeech: false, silenceTimer: null, idleTimer: null };
-        
-        // 机器人循环计时器
-        let idleLoopTimer = null; 
+
+        // 扩充词库 (Unit ID -> Step ID -> Words)
+        const extraVocab = {
+            1: { // 邻居
+                1: ["new neighbor", "from 3B", "just moved in", "Henry", "living downstairs", "the new guy"],
+                2: ["down the hall", "upstairs", "next door", "in unit 402", "across the street"]
+            },
+            2: { // 位置
+                1: ["the subway", "the restroom", "the exit", "an elevator", "a pharmacy", "the bus stop"],
+                2: ["where it is", "which floor", "the direction", "how to get there"]
+            },
+            3: { // 内急/借用
+                1: ["phone charger", "wifi password", "pen", "lighter", "umbrella", "power bank"],
+                2: ["urgent", "an emergency", "dying", "running low", "important"]
+            },
+            4: { // 银行
+                1: ["deposit cash", "withdraw money", "transfer funds", "open an account", "change PIN"],
+                2: ["ID card", "passport", "debit card", "check", "account number"]
+            },
+            5: { // 结账
+                1: ["credit card", "Apple Pay", "cash", "Venmo", "Zelle", "AliPay"],
+                2: ["a receipt", "a discount", "cash back", "small change", "a bag"]
+            },
+            6: { // 点餐
+                1: ["tap water", "the menu", "napkins", "a refill", "chopsticks", "a box"],
+                2: ["add sugar", "make it spicy", "add ice", "put cilantro", "rush it"]
+            },
+            7: { // 聚餐
+                1: ["split the bill", "share the cost", "go Dutch", "treat you"],
+                2: ["on me", "my treat", "my turn", "covered by me"]
+            },
+            8: { // 叙旧
+                1: ["no see", "no talk", "since college", "since last year"],
+                2: ["catch up", "hang out", "get coffee", "keep in touch", "exchange numbers"]
+            },
+            9: { // 打车
+                1: ["JFK airport", "Main Street", "the hotel", "this address", "Flushing"],
+                2: ["right here", "at the corner", "at the light", "by the sign"]
+            },
+            10: { // 医疗/救命
+                1: ["a doctor", "an ambulance", "painkillers", "some ice", "help"],
+                2: ["dizzy", "nauseous", "feverish", "terrible", "weak"]
+            },
+            11: { // 听不懂
+                1: ["speak slowly", "say that again", "write it down", "use Google Translate"],
+                2: ["understand", "hear you", "get it", "know that word"]
+            },
+            12: { // 退货
+                1: ["return this", "exchange this", "get a refund", "speak to manager"],
+                2: ["is broken", "is expired", "doesn't fit", "is the wrong color"]
+            },
+            13: { // 预约
+                1: ["book a table", "make a reservation", "cancel my appointment", "reschedule"],
+                2: ["7:00 PM", "noon", "tomorrow morning", "next Monday"]
+            }
+        };
 
         window.onload = function() {
             document.getElementById('year').innerText = new Date().getFullYear();
             loadTheme();
+            
+            // 1. 先注入扩展词库 (保证在 restoreSelection 之前)
+            injectExtraChips();
+            
             loadCustomChips();
             loadUsageData();
             injectSmartKeywords();
@@ -841,7 +898,7 @@
             injectToolboxDOM(); 
             initSpeechRecognition();
             checkMonthlyReport(); 
-            autoSortUnits();
+            autoSortUnits(); // 排序+循环+气泡
             
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
@@ -854,95 +911,101 @@
             initScrollHints();
             rebuildActionButtons(); 
             addFloatingControls(); 
-            startSearchAnimation();
             
-            // 启动闲置检测
+            // 2. 启动智能情景搜索
+            startSmartSearchAnimation();
+            
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 核心升级：机器人闲置唤醒 (Loop) ---
-        function resetIdleTimer() {
-            if(aiState.active) return; // 聊天中不干扰
-            
-            // 清除所有相关的定时器
-            if(aiState.idleTimer) clearTimeout(aiState.idleTimer);
-            if(idleLoopTimer) clearTimeout(idleLoopTimer);
-            
-            // 隐藏气泡 (如果有的话)
-            const bubble = document.getElementById('robotBubble');
-            if(bubble) bubble.classList.remove('visible');
-            document.getElementById('robotBadge').style.display = 'none';
-
-            // 重新开始 60秒 计时
-            aiState.idleTimer = setTimeout(triggerIdleAlert, 60000); 
-        }
-
-        function triggerIdleAlert() {
-            if(aiState.active) return;
-            
-            // 1. 显示红点
-            document.getElementById('robotBadge').style.display = 'block';
-            
-            // 2. 显示侧边气泡
-            const bubble = document.getElementById('robotBubble');
-            if(bubble) {
-                bubble.classList.add('visible');
-                triggerHaptic();
-                
-                // 3. 10秒后消失
-                setTimeout(() => {
-                    bubble.classList.remove('visible');
+        // --- 🚀 新功能：注入扩展词库 ---
+        function injectExtraChips() {
+            for (let u = 1; u <= 13; u++) {
+                for (let s = 1; s <= 2; s++) {
+                    const container = document.getElementById(`u${u}-s${s}-chips`);
+                    if (!container || !extraVocab[u] || !extraVocab[u][s]) continue;
                     
-                    // 4. 消失后，如果用户还没动，开启下一轮 60秒 循环
-                    // 注意：如果用户动了，resetIdleTimer 会被调用，清理掉 idleLoopTimer
-                    idleLoopTimer = setTimeout(triggerIdleAlert, 60000);
+                    // 获取现有的词，避免重复
+                    const existing = Array.from(container.querySelectorAll('.chip')).map(c => c.innerText);
+                    const wrapper = container.querySelector('.add-btn-wrapper');
                     
-                }, 10000);
+                    extraVocab[u][s].forEach(word => {
+                        if (!existing.includes(word)) {
+                            const btn = document.createElement('div');
+                            btn.className = 'chip';
+                            btn.innerText = word;
+                            btn.onclick = function() { 
+                                // 这里简化处理，中文暂用英文代替，实际使用中主要为了跟读
+                                updateUnit(u, s, word, word, "", "", this); 
+                            };
+                            // 插在加号前面
+                            if(wrapper) container.insertBefore(btn, wrapper);
+                            else container.appendChild(btn);
+                        }
+                    });
+                }
             }
         }
 
-        // 修改：悬浮球添加气泡 DOM
-        function addFloatingControls() {
-            const container = document.querySelector('.float-controls');
+        // --- 🚀 新功能：智能情景搜索 ---
+        function startSmartSearchAnimation() {
+            const input = document.getElementById('searchBox');
+            const hour = new Date().getHours();
             
-            // 机器人按钮容器 (为了相对定位气泡)
-            const wrapper = document.createElement('div');
-            wrapper.style.position = 'relative';
-            
-            // 气泡
-            const bubble = document.createElement('div');
-            bubble.id = 'robotBubble';
-            bubble.className = 'robot-speech-bubble';
-            bubble.innerText = '嘿！想练练口语吗？点我！';
-            wrapper.appendChild(bubble);
+            // 基础提示库
+            let prompts = [
+                { t: "听不懂英语？", k: "翻译" },
+                { t: "想退货？", k: "退款" },
+                { t: "迷路了？", k: "导航" },
+                { t: "找不到厕所？", k: "洗手间" }
+            ];
 
-            // 按钮
-            const btn = document.createElement('button');
-            btn.className = 'fab-robot';
-            btn.innerHTML = '🤖<div class="robot-badge" id="robotBadge"></div>';
-            btn.title = "AI 陪练";
-            btn.onclick = () => { 
-                triggerHaptic(); 
-                resetIdleTimer(); // 点击也是一种交互
-                toggleChat(); 
-                if(document.getElementById('chatBody').innerHTML.trim() === "") {
-                    startAiSession(); 
-                }
-            };
-            wrapper.appendChild(btn);
-            container.insertBefore(wrapper, container.firstChild);
+            // 根据时间注入特定场景
+            if (hour >= 6 && hour < 10) { // 早上
+                prompts.push({ t: "赶时间上班？", k: "打车" });
+                prompts.push({ t: "没睡醒？", k: "咖啡" });
+                prompts.push({ t: "刚搬来这儿？", k: "邻居" });
+            } else if (hour >= 11 && hour < 14) { // 中午
+                prompts.push({ t: "不知道吃啥？", k: "推荐" });
+                prompts.push({ t: "买单尴尬？", k: "AA" });
+            } else if (hour >= 17 && hour < 21) { // 晚上
+                prompts.push({ t: "下班喝一杯？", k: "酒吧" });
+                prompts.push({ t: "不想做饭？", k: "外卖" });
+            } else if (hour >= 21 || hour < 5) { // 深夜
+                prompts.push({ t: "睡不着？", k: "失眠" });
+                prompts.push({ t: "遇到危险？", k: "救命" });
+                prompts.push({ t: "身体不舒服？", k: "医生" });
+            }
 
-            // 工具箱按钮 (保持不变)
-            const t = document.createElement('button');
-            t.className = 'fab-tools';
-            t.innerHTML = '🧰';
-            t.onclick = openToolbox;
-            container.insertBefore(t, container.firstChild);
+            // 随机打乱
+            prompts.sort(() => Math.random() - 0.5);
+
+            let idx = 0;
+            // 初始显示
+            updatePlaceholder();
+
+            setInterval(() => {
+                if (document.activeElement === input && input.value !== "") return; // 输入时不打扰
+                
+                // 淡出
+                input.classList.add('fade-text');
+                
+                setTimeout(() => {
+                    idx = (idx + 1) % prompts.length;
+                    updatePlaceholder();
+                    // 淡入
+                    input.classList.remove('fade-text');
+                }, 500); // 配合 CSS transition 0.5s
+            }, 5000); // 5秒切换
+
+            function updatePlaceholder() {
+                const item = prompts[idx];
+                input.setAttribute('placeholder', `${item.t} 搜 "${item.k}" 试试...`);
+            }
         }
 
-        // --- 其他逻辑保持 V31.5 ---
-        
+        // --- 核心修复：气泡 (直接贴给第一张卡片) ---
         function initBubbleTip(targetCard) {
             if (!targetCard) targetCard = document.querySelector('#content-area .unit-card:not(.clone)');
             if (!targetCard) return;
@@ -958,6 +1021,7 @@
         }
         function dismissBubble(element) { if(element) { element.classList.add('fade-out'); setTimeout(() => { element.remove(); }, 600); } }
 
+        // --- 其他基础逻辑 ---
         function autoSortUnits() {
             const container = document.getElementById('content-area');
             const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); 
@@ -1088,7 +1152,10 @@
         function startAiSession() { aiState.active = true; aiState.score = 0; aiState.total = 0; document.getElementById('chatBody').innerHTML = ''; addBotMsg("Hi there! I'm your AI tutor. Want to practice English?", [{ text: "Yes, let's go!", action: askForScenario }, { text: "Not now", action: () => { toggleChat(); aiState.active = false; } }]); }
         function askForScenario() { addUserMsg("Yes, let's go!"); let ops = []; for(let i=1; i<=13; i++) { const c = document.getElementById(`u${i}`); if(c) { const name = c.getAttribute('data-name'); ops.push({ text: name, action: () => startUnitPractice(i) }); } } addBotMsg("Great! Which scenario do you want to practice?", ops); }
         function startUnitPractice(uid) { addUserMsg(`Unit ${uid}`); aiState.currentUnit = uid; aiState.currentStep = 1; addBotMsg("Awesome choice! Let's start!"); setTimeout(askQuestion, 1500); }
-        function startSearchAnimation() { const input = document.getElementById('searchBox'); let allKeywords = []; document.querySelectorAll('.unit-card').forEach(c => { const keys = c.getAttribute('data-keywords').split(' '); allKeywords.push(...keys); }); allKeywords = allKeywords.filter(k => /^[\u4e00-\u9fa5]{2,}$/.test(k) && k.length < 5); allKeywords = [...new Set(allKeywords)]; let idx = 0; setInterval(() => { if(document.activeElement === input && input.value !== "") return; input.style.color = 'transparent'; setTimeout(() => { const word = allKeywords[idx % allKeywords.length]; input.setAttribute('placeholder', `🔍 搜"${word}"试试...`); input.style.color = 'var(--text-main)'; idx++; }, 500); }, 4000); }
+        function resetIdleTimer() { if(aiState.active) return; if(aiState.idleTimer) clearTimeout(aiState.idleTimer); aiState.idleTimer = setTimeout(triggerIdleAlert, 60000); }
+        let idleLoopTimer = null;
+        function triggerIdleAlert() { if(aiState.active) return; document.getElementById('robotBadge').style.display = 'block'; const bubble = document.getElementById('robotBubble'); if(bubble) { bubble.classList.add('visible'); triggerHaptic(); setTimeout(() => { bubble.classList.remove('visible'); idleLoopTimer = setTimeout(triggerIdleAlert, 60000); }, 10000); } }
+        function addFloatingControls() { const c=document.querySelector('.float-controls'); const w=document.createElement('div'); w.style.position='relative'; const b=document.createElement('div'); b.id='robotBubble'; b.className='robot-speech-bubble'; b.innerText='嘿！想练练口语吗？点我！'; w.appendChild(b); const btn=document.createElement('button'); btn.className='fab-robot'; btn.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>'; btn.title="AI 陪练"; btn.onclick=()=>{ triggerHaptic(); resetIdleTimer(); toggleChat(); if(document.getElementById('chatBody').innerHTML.trim()==="") startAiSession(); }; w.appendChild(btn); c.insertBefore(w, c.firstChild); const t=document.createElement('button'); t.className='fab-tools'; t.innerHTML='🧰'; t.onclick=openToolbox; c.insertBefore(t, c.firstChild); }
         function toggleChat() { const el = document.getElementById('chatOverlay'); const isHidden = el.style.display === 'none' || el.style.display === ''; el.style.display = isHidden ? 'flex' : 'none'; document.getElementById('robotBadge').style.display = 'none'; if(isHidden) { const body = document.getElementById('chatBody'); body.scrollTop = body.scrollHeight; } }
         function injectToolboxDOM(){if(document.getElementById('toolOverlay'))return;const d=document.createElement('div');d.id='toolOverlay';d.className='tool-overlay';d.onclick=(e)=>{if(e.target===d)d.style.display='none';};d.innerHTML=`<div class="tool-card"><div class="tool-tabs"><div class="tool-tab active" onclick="switchTool(0)">🌡️ 换算</div><div class="tool-tab" onclick="switchTool(1)">💵 小费</div></div><div class="tool-section active" id="tool-calc"><div class="calc-row"><input type="number" class="calc-input" id="inp-f" placeholder="°F" oninput="convert('f')"><span class="calc-label">°F</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-c" placeholder="°C" oninput="convert('c')"><span class="calc-label">°C</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-lb" placeholder="lb" oninput="convert('lb')"><span class="calc-label">lb</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-kg" placeholder="kg" oninput="convert('kg')"><span class="calc-label">kg</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-oz" placeholder="oz" oninput="convert('oz')"><span class="calc-label">oz</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-ml" placeholder="ml" oninput="convert('ml')"><span class="calc-label">ml</span></div></div><div class="tool-section" id="tool-tip"><div class="calc-row" style="justify-content:center;"><span style="font-weight:bold;">消费 $</span><input type="number" class="calc-input" id="inp-bill" placeholder="0.00" style="width:150px;" oninput="calcTip()"></div><div class="tip-grid"><div class="tip-box"><span class="tip-pct">15%</span><span class="tip-val" id="tip-15">$0</span></div><div class="tip-box"><span class="tip-pct">18%</span><span class="tip-val" id="tip-18">$0</span></div><div class="tip-box"><span class="tip-pct">20%</span><span class="tip-val" id="tip-20">$0</span></div></div></div></div>`;document.body.appendChild(d);}
         function switchTool(idx){triggerHaptic();document.querySelectorAll('.tool-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));document.querySelectorAll('.tool-section').forEach((s,i)=>s.classList.toggle('active',i===idx));}

@@ -819,7 +819,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V32.1: 扩展词库汉化补全版) ===
+        // === 核心逻辑 (V33.0: 场景搜索修正 + 语音修复版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -829,160 +829,25 @@
 
         // 扩充词库 (Unit -> Step -> [{e:英文, c:中文}])
         const extraVocab = {
-            1: { // 邻居
-                1: [
-                    {e:"new neighbor", c:"新邻居"}, {e:"from 3B", c:"3B的住户"}, 
-                    {e:"just moved in", c:"刚搬来的"}, {e:"Henry", c:"Henry"}, 
-                    {e:"living downstairs", c:"住楼下的"}, {e:"the new guy", c:"新来的那个"}
-                ],
-                2: [
-                    {e:"down the hall", c:"走廊尽头"}, {e:"upstairs", c:"楼上"}, 
-                    {e:"next door", c:"隔壁"}, {e:"in unit 402", c:"402室"}, 
-                    {e:"across the street", c:"马路对面"}
-                ]
-            },
-            2: { // 位置
-                1: [
-                    {e:"the subway", c:"地铁站"}, {e:"the restroom", c:"洗手间"}, 
-                    {e:"the exit", c:"出口"}, {e:"an elevator", c:"电梯"}, 
-                    {e:"a pharmacy", c:"药房"}, {e:"the bus stop", c:"公交站"}
-                ],
-                2: [
-                    {e:"where it is", c:"它在哪"}, {e:"which floor", c:"在几楼"}, 
-                    {e:"the direction", c:"方向"}, {e:"how to get there", c:"怎么走"}
-                ]
-            },
-            3: { // 内急/借用
-                1: [
-                    {e:"phone charger", c:"手机充电器"}, {e:"wifi password", c:"WiFi密码"}, 
-                    {e:"pen", c:"笔"}, {e:"lighter", c:"打火机"}, 
-                    {e:"umbrella", c:"雨伞"}, {e:"power bank", c:"充电宝"}
-                ],
-                2: [
-                    {e:"urgent", c:"紧急"}, {e:"an emergency", c:"急事"}, 
-                    {e:"dying", c:"快没电了"}, {e:"running low", c:"电量低"}, 
-                    {e:"important", c:"很重要"}
-                ]
-            },
-            4: { // 银行
-                1: [
-                    {e:"deposit cash", c:"存现金"}, {e:"withdraw money", c:"取钱"}, 
-                    {e:"transfer funds", c:"转账"}, {e:"open an account", c:"开户"}, 
-                    {e:"change PIN", c:"改密码"}
-                ],
-                2: [
-                    {e:"ID card", c:"身份证"}, {e:"passport", c:"护照"}, 
-                    {e:"debit card", c:"借记卡"}, {e:"check", c:"支票"}, 
-                    {e:"account number", c:"账号"}
-                ]
-            },
-            5: { // 结账
-                1: [
-                    {e:"credit card", c:"信用卡"}, {e:"Apple Pay", c:"Apple Pay"}, 
-                    {e:"cash", c:"现金"}, {e:"Venmo", c:"Venmo"}, 
-                    {e:"Zelle", c:"Zelle"}, {e:"AliPay", c:"支付宝"}
-                ],
-                2: [
-                    {e:"a receipt", c:"收据"}, {e:"a discount", c:"折扣"}, 
-                    {e:"cash back", c:"返现"}, {e:"small change", c:"零钱"}, 
-                    {e:"a bag", c:"袋子"}
-                ]
-            },
-            6: { // 点餐
-                1: [
-                    {e:"tap water", c:"自来水"}, {e:"the menu", c:"菜单"}, 
-                    {e:"napkins", c:"餐巾纸"}, {e:"a refill", c:"续杯"}, 
-                    {e:"chopsticks", c:"筷子"}, {e:"a box", c:"打包盒"}
-                ],
-                2: [
-                    {e:"add sugar", c:"加糖"}, {e:"make it spicy", c:"做成辣的"}, 
-                    {e:"add ice", c:"加冰"}, {e:"put cilantro", c:"放香菜"}, 
-                    {e:"rush it", c:"快一点"}
-                ]
-            },
-            7: { // 聚餐
-                1: [
-                    {e:"split the bill", c:"平摊"}, {e:"share the cost", c:"分担费用"}, 
-                    {e:"go Dutch", c:"AA制"}, {e:"treat you", c:"请你"}
-                ],
-                2: [
-                    {e:"on me", c:"我请客"}, {e:"my treat", c:"我买单"}, 
-                    {e:"my turn", c:"轮到我了"}, {e:"covered by me", c:"我包了"}
-                ]
-            },
-            8: { // 叙旧
-                1: [
-                    {e:"no see", c:"没见"}, {e:"no talk", c:"没聊"}, 
-                    {e:"since college", c:"大学后"}, {e:"since last year", c:"去年后"}
-                ],
-                2: [
-                    {e:"catch up", c:"叙叙旧"}, {e:"hang out", c:"聚聚"}, 
-                    {e:"get coffee", c:"喝杯咖啡"}, {e:"keep in touch", c:"常联系"}, 
-                    {e:"exchange numbers", c:"交换号码"}
-                ]
-            },
-            9: { // 打车
-                1: [
-                    {e:"JFK airport", c:"JFK机场"}, {e:"Main Street", c:"Main街"}, 
-                    {e:"the hotel", c:"酒店"}, {e:"this address", c:"这个地址"}, 
-                    {e:"Flushing", c:"法拉盛"}
-                ],
-                2: [
-                    {e:"right here", c:"就在这"}, {e:"at the corner", c:"在路口"}, 
-                    {e:"at the light", c:"在红绿灯"}, {e:"by the sign", c:"标志牌旁"}
-                ]
-            },
-            10: { // 医疗/救命
-                1: [
-                    {e:"a doctor", c:"医生"}, {e:"an ambulance", c:"救护车"}, 
-                    {e:"painkillers", c:"止痛药"}, {e:"some ice", c:"冰块"}, 
-                    {e:"help", c:"帮助"}
-                ],
-                2: [
-                    {e:"dizzy", c:"头晕"}, {e:"nauseous", c:"恶心"}, 
-                    {e:"feverish", c:"发烧"}, {e:"terrible", c:"很糟"}, 
-                    {e:"weak", c:"虚弱"}
-                ]
-            },
-            11: { // 听不懂
-                1: [
-                    {e:"speak slowly", c:"说慢点"}, {e:"say that again", c:"再说一次"}, 
-                    {e:"write it down", c:"写下来"}, {e:"use Google Translate", c:"用谷歌翻译"}
-                ],
-                2: [
-                    {e:"understand", c:"听懂"}, {e:"hear you", c:"听清"}, 
-                    {e:"get it", c:"明白"}, {e:"know that word", c:"懂那个词"}
-                ]
-            },
-            12: { // 退货
-                1: [
-                    {e:"return this", c:"退这个"}, {e:"exchange this", c:"换这个"}, 
-                    {e:"get a refund", c:"退款"}, {e:"speak to manager", c:"找经理"}
-                ],
-                2: [
-                    {e:"is broken", c:"坏了"}, {e:"is expired", c:"过期了"}, 
-                    {e:"doesn't fit", c:"不合身"}, {e:"is the wrong color", c:"颜色错了"}
-                ]
-            },
-            13: { // 预约
-                1: [
-                    {e:"book a table", c:"订位"}, {e:"make a reservation", c:"预约"}, 
-                    {e:"cancel my appointment", c:"取消预约"}, {e:"reschedule", c:"改期"}
-                ],
-                2: [
-                    {e:"7:00 PM", c:"晚上7点"}, {e:"noon", c:"中午"}, 
-                    {e:"tomorrow morning", c:"明早"}, {e:"next Monday", c:"下周一"}
-                ]
-            }
+            1: { 1: [{e:"new neighbor", c:"新邻居"}, {e:"from 3B", c:"3B的住户"}, {e:"just moved in", c:"刚搬来的"}, {e:"Henry", c:"Henry"}, {e:"living downstairs", c:"住楼下的"}, {e:"the new guy", c:"新来的那个"}], 2: [{e:"down the hall", c:"走廊尽头"}, {e:"upstairs", c:"楼上"}, {e:"next door", c:"隔壁"}, {e:"in unit 402", c:"402室"}, {e:"across the street", c:"马路对面"}] },
+            2: { 1: [{e:"the subway", c:"地铁站"}, {e:"the restroom", c:"洗手间"}, {e:"the exit", c:"出口"}, {e:"an elevator", c:"电梯"}, {e:"a pharmacy", c:"药房"}, {e:"the bus stop", c:"公交站"}], 2: [{e:"where it is", c:"它在哪"}, {e:"which floor", c:"在几楼"}, {e:"the direction", c:"方向"}, {e:"how to get there", c:"怎么走"}] },
+            3: { 1: [{e:"phone charger", c:"手机充电器"}, {e:"wifi password", c:"WiFi密码"}, {e:"pen", c:"笔"}, {e:"lighter", c:"打火机"}, {e:"umbrella", c:"雨伞"}, {e:"power bank", c:"充电宝"}], 2: [{e:"urgent", c:"紧急"}, {e:"an emergency", c:"急事"}, {e:"dying", c:"快没电了"}, {e:"running low", c:"电量低"}, {e:"important", c:"很重要"}] },
+            4: { 1: [{e:"deposit cash", c:"存现金"}, {e:"withdraw money", c:"取钱"}, {e:"transfer funds", c:"转账"}, {e:"open an account", c:"开户"}, {e:"change PIN", c:"改密码"}], 2: [{e:"ID card", c:"身份证"}, {e:"passport", c:"护照"}, {e:"debit card", c:"借记卡"}, {e:"check", c:"支票"}, {e:"account number", c:"账号"}] },
+            5: { 1: [{e:"credit card", c:"信用卡"}, {e:"Apple Pay", c:"Apple Pay"}, {e:"cash", c:"现金"}, {e:"Venmo", c:"Venmo"}, {e:"Zelle", c:"Zelle"}, {e:"AliPay", c:"支付宝"}], 2: [{e:"a receipt", c:"收据"}, {e:"a discount", c:"折扣"}, {e:"cash back", c:"返现"}, {e:"small change", c:"零钱"}, {e:"a bag", c:"袋子"}] },
+            6: { 1: [{e:"tap water", c:"自来水"}, {e:"the menu", c:"菜单"}, {e:"napkins", c:"餐巾纸"}, {e:"a refill", c:"续杯"}, {e:"chopsticks", c:"筷子"}, {e:"a box", c:"打包盒"}], 2: [{e:"add sugar", c:"加糖"}, {e:"make it spicy", c:"做成辣的"}, {e:"add ice", c:"加冰"}, {e:"put cilantro", c:"放香菜"}, {e:"rush it", c:"快一点"}] },
+            7: { 1: [{e:"split the bill", c:"平摊"}, {e:"share the cost", c:"分担费用"}, {e:"go Dutch", c:"AA制"}, {e:"treat you", c:"请你"}], 2: [{e:"on me", c:"我请客"}, {e:"my treat", c:"我买单"}, {e:"my turn", c:"轮到我了"}, {e:"covered by me", c:"我包了"}] },
+            8: { 1: [{e:"no see", c:"没见"}, {e:"no talk", c:"没聊"}, {e:"since college", c:"大学后"}, {e:"since last year", c:"去年后"}], 2: [{e:"catch up", c:"叙叙旧"}, {e:"hang out", c:"聚聚"}, {e:"get coffee", c:"喝杯咖啡"}, {e:"keep in touch", c:"常联系"}, {e:"exchange numbers", c:"交换号码"}] },
+            9: { 1: [{e:"JFK airport", c:"JFK机场"}, {e:"Main Street", c:"Main街"}, {e:"the hotel", c:"酒店"}, {e:"this address", c:"这个地址"}, {e:"Flushing", c:"法拉盛"}], 2: [{e:"right here", c:"就在这"}, {e:"at the corner", c:"在路口"}, {e:"at the light", c:"在红绿灯"}, {e:"by the sign", c:"标志牌旁"}] },
+            10: { 1: [{e:"a doctor", c:"医生"}, {e:"an ambulance", c:"救护车"}, {e:"painkillers", c:"止痛药"}, {e:"some ice", c:"冰块"}, {e:"help", c:"帮助"}], 2: [{e:"dizzy", c:"头晕"}, {e:"nauseous", c:"恶心"}, {e:"feverish", c:"发烧"}, {e:"terrible", c:"很糟"}, {e:"weak", c:"虚弱"}] },
+            11: { 1: [{e:"speak slowly", c:"说慢点"}, {e:"say that again", c:"再说一次"}, {e:"write it down", c:"写下来"}, {e:"use Google Translate", c:"用谷歌翻译"}], 2: [{e:"understand", c:"听懂"}, {e:"hear you", c:"听清"}, {e:"get it", c:"明白"}, {e:"know that word", c:"懂那个词"}] },
+            12: { 1: [{e:"return this", c:"退这个"}, {e:"exchange this", c:"换这个"}, {e:"get a refund", c:"退款"}, {e:"speak to manager", c:"找经理"}], 2: [{e:"is broken", c:"坏了"}, {e:"is expired", c:"过期了"}, {e:"doesn't fit", c:"不合身"}, {e:"is the wrong color", c:"颜色错了"}] },
+            13: { 1: [{e:"book a table", c:"订位"}, {e:"make a reservation", c:"预约"}, {e:"cancel my appointment", c:"取消预约"}, {e:"reschedule", c:"改期"}], 2: [{e:"7:00 PM", c:"晚上7点"}, {e:"noon", c:"中午"}, {e:"tomorrow morning", c:"明早"}, {e:"next Monday", c:"下周一"}] }
         };
 
         window.onload = function() {
             document.getElementById('year').innerText = new Date().getFullYear();
             loadTheme();
-            
-            // 1. 注入带中文翻译的扩展词库
-            injectExtraChips();
-            
+            injectExtraChips(); // 1. 注入词库
             loadCustomChips();
             loadUsageData();
             injectSmartKeywords();
@@ -1004,64 +869,60 @@
             initScrollHints();
             rebuildActionButtons(); 
             addFloatingControls(); 
-            startSmartSearchAnimation();
+            startSmartSearchAnimation(); // 2. 启动智能场景搜索
             
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 🚀 升级版：注入双语词库 ---
-        function injectExtraChips() {
-            for (let u = 1; u <= 13; u++) {
-                for (let s = 1; s <= 2; s++) {
-                    const container = document.getElementById(`u${u}-s${s}-chips`);
-                    if (!container || !extraVocab[u] || !extraVocab[u][s]) continue;
-                    
-                    const existing = Array.from(container.querySelectorAll('.chip')).map(c => c.innerText);
-                    const wrapper = container.querySelector('.add-btn-wrapper');
-                    
-                    extraVocab[u][s].forEach(item => {
-                        // item.e 是英文，item.c 是中文
-                        if (!existing.includes(item.e)) {
-                            const btn = document.createElement('div');
-                            btn.className = 'chip';
-                            btn.innerText = item.e;
-                            btn.onclick = function() { 
-                                // 关键：传入 item.c (中文翻译)
-                                updateUnit(u, s, item.e, item.c, "", "", this); 
-                            };
-                            if(wrapper) container.insertBefore(btn, wrapper);
-                            else container.appendChild(btn);
-                        }
-                    });
+        // --- 🚀 修复点：语音朗读 (精准定位文字区) ---
+        function speakWholeSentence(wordId, p, x) {
+            const wordEl = document.getElementById(wordId);
+            if(wordEl) {
+                // 关键修正：向上找到 .text-content 容器，只读里面的字，完全避开 .action-group (按钮区)
+                const container = wordEl.closest('.text-content');
+                if (container) {
+                    speakDirect(container.innerText);
                 }
             }
         }
 
-        // --- 智能情景搜索 ---
+        // --- 🚀 优化点：强场景化引导搜索 ---
         function startSmartSearchAnimation() {
             const input = document.getElementById('searchBox');
             const hour = new Date().getHours();
             
+            // 默认全天候场景
             let prompts = [
-                { t: "听不懂英语？", k: "翻译" }, { t: "想退货？", k: "退款" },
-                { t: "迷路了？", k: "导航" }, { t: "找不到厕所？", k: "洗手间" }
+                { t: "完全听不懂对方说什么？", k: "翻译" },
+                { t: "找不到洗手间很尴尬？", k: "内急" }
             ];
 
-            if (hour >= 6 && hour < 10) { 
-                prompts.push({ t: "赶时间上班？", k: "打车" }); prompts.push({ t: "没睡醒？", k: "咖啡" });
-                prompts.push({ t: "刚搬来这儿？", k: "邻居" });
-            } else if (hour >= 11 && hour < 14) { 
-                prompts.push({ t: "不知道吃啥？", k: "推荐" }); prompts.push({ t: "买单尴尬？", k: "AA" });
-            } else if (hour >= 17 && hour < 21) { 
-                prompts.push({ t: "下班喝一杯？", k: "酒吧" }); prompts.push({ t: "不想做饭？", k: "外卖" });
-            } else if (hour >= 21 || hour < 5) { 
-                prompts.push({ t: "睡不着？", k: "失眠" }); prompts.push({ t: "遇到危险？", k: "救命" });
-                prompts.push({ t: "身体不舒服？", k: "医生" });
+            // 动态注入分时段的“生存痛点”
+            if (hour >= 5 && hour < 10) { // 早上
+                prompts.push({ t: "赶时间上班怕迟到？", k: "打车" });
+                prompts.push({ t: "刚搬来还没认识邻居？", k: "邻居" });
+            } else if (hour >= 11 && hour < 14) { // 中午
+                prompts.push({ t: "不知道该怎么点餐？", k: "点餐" });
+                prompts.push({ t: "和同事吃饭怕冷场？", k: "聊天" });
+                prompts.push({ t: "买单时想AA制？", k: "AA" });
+            } else if (hour >= 14 && hour < 18) { // 下午
+                prompts.push({ t: "下班想去喝杯咖啡？", k: "咖啡" });
+                prompts.push({ t: "银行柜员没有中文服务？", k: "银行" });
+                prompts.push({ t: "买的东西不合适想退？", k: "退货" });
+            } else if (hour >= 18 && hour < 22) { // 晚上
+                prompts.push({ t: "晚上聚会想请客？", k: "买单" });
+                prompts.push({ t: "不想做饭想叫外卖？", k: "外卖" });
+            } else { // 深夜 (22 - 5)
+                prompts.push({ t: "半夜回家要打Uber？", k: "打车" });
+                prompts.push({ t: "身体不舒服想看医生？", k: "救命" });
+                prompts.push({ t: "遇到紧急情况？", k: "警察" });
             }
 
             prompts.sort(() => Math.random() - 0.5);
             let idx = 0;
+            
+            // 初始设置，去除默认的 placeholder
             updatePlaceholder();
 
             setInterval(() => {
@@ -1080,142 +941,21 @@
             }
         }
 
-        // --- 气泡逻辑 ---
-        function initBubbleTip(targetCard) {
-            if (!targetCard) targetCard = document.querySelector('#content-area .unit-card:not(.clone)');
-            if (!targetCard) return;
-            const wrapper = targetCard.querySelector('.step-container .chips-container .add-btn-wrapper');
-            if (wrapper) {
-                if(wrapper.querySelector('.bubble-tip')) return;
-                const bubble = document.createElement('div');
-                bubble.className = 'bubble-tip';
-                bubble.innerText = '没找到你想要的？现在可以点击添加！';
-                wrapper.appendChild(bubble);
-                setTimeout(() => { dismissBubble(bubble); }, 15000);
-            }
-        }
+        // --- 其他逻辑 (保持 V31.x 稳定版) ---
+        function injectExtraChips() { for (let u = 1; u <= 13; u++) { for (let s = 1; s <= 2; s++) { const container = document.getElementById(`u${u}-s${s}-chips`); if (!container || !extraVocab[u] || !extraVocab[u][s]) continue; const existing = Array.from(container.querySelectorAll('.chip')).map(c => c.innerText); const wrapper = container.querySelector('.add-btn-wrapper'); extraVocab[u][s].forEach(item => { if (!existing.includes(item.e)) { const btn = document.createElement('div'); btn.className = 'chip'; btn.innerText = item.e; btn.onclick = function() { updateUnit(u, s, item.e, item.c, "", "", this); }; if(wrapper) container.insertBefore(btn, wrapper); else container.appendChild(btn); } }); } } }
+        function initBubbleTip(targetCard) { if (!targetCard) targetCard = document.querySelector('#content-area .unit-card:not(.clone)'); if (!targetCard) return; const wrapper = targetCard.querySelector('.step-container .chips-container .add-btn-wrapper'); if (wrapper) { if(wrapper.querySelector('.bubble-tip')) return; const bubble = document.createElement('div'); bubble.className = 'bubble-tip'; bubble.innerText = '没找到你想要的？现在可以点击添加！'; wrapper.appendChild(bubble); setTimeout(() => { dismissBubble(bubble); }, 15000); } }
         function dismissBubble(element) { if(element) { element.classList.add('fade-out'); setTimeout(() => { element.remove(); }, 600); } }
-
-        function autoSortUnits() {
-            const container = document.getElementById('content-area');
-            const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); 
-            const hour = new Date().getHours();
-            let timeWeights = {};
-            if (hour >= 5 && hour < 10) { timeWeights = { 1: 50, 9: 40, 4: 30 }; } 
-            else if (hour >= 11 && hour < 14) { timeWeights = { 6: 50, 7: 40, 5: 30 }; } 
-            else if (hour >= 17 && hour < 21) { timeWeights = { 8: 50, 7: 40, 6: 30 }; } 
-            else if (hour >= 21 || hour < 4) { timeWeights = { 9: 60, 10: 50, 3: 40 }; }
-            cards.sort((a, b) => {
-                const idA = parseInt(a.id.replace('u', ''));
-                const idB = parseInt(b.id.replace('u', ''));
-                let scoreA = usageData[idA] || 0; let scoreB = usageData[idB] || 0;
-                scoreA += (timeWeights[idA] || 0); scoreB += (timeWeights[idB] || 0);
-                return scoreB - scoreA; 
-            });
-            container.innerHTML = ""; cards.forEach(card => container.appendChild(card));
-            initInfiniteLoop(container, cards);
-        }
-
-        function initInfiniteLoop(container, cards) {
-            container.querySelectorAll('.snap-spacer, .unit-card.clone').forEach(el => el.remove());
-            if (cards.length < 2) return; 
-            const firstCard = cards[0]; const lastCard = cards[cards.length - 1];
-            setTimeout(() => initBubbleTip(firstCard), 500);
-            const cloneFirst = firstCard.cloneNode(true); const cloneLast = lastCard.cloneNode(true);
-            [cloneFirst, cloneLast].forEach(el => { el.classList.add('clone'); el.id = ""; el.querySelectorAll('[id]').forEach(c => c.removeAttribute('id')); });
-            const spacerStart = document.createElement('div'); spacerStart.className = 'snap-spacer';
-            const spacerEnd = document.createElement('div'); spacerEnd.className = 'snap-spacer';
-            container.insertBefore(spacerStart, container.firstChild);
-            container.insertBefore(cloneLast, container.firstChild.nextSibling); 
-            container.appendChild(cloneFirst);
-            container.appendChild(spacerEnd);
-            requestAnimationFrame(() => { container.style.scrollBehavior = 'auto'; const offset = firstCard.offsetLeft - container.offsetLeft - (window.innerWidth * 0.075); container.scrollLeft = offset; setTimeout(() => { container.style.scrollBehavior = 'smooth'; }, 50); });
-            container.onscroll = () => {
-                const sl = container.scrollLeft; const sw = container.scrollWidth; const cw = container.clientWidth; const buf = 10;
-                if (sw - (sl + cw) < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = firstCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); }
-                if (sl < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = lastCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); }
-            };
-        }
-
-        function rebuildActionButtons() {
-            for(let i=1; i<=13; i++) {
-                const card = document.getElementById(`u${i}`);
-                if(!card) continue;
-                const steps = card.querySelectorAll('.step-container');
-                steps.forEach((step, index) => {
-                    const displayArea = step.querySelector('.display-area');
-                    if(displayArea) {
-                        const s = index + 1;
-                        const oldBtns = displayArea.querySelectorAll('button'); oldBtns.forEach(b => b.remove());
-                        let group = displayArea.querySelector('.action-group');
-                        if(!group) { group = document.createElement('div'); group.className = 'action-group'; displayArea.appendChild(group); }
-                        const btnAudio = createMiniBtn('🔊', () => { const wordEl = document.getElementById(`u${i}-s${s}-word`); if(wordEl) speakWholeSentence(wordEl.id, "", ""); }); group.appendChild(btnAudio);
-                        const btnMic = createMiniBtn('🎙️', function(e) { const wordEl = document.getElementById(`u${i}-s${s}-word`); if(wordEl) startSimpleListening(this, wordEl.parentElement.innerText); }); btnMic.classList.add('btn-mic'); group.appendChild(btnMic);
-                        const btnShow = createMiniBtn('👁️', () => { const wordEl = document.getElementById(`u${i}-s${s}-word`); const transEl = document.getElementById(`u${i}-s${s}-trans`); if(wordEl && transEl) openShowCard(wordEl.parentElement.innerText, transEl.innerText); }); group.appendChild(btnShow);
-                    }
-                });
-            }
-        }
+        function autoSortUnits() { const container = document.getElementById('content-area'); const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); const hour = new Date().getHours(); let timeWeights = {}; if (hour >= 5 && hour < 10) { timeWeights = { 1: 50, 9: 40, 4: 30 }; } else if (hour >= 11 && hour < 14) { timeWeights = { 6: 50, 7: 40, 5: 30 }; } else if (hour >= 17 && hour < 21) { timeWeights = { 8: 50, 7: 40, 6: 30 }; } else if (hour >= 21 || hour < 4) { timeWeights = { 9: 60, 10: 50, 3: 40 }; } cards.sort((a, b) => { const idA = parseInt(a.id.replace('u', '')); const idB = parseInt(b.id.replace('u', '')); let scoreA = usageData[idA] || 0; let scoreB = usageData[idB] || 0; scoreA += (timeWeights[idA] || 0); scoreB += (timeWeights[idB] || 0); return scoreB - scoreA; }); container.innerHTML = ""; cards.forEach(card => container.appendChild(card)); initInfiniteLoop(container, cards); }
+        function initInfiniteLoop(container, cards) { container.querySelectorAll('.snap-spacer, .unit-card.clone').forEach(el => el.remove()); if (cards.length < 2) return; const firstCard = cards[0]; const lastCard = cards[cards.length - 1]; setTimeout(() => initBubbleTip(firstCard), 500); const cloneFirst = firstCard.cloneNode(true); const cloneLast = lastCard.cloneNode(true); [cloneFirst, cloneLast].forEach(el => { el.classList.add('clone'); el.id = ""; el.querySelectorAll('[id]').forEach(c => c.removeAttribute('id')); }); const spacerStart = document.createElement('div'); spacerStart.className = 'snap-spacer'; const spacerEnd = document.createElement('div'); spacerEnd.className = 'snap-spacer'; container.insertBefore(spacerStart, container.firstChild); container.insertBefore(cloneLast, container.firstChild.nextSibling); container.appendChild(cloneFirst); container.appendChild(spacerEnd); requestAnimationFrame(() => { container.style.scrollBehavior = 'auto'; const offset = firstCard.offsetLeft - container.offsetLeft - (window.innerWidth * 0.075); container.scrollLeft = offset; setTimeout(() => { container.style.scrollBehavior = 'smooth'; }, 50); }); container.onscroll = () => { const sl = container.scrollLeft; const sw = container.scrollWidth; const cw = container.clientWidth; const buf = 10; if (sw - (sl + cw) < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = firstCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); } if (sl < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = lastCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); } }; }
+        function rebuildActionButtons() { for(let i=1; i<=13; i++) { const card = document.getElementById(`u${i}`); if(!card) continue; const steps = card.querySelectorAll('.step-container'); steps.forEach((step, index) => { const displayArea = step.querySelector('.display-area'); if(displayArea) { const s = index + 1; const oldBtns = displayArea.querySelectorAll('button'); oldBtns.forEach(b => b.remove()); let group = displayArea.querySelector('.action-group'); if(!group) { group = document.createElement('div'); group.className = 'action-group'; displayArea.appendChild(group); } const btnAudio = createMiniBtn('🔊', () => { const wordEl = document.getElementById(`u${i}-s${s}-word`); if(wordEl) speakWholeSentence(wordEl.id, "", ""); }); group.appendChild(btnAudio); const btnMic = createMiniBtn('🎙️', function(e) { const wordEl = document.getElementById(`u${i}-s${s}-word`); if(wordEl) startSimpleListening(this, wordEl.parentElement.innerText); }); btnMic.classList.add('btn-mic'); group.appendChild(btnMic); const btnShow = createMiniBtn('👁️', () => { const wordEl = document.getElementById(`u${i}-s${s}-word`); const transEl = document.getElementById(`u${i}-s${s}-trans`); if(wordEl && transEl) openShowCard(wordEl.parentElement.innerText, transEl.innerText); }); group.appendChild(btnShow); } }); } }
         function createMiniBtn(icon, onClick) { const btn = document.createElement('button'); btn.className = 'btn-mini'; btn.innerHTML = icon; btn.onclick = (e) => { e.stopPropagation(); triggerHaptic(); onClick.call(btn, e); }; return btn; }
-        
         let simpleTarget = "";
-        function startSimpleListening(btn, text) {
-            if (!recognition) { alert("Browser not supported"); return; }
-            triggerHaptic();
-            simpleTarget = text.toLowerCase().replace(/[.,?!]/g, '').trim(); 
-            recognition.onresult = (e) => {
-                const spoken = e.results[e.results.length-1][0].transcript;
-                handleSimpleResult(spoken);
-                btn.classList.remove('listening');
-            };
-            recognition.onend = () => btn.classList.remove('listening');
-            document.querySelectorAll('.btn-mic').forEach(b => b.classList.remove('listening'));
-            btn.classList.add('listening');
-            try { recognition.start(); showToast("🎤 请大声朗读..."); } catch(e){}
-        }
-        function handleSimpleResult(spoken) {
-            const cleanSpoken = spoken.toLowerCase().replace(/[.,?!]/g, '').trim();
-            if (cleanSpoken.includes(simpleTarget) || simpleTarget.includes(cleanSpoken)) { showToast(`🎉 太棒了！完美发音！\n"${spoken}"`); triggerHaptic(); } 
-            else { showToast(`🤔 再试一次，听起来像：\n"${spoken}"`); }
-        }
-        
-        function addBotMsg(text, chips=[], autoMic=false, callback=null) {
-            const body = document.getElementById('chatBody');
-            const d = document.createElement('div'); d.className='msg bot'; d.innerText=text; body.appendChild(d);
-            if(chips.length>0){ const g = document.createElement('div'); g.className='msg-btn-group'; chips.forEach(c=>{const b=document.createElement('div');b.className='msg-chip';b.innerText=c.text;b.onclick=()=>c.action();g.appendChild(b);}); body.appendChild(g); }
-            speakDirect(text, ()=>{ if(autoMic) startChatListening(); if(callback) callback(); });
-            body.scrollTop = body.scrollHeight;
-        }
-        function processAnswer(spokenText) {
-            aiState.waitingForSpeech = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
-            addUserMsg(spokenText);
-            const target = aiState.currentTargetEng.toLowerCase().replace(/[^a-z ]/g, ""); const spoken = spokenText.toLowerCase().replace(/[^a-z ]/g, ""); const targetWords = target.split(" ");
-            let matchCount = 0; targetWords.forEach(w => { if(spoken.includes(w)) matchCount++; });
-            const accuracy = matchCount / targetWords.length;
-            if(accuracy >= 0.5) { aiState.score++; triggerHaptic(); addBotMsg("✅ 回答正确！太棒了！", [], false, () => { setTimeout(() => { aiState.currentStep++; askQuestion(); }, 2000); }); } 
-            else { triggerHaptic(); if(navigator.vibrate) navigator.vibrate(100); addBotMsg(`❌ 差点意思，正确读法是：\n"${aiState.currentTargetEng}"`, [], false, () => { speakDirect(aiState.currentTargetEng, () => { setTimeout(() => { aiState.currentStep++; askQuestion(); }, 3000); }); }); }
-            aiState.total++;
-        }
-        function endChat(completed) {
-            aiState.active = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer); if(recognition) try { recognition.abort(); } catch(e){} document.getElementById('chatMicBtn').classList.remove('active');
-            let msg = "练习结束，下次继续！"; if(completed && aiState.total > 0) { const pct = Math.round((aiState.score / aiState.total) * 100); msg = `练习完成！🎉\n正确率 ${pct}%。继续加油！`; }
-            addBotMsg(msg, [], false, () => { setTimeout(() => { const overlay = document.getElementById('chatOverlay'); if(overlay) overlay.style.display = 'none'; }, 6000); });
-        }
-        function askQuestion() {
-            if(!aiState.active) return;
-            const u = aiState.currentUnit; const s = aiState.currentStep;
-            const wordEl = document.getElementById(`u${u}-s${s}-word`); const transEl = document.getElementById(`u${u}-s${s}-trans`);
-            if(!wordEl || s > 2) { endChat(true); return; }
-            const targetEng = wordEl.parentElement.innerText; aiState.currentTargetEng = targetEng;
-            let targetCn = transEl.innerText;
-            const savedData = JSON.parse(localStorage.getItem(`u${u}-s${s}`));
-            if(savedData) targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix);
-            aiState.currentTargetCn = targetCn;
-            addBotMsg(`Please translate:\n"${targetCn}"`, [], true); 
-            aiState.waitingForSpeech = true;
-            if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
-            aiState.silenceTimer = setTimeout(() => { if(aiState.waitingForSpeech && aiState.active) { speakDirect("Are you there?", () => { startChatListening(); }); } }, 20000); 
-        }
+        function startSimpleListening(btn, text) { if (!recognition) { alert("Browser not supported"); return; } triggerHaptic(); simpleTarget = text.toLowerCase().replace(/[.,?!]/g, '').trim(); recognition.onresult = (e) => { const spoken = e.results[e.results.length-1][0].transcript; handleSimpleResult(spoken); btn.classList.remove('listening'); }; recognition.onend = () => btn.classList.remove('listening'); document.querySelectorAll('.btn-mic').forEach(b => b.classList.remove('listening')); btn.classList.add('listening'); try { recognition.start(); showToast("🎤 请大声朗读..."); } catch(e){} }
+        function handleSimpleResult(spoken) { const cleanSpoken = spoken.toLowerCase().replace(/[.,?!]/g, '').trim(); if (cleanSpoken.includes(simpleTarget) || simpleTarget.includes(cleanSpoken)) { showToast(`🎉 太棒了！完美发音！\n"${spoken}"`); triggerHaptic(); } else { showToast(`🤔 再试一次，听起来像：\n"${spoken}"`); } }
+        function addBotMsg(text, chips=[], autoMic=false, callback=null) { const body = document.getElementById('chatBody'); const d = document.createElement('div'); d.className='msg bot'; d.innerText=text; body.appendChild(d); if(chips.length>0){ const g = document.createElement('div'); g.className='msg-btn-group'; chips.forEach(c=>{const b=document.createElement('div');b.className='msg-chip';b.innerText=c.text;b.onclick=()=>c.action();g.appendChild(b);}); body.appendChild(g); } speakDirect(text, ()=>{ if(autoMic) startChatListening(); if(callback) callback(); }); body.scrollTop = body.scrollHeight; }
+        function processAnswer(spokenText) { aiState.waitingForSpeech = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer); addUserMsg(spokenText); const target = aiState.currentTargetEng.toLowerCase().replace(/[^a-z ]/g, ""); const spoken = spokenText.toLowerCase().replace(/[^a-z ]/g, ""); const targetWords = target.split(" "); let matchCount = 0; targetWords.forEach(w => { if(spoken.includes(w)) matchCount++; }); const accuracy = matchCount / targetWords.length; if(accuracy >= 0.5) { aiState.score++; triggerHaptic(); addBotMsg("✅ 回答正确！太棒了！", [], false, () => { setTimeout(() => { aiState.currentStep++; askQuestion(); }, 2000); }); } else { triggerHaptic(); if(navigator.vibrate) navigator.vibrate(100); addBotMsg(`❌ 差点意思，正确读法是：\n"${aiState.currentTargetEng}"`, [], false, () => { speakDirect(aiState.currentTargetEng, () => { setTimeout(() => { aiState.currentStep++; askQuestion(); }, 3000); }); }); } aiState.total++; }
+        function endChat(completed) { aiState.active = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer); if(recognition) try { recognition.abort(); } catch(e){} document.getElementById('chatMicBtn').classList.remove('active'); let msg = "练习结束，下次继续！"; if(completed && aiState.total > 0) { const pct = Math.round((aiState.score / aiState.total) * 100); msg = `练习完成！🎉\n正确率 ${pct}%。继续加油！`; } addBotMsg(msg, [], false, () => { setTimeout(() => { const overlay = document.getElementById('chatOverlay'); if(overlay) overlay.style.display = 'none'; }, 6000); }); }
+        function askQuestion() { if(!aiState.active) return; const u = aiState.currentUnit; const s = aiState.currentStep; const wordEl = document.getElementById(`u${u}-s${s}-word`); const transEl = document.getElementById(`u${u}-s${s}-trans`); if(!wordEl || s > 2) { endChat(true); return; } const targetEng = wordEl.parentElement.innerText; aiState.currentTargetEng = targetEng; let targetCn = transEl.innerText; const savedData = JSON.parse(localStorage.getItem(`u${u}-s${s}`)); if(savedData) targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix); aiState.currentTargetCn = targetCn; addBotMsg(`Please translate:\n"${targetCn}"`, [], true); aiState.waitingForSpeech = true; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer); aiState.silenceTimer = setTimeout(() => { if(aiState.waitingForSpeech && aiState.active) { speakDirect("Are you there?", () => { startChatListening(); }); } }, 20000); }
         function manualMicClick() { if(aiState.waitingForSpeech) startChatListening(); else showToast("Wait for my question!"); }
         function initSpeechRecognition() { if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) { const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; recognition = new SpeechRecognition(); recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1; recognition.onresult = (e) => { console.log(e.results[0][0].transcript); }; } }
         function speakDirect(text, callback) { window.speechSynthesis.cancel(); const hasEnglishContext = /[a-zA-Z]{2,}/.test(text); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = hasEnglishContext ? 'en-US' : 'zh-CN'; utterance.rate = 0.9; if(callback) utterance.onend = callback; window.speechSynthesis.speak(utterance); }
@@ -1264,7 +1004,6 @@
         function toggleQuizMode(){triggerHaptic();document.body.classList.toggle('quiz-mode');}
         function updateUnit(unitNum,stepNum,engWord,cnWord,prefixEng,suffixCn,element,playSound=true){triggerHaptic();incrementUsage(unitNum);const wordId=`u${unitNum}-s${stepNum}-word`;const displayEl=document.getElementById(wordId);if(displayEl)displayEl.innerText=engWord;const fullCn=getFullChineseSentence(unitNum,stepNum,cnWord,suffixCn);document.getElementById(`u${unitNum}-s${stepNum}-trans`).innerText=fullCn;let container=element.parentElement;container.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));if(element.classList.contains('chip'))element.classList.add('active');localStorage.setItem(`u${unitNum}-s${stepNum}`,JSON.stringify({engWord,cnWord,prefix:prefixEng,suffix:suffixCn}));if(playSound)speakDirect(engWord);}
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
-        function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
     </script>
 </body>
 </html>

@@ -841,7 +841,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V34.0: App化 + 数据备份终极版) ===
+        // === 核心逻辑 (V35.0: 文案优化 + 终极稳定版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -849,7 +849,7 @@
         
         let aiState = { active: false, currentUnit: null, currentStep: 0, score: 0, total: 0, currentTargetEng: "", currentTargetCn: "", waitingForSpeech: false, silenceTimer: null, idleTimer: null };
 
-        // 扩充词库
+        // 扩充词库 (Unit -> Step -> [{e:英文, c:中文}])
         const extraVocab = {
             1: { 1: [{e:"new neighbor", c:"新邻居"}, {e:"from 3B", c:"3B的住户"}, {e:"just moved in", c:"刚搬来的"}, {e:"Henry", c:"Henry"}, {e:"living downstairs", c:"住楼下的"}, {e:"the new guy", c:"新来的那个"}], 2: [{e:"down the hall", c:"走廊尽头"}, {e:"upstairs", c:"楼上"}, {e:"next door", c:"隔壁"}, {e:"in unit 402", c:"402室"}, {e:"across the street", c:"马路对面"}] },
             2: { 1: [{e:"the subway", c:"地铁站"}, {e:"the restroom", c:"洗手间"}, {e:"the exit", c:"出口"}, {e:"an elevator", c:"电梯"}, {e:"a pharmacy", c:"药房"}, {e:"the bus stop", c:"公交站"}], 2: [{e:"where it is", c:"它在哪"}, {e:"which floor", c:"在几楼"}, {e:"the direction", c:"方向"}, {e:"how to get there", c:"怎么走"}] },
@@ -869,6 +869,10 @@
         window.onload = function() {
             document.getElementById('year').innerText = new Date().getFullYear();
             loadTheme();
+            
+            // 🚀 1. 界面文案更新
+            updateUIStrings();
+            
             injectExtraChips();
             loadCustomChips();
             loadUsageData();
@@ -878,8 +882,12 @@
             injectToolboxDOM(); 
             initSpeechRecognition();
             checkMonthlyReport(); 
-            injectLogicButtons(); // 1
-            autoSortUnits(); // 2
+            
+            // 🚀 2. 硬核注入喇叭 (保证克隆前有 onclick)
+            injectLogicButtons();
+            
+            // 🚀 3. 排序 + 循环
+            autoSortUnits(); 
             
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
@@ -891,7 +899,6 @@
             setTimeout(() => { initBubbleTip(); }, 1000);
             initScrollHints();
             rebuildActionButtons(); 
-            initGlobalClickListeners(); // 3
             addFloatingControls(); 
             startSmartSearchAnimation();
             
@@ -899,85 +906,15 @@
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 🚀 数据备份与恢复 ---
-        function backupData() {
-            triggerHaptic();
-            // 收集所有以 'custom_chips_' 开头的 localStorage
-            let backup = {};
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('custom_chips_') || key.startsWith('u') || key === 'unit_usage' || key === 'theme') {
-                    backup[key] = localStorage.getItem(key);
-                }
-            }
-            const dataStr = JSON.stringify(backup);
-            // 复制到剪贴板
-            navigator.clipboard.writeText(dataStr).then(() => {
-                alert("✅ 数据已复制到剪贴板！\n\n请粘贴保存到备忘录或微信。");
-            }).catch(err => {
-                prompt("复制失败，请手动复制以下内容：", dataStr);
+        // --- 🚀 新功能：文案更新 ---
+        function updateUIStrings() {
+            document.querySelectorAll('.combo-title').forEach(el => {
+                // 替换旧文案，保留小火箭
+                el.innerHTML = el.innerHTML.replace('逻辑构造', '完整句子（示例）');
             });
         }
 
-        function restoreData() {
-            triggerHaptic();
-            const dataStr = prompt("请粘贴之前备份的数据字符串：");
-            if (!dataStr) return;
-            try {
-                const backup = JSON.parse(dataStr);
-                for (let key in backup) {
-                    localStorage.setItem(key, backup[key]);
-                }
-                alert("🎉 数据恢复成功！页面将刷新。");
-                location.reload();
-            } catch (e) {
-                alert("❌ 数据格式错误，恢复失败。");
-            }
-        }
-
-        // --- 注入工具箱 (包含备份按钮) ---
-        function injectToolboxDOM(){
-            if(document.getElementById('toolOverlay'))return;
-            const d=document.createElement('div');
-            d.id='toolOverlay';d.className='tool-overlay';
-            d.onclick=(e)=>{if(e.target===d)d.style.display='none';};
-            
-            // 增加备份区
-            d.innerHTML=`
-                <div class="tool-card">
-                    <div class="tool-tabs">
-                        <div class="tool-tab active" onclick="switchTool(0)">🌡️ 换算</div>
-                        <div class="tool-tab" onclick="switchTool(1)">💵 小费</div>
-                        <div class="tool-tab" onclick="switchTool(2)">💾 备份</div>
-                    </div>
-                    
-                    <div class="tool-section active" id="tool-calc">
-                        <div class="calc-row"><input type="number" class="calc-input" id="inp-f" placeholder="°F" oninput="convert('f')"><span class="calc-label">°F</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-c" placeholder="°C" oninput="convert('c')"><span class="calc-label">°C</span></div>
-                        <div class="calc-row"><input type="number" class="calc-input" id="inp-lb" placeholder="lb" oninput="convert('lb')"><span class="calc-label">lb</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-kg" placeholder="kg" oninput="convert('kg')"><span class="calc-label">kg</span></div>
-                        <div class="calc-row"><input type="number" class="calc-input" id="inp-oz" placeholder="oz" oninput="convert('oz')"><span class="calc-label">oz</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-ml" placeholder="ml" oninput="convert('ml')"><span class="calc-label">ml</span></div>
-                    </div>
-                    
-                    <div class="tool-section" id="tool-tip">
-                        <div class="calc-row" style="justify-content:center;"><span style="font-weight:bold;">消费 $</span><input type="number" class="calc-input" id="inp-bill" placeholder="0.00" style="width:150px;" oninput="calcTip()"></div>
-                        <div class="tip-grid">
-                            <div class="tip-box"><span class="tip-pct">15%</span><span class="tip-val" id="tip-15">$0</span></div>
-                            <div class="tip-box"><span class="tip-pct">18%</span><span class="tip-val" id="tip-18">$0</span></div>
-                            <div class="tip-box"><span class="tip-pct">20%</span><span class="tip-val" id="tip-20">$0</span></div>
-                        </div>
-                    </div>
-
-                    <div class="tool-section" id="tool-backup" style="text-align:center;">
-                        <p style="color:var(--text-sub); font-size:0.9em; margin-bottom:20px;">换手机或清缓存前，请先导出备份。</p>
-                        <div style="display:flex; gap:15px; justify-content:center;">
-                            <button onclick="backupData()" style="padding:12px 20px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold;">📤 导出数据</button>
-                            <button onclick="restoreData()" style="padding:12px 20px; background:var(--display-area); color:var(--text-main); border:1px solid var(--border); border-radius:12px; font-weight:bold;">📥 恢复数据</button>
-                        </div>
-                    </div>
-                </div>`;
-            document.body.appendChild(d);
-        }
-
-        // --- 其他保持 V33.4 逻辑 ---
+        // --- 🚀 核心修复：硬核注入底部喇叭 ---
         function injectLogicButtons() {
             const boxes = document.querySelectorAll('.combo-box');
             boxes.forEach(box => {
@@ -987,16 +924,42 @@
                 newBtn.className = 'combo-audio-btn';
                 newBtn.innerHTML = '🔊'; 
                 newBtn.style.zIndex = "10"; 
+                // 直接写入属性，克隆免疫
                 newBtn.setAttribute('onclick', 'handleLogicClick(event, this)');
                 box.appendChild(newBtn);
             });
         }
+
+        // --- 🚀 全局处理函数 ---
         window.handleLogicClick = function(e, btn) {
-            e.stopPropagation(); if(navigator.vibrate) navigator.vibrate(15);
-            btn.style.transform = "scale(0.9)"; setTimeout(() => btn.style.transform = "scale(1)", 150);
+            e.stopPropagation();
+            if(navigator.vibrate) navigator.vibrate(15);
+            btn.style.transform = "scale(0.9)";
+            setTimeout(() => btn.style.transform = "scale(1)", 150);
             const container = btn.closest('.combo-box');
-            if (container) { const textEl = container.querySelector('.combo-text'); if (textEl) speakDirect(textEl.innerText); }
+            if (container) {
+                const textEl = container.querySelector('.combo-text');
+                if (textEl) speakDirect(textEl.innerText);
+            }
         }
+
+        // --- 气泡逻辑 ---
+        function initBubbleTip(targetCard) {
+            if (!targetCard) targetCard = document.querySelector('#content-area .unit-card:not(.clone)');
+            if (!targetCard) return;
+            const wrapper = targetCard.querySelector('.step-container .chips-container .add-btn-wrapper');
+            if (wrapper) {
+                if(wrapper.querySelector('.bubble-tip')) return;
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble-tip';
+                bubble.innerText = '没找到你想要的？现在可以点击添加！';
+                wrapper.appendChild(bubble);
+                setTimeout(() => { dismissBubble(bubble); }, 15000);
+            }
+        }
+        function dismissBubble(element) { if(element) { element.classList.add('fade-out'); setTimeout(() => { element.remove(); }, 600); } }
+
+        // --- 场景搜索引导 ---
         function startSmartSearchAnimation() {
             const input = document.getElementById('searchBox');
             const hour = new Date().getHours();
@@ -1010,10 +973,10 @@
             setInterval(() => { if (document.activeElement === input && input.value !== "") return; input.classList.add('fade-text'); setTimeout(() => { idx = (idx + 1) % prompts.length; updatePlaceholder(); input.classList.remove('fade-text'); }, 500); }, 5000);
             function updatePlaceholder() { const item = prompts[idx]; input.setAttribute('placeholder', `${item.t} 搜 "${item.k}" 试试...`); }
         }
+
+        // --- 其他基础逻辑 ---
         function speakWholeSentence(wordId, p, x) { const wordEl = document.getElementById(wordId); if(wordEl) { const container = wordEl.closest('.text-content'); if (container) speakDirect(container.innerText); } }
         function injectExtraChips() { for (let u = 1; u <= 13; u++) { for (let s = 1; s <= 2; s++) { const container = document.getElementById(`u${u}-s${s}-chips`); if (!container || !extraVocab[u] || !extraVocab[u][s]) continue; const existing = Array.from(container.querySelectorAll('.chip')).map(c => c.innerText); const wrapper = container.querySelector('.add-btn-wrapper'); extraVocab[u][s].forEach(item => { if (!existing.includes(item.e)) { const btn = document.createElement('div'); btn.className = 'chip'; btn.innerText = item.e; btn.onclick = function() { updateUnit(u, s, item.e, item.c, "", "", this); }; if(wrapper) container.insertBefore(btn, wrapper); else container.appendChild(btn); } }); } } }
-        function initBubbleTip(targetCard) { if (!targetCard) targetCard = document.querySelector('#content-area .unit-card:not(.clone)'); if (!targetCard) return; const wrapper = targetCard.querySelector('.step-container .chips-container .add-btn-wrapper'); if (wrapper) { if(wrapper.querySelector('.bubble-tip')) return; const bubble = document.createElement('div'); bubble.className = 'bubble-tip'; bubble.innerText = '没找到你想要的？现在可以点击添加！'; wrapper.appendChild(bubble); setTimeout(() => { dismissBubble(bubble); }, 15000); } }
-        function dismissBubble(element) { if(element) { element.classList.add('fade-out'); setTimeout(() => { element.remove(); }, 600); } }
         function autoSortUnits() { const container = document.getElementById('content-area'); const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); const hour = new Date().getHours(); let timeWeights = {}; if (hour >= 5 && hour < 10) { timeWeights = { 1: 50, 9: 40, 4: 30 }; } else if (hour >= 11 && hour < 14) { timeWeights = { 6: 50, 7: 40, 5: 30 }; } else if (hour >= 17 && hour < 21) { timeWeights = { 8: 50, 7: 40, 6: 30 }; } else if (hour >= 21 || hour < 4) { timeWeights = { 9: 60, 10: 50, 3: 40 }; } cards.sort((a, b) => { const idA = parseInt(a.id.replace('u', '')); const idB = parseInt(b.id.replace('u', '')); let scoreA = usageData[idA] || 0; let scoreB = usageData[idB] || 0; scoreA += (timeWeights[idA] || 0); scoreB += (timeWeights[idB] || 0); return scoreB - scoreA; }); container.innerHTML = ""; cards.forEach(card => container.appendChild(card)); initInfiniteLoop(container, cards); }
         function initInfiniteLoop(container, cards) { container.querySelectorAll('.snap-spacer, .unit-card.clone').forEach(el => el.remove()); if (cards.length < 2) return; const firstCard = cards[0]; const lastCard = cards[cards.length - 1]; setTimeout(() => initBubbleTip(firstCard), 500); const cloneFirst = firstCard.cloneNode(true); const cloneLast = lastCard.cloneNode(true); [cloneFirst, cloneLast].forEach(el => { el.classList.add('clone'); el.id = ""; el.querySelectorAll('[id]').forEach(c => c.removeAttribute('id')); }); const spacerStart = document.createElement('div'); spacerStart.className = 'snap-spacer'; const spacerEnd = document.createElement('div'); spacerEnd.className = 'snap-spacer'; container.insertBefore(spacerStart, container.firstChild); container.insertBefore(cloneLast, container.firstChild.nextSibling); container.appendChild(cloneFirst); container.appendChild(spacerEnd); requestAnimationFrame(() => { container.style.scrollBehavior = 'auto'; const offset = firstCard.offsetLeft - container.offsetLeft - (window.innerWidth * 0.075); container.scrollLeft = offset; setTimeout(() => { container.style.scrollBehavior = 'smooth'; }, 50); }); container.onscroll = () => { const sl = container.scrollLeft; const sw = container.scrollWidth; const cw = container.clientWidth; const buf = 10; if (sw - (sl + cw) < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = firstCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); } if (sl < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = lastCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); } }; }
         function rebuildActionButtons() { for(let i=1; i<=13; i++) { const card = document.getElementById(`u${i}`); if(!card) continue; const steps = card.querySelectorAll('.step-container'); steps.forEach((step, index) => { const displayArea = step.querySelector('.display-area'); if(displayArea) { const s = index + 1; const oldBtns = displayArea.querySelectorAll('button'); oldBtns.forEach(b => b.remove()); let group = displayArea.querySelector('.action-group'); if(!group) { group = document.createElement('div'); group.className = 'action-group'; displayArea.appendChild(group); } const btnAudio = createMiniBtn('🔊', () => { const wordEl = document.getElementById(`u${i}-s${s}-word`); if(wordEl) speakWholeSentence(wordEl.id, "", ""); }); group.appendChild(btnAudio); const btnMic = createMiniBtn('🎙️', function(e) { const wordEl = document.getElementById(`u${i}-s${s}-word`); if(wordEl) startSimpleListening(this, wordEl.parentElement.innerText); }); btnMic.classList.add('btn-mic'); group.appendChild(btnMic); const btnShow = createMiniBtn('👁️', () => { const wordEl = document.getElementById(`u${i}-s${s}-word`); const transEl = document.getElementById(`u${i}-s${s}-trans`); if(wordEl && transEl) openShowCard(wordEl.parentElement.innerText, transEl.innerText); }); group.appendChild(btnShow); } }); } }
@@ -1046,9 +1009,6 @@
         function calcTip(){const b=parseFloat(document.getElementById('inp-bill').value)||0;document.getElementById('tip-15').innerText='$'+(b*1.15).toFixed(2);document.getElementById('tip-18').innerText='$'+(b*1.18).toFixed(2);document.getElementById('tip-20').innerText='$'+(b*1.20).toFixed(2);}
         function openToolbox(){triggerHaptic();document.getElementById('toolOverlay').style.display='flex';}
         function closeToolbox(){document.getElementById('toolOverlay').style.display='none';}
-        function initGlobalClickListeners() { document.body.addEventListener('click', function(e) { const comboBtn = e.target.closest('.combo-audio-btn'); if (comboBtn) { e.stopPropagation(); triggerHaptic(); const container = comboBtn.closest('.combo-box'); if (container) { const textEl = container.querySelector('.combo-text'); if (textEl) speakDirect(textEl.innerText); } return; } }); }
-        function backupData() { triggerHaptic(); let backup = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.startsWith('custom_chips_') || key.startsWith('u') || key === 'unit_usage' || key === 'theme') { backup[key] = localStorage.getItem(key); } } const dataStr = JSON.stringify(backup); navigator.clipboard.writeText(dataStr).then(() => { alert("✅ 数据已复制到剪贴板！\n\n请粘贴保存到备忘录或微信。"); }).catch(err => { prompt("复制失败，请手动复制以下内容：", dataStr); }); }
-        function restoreData() { triggerHaptic(); const dataStr = prompt("请粘贴之前备份的数据字符串："); if (!dataStr) return; try { const backup = JSON.parse(dataStr); for (let key in backup) { localStorage.setItem(key, backup[key]); } alert("🎉 数据恢复成功！页面将刷新。"); location.reload(); } catch (e) { alert("❌ 数据格式错误，恢复失败。"); } }
         function injectSmartKeywords(){/*...*/}
         function injectShowCardDOM(){if(!document.getElementById('showCardOverlay')){const d=document.createElement('div');d.id='showCardOverlay';d.className='show-card-overlay';d.onclick=closeShowCard;d.innerHTML=`<div class="show-card-text" id="showCardEng"></div><div class="show-card-sub" id="showCardCn"></div><div class="show-card-hint">点击任意处关闭</div>`;document.body.appendChild(d);}}
         function openShowCard(e,c){document.getElementById('showCardEng').innerText=e;document.getElementById('showCardCn').innerText=c;document.getElementById('showCardOverlay').style.display='flex';}

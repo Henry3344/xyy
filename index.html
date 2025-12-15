@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Survival English Guide v25.5</title>
     <style>
-        /* --- V31.2 样式表：气泡占位修复版 --- */
+        /* --- V31.3 样式表：气泡下方占位修复版 --- */
         :root {
             --bg-body: #f2f2f7; --bg-card: #ffffff; --text-main: #1c1c1e; --text-sub: #8e8e93;
             --primary: #007aff; --primary-light: #e5f1ff; --border: #c6c6c8;
@@ -23,15 +23,8 @@
             --hint-bg: rgba(28, 28, 30, 0.85);
         }
 
-        html, body { 
-            height: 100%; overflow: hidden; margin: 0; padding: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--bg-body); color: var(--text-main); 
-            display: flex; flex-direction: column; transition: background 0.3s; 
-            -webkit-tap-highlight-color: transparent; 
-        }
+        html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-body); color: var(--text-main); display: flex; flex-direction: column; transition: background 0.3s; -webkit-tap-highlight-color: transparent; }
         
-        /* 顶部导航 */
         .header-container { flex: 0 0 auto; background: var(--nav-bg); backdrop-filter: blur(15px); z-index: 1000; border-bottom: 1px solid var(--border); padding-top: env(safe-area-inset-top); }
         .top-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; max-width: 650px; margin: 0 auto; }
         .app-title { font-size: 1.1em; font-weight: 800; margin: 0; }
@@ -47,7 +40,6 @@
         [data-theme="dark"] .nav-btn { border: 1px solid var(--border); }
         .nav-btn.active-nav { background: var(--primary); color: white; }
 
-        /* 内容区 */
         #content-area { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 15px 0; gap: 15px; align-items: flex-start; scroll-behavior: smooth; }
         #content-area::-webkit-scrollbar { display: none; }
         .snap-spacer { flex: 0 0 7.5vw; } 
@@ -72,39 +64,47 @@
         .btn-mini.listening { background: var(--danger); color: white; border-color: var(--danger); animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,59,48,0.4); } 70% { box-shadow: 0 0 0 6px rgba(255,59,48,0); } 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); } }
 
-        .chips-container { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+        .chips-container { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; align-items: flex-start; }
         .chip { background: var(--chip-bg); border: 1px solid var(--chip-border); padding: 6px 12px; border-radius: 16px; font-size: 0.9em; cursor: pointer; font-weight: 600; color: var(--text-main); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
         
-        .add-btn-wrapper { display: inline-block; position: relative; } 
+        /* 加号按钮容器：设为 flex 以便气泡换行 */
+        .add-btn-wrapper { 
+            display: flex; 
+            flex-direction: column; /* 垂直排列：加号在上，气泡在下 */
+            align-items: center; 
+            position: relative;
+        } 
         .add-chip-btn { border: 1px dashed var(--text-sub); background: transparent; padding: 6px 10px; color: var(--text-sub); }
         
-        /* --- 核心修复：气泡改为“占位式” (Flow Layout) --- */
+        /* --- 核心修复：气泡在加号下方，箭头向上 --- */
         .bubble-tip { 
-            position: relative; /* 关键：回到文档流 */
+            position: relative; 
             display: block;
-            margin: 0 auto 10px auto; /* 上下留白，把下面内容挤开 */
+            margin-top: 10px; /* 距离加号的间距 */
             background: var(--danger); color: white; padding: 8px 12px; border-radius: 8px; 
-            font-size: 0.85em; font-weight: bold; 
-            width: fit-content; max-width: 90%; /* 限制宽度 */
-            white-space: normal; word-wrap: break-word; /* 允许换行 */
+            font-size: 0.8em; font-weight: bold; 
+            width: max-content; max-width: 150px; /* 限制宽度 */
+            white-space: normal; line-height: 1.3;
             text-align: center; 
-            animation: popIn 0.3s ease-out;
+            animation: popUp 0.3s ease-out;
             box-shadow: 0 4px 10px rgba(255, 59, 48, 0.3);
-            /* 下面三角形 */
+            z-index: 99;
         }
+        /* 向上指的箭头 */
         .bubble-tip::after { 
-            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; 
-            border-width: 6px; border-style: solid; border-color: var(--danger) transparent transparent transparent; 
+            content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -6px; 
+            border-width: 6px; border-style: solid; 
+            border-color: transparent transparent var(--danger) transparent; /* 下方有色，指向上 */
         }
         
-        /* 消失动画：折叠高度 */
+        /* 消失动画：收缩高度 */
         .bubble-tip.fade-out { 
             opacity: 0; 
-            margin: 0; padding: 0; height: 0; overflow: hidden; /* 核心：空间合并 */
+            margin-top: 0; padding: 0; height: 0; overflow: hidden; /* 合并空间 */
             transition: all 0.5s ease;
         }
-        @keyframes popIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .scroll-hint { position: absolute; bottom: 0; left: 0; width: 100%; text-align: center; color: var(--primary); font-size: 0.85em; padding: 12px 0; background: var(--hint-bg); backdrop-filter: blur(8px); border-radius: 0 0 20px 20px; opacity: 0; pointer-events: none; z-index: 50; transition: opacity 0.3s; font-weight: bold; }
         .scroll-hint.visible { opacity: 1; animation: float-hint 2s ease-in-out infinite; }
@@ -804,7 +804,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V31.2: 气泡占位修复 + 移除句式版) ===
+        // === 核心逻辑 (V31.3: 气泡精准定位 + 占位修复版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -823,7 +823,7 @@
             injectToolboxDOM(); 
             initSpeechRecognition();
             checkMonthlyReport(); 
-            autoSortUnits(); // 排序+无缝循环
+            autoSortUnits();
             
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
@@ -832,25 +832,23 @@
                 }
             }
             
-            // 延时稍长一点，确保 Scroll 完成后再找卡片贴气泡
+            // 延时确保 DOM 稳定
             setTimeout(() => { initBubbleTip(); }, 600);
             initScrollHints();
             rebuildActionButtons(); 
-            // injectComboStructs(); // 已删除
             addFloatingControls(); 
             startSearchAnimation();
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 修复：气泡逻辑 (找准卡片 + 占位) ---
+        // --- 核心修复：气泡 (下方占位) ---
         function initBubbleTip() {
-            // 1. 找到屏幕中心的卡片
+            // 1. 找屏幕中间的 Real Card
             const center = window.innerWidth / 2;
             let bestCard = null;
             let minDiff = Infinity;
             
-            // 只找 Real Cards，不找 clone
             document.querySelectorAll('.unit-card:not(.clone)').forEach(card => {
                 const rect = card.getBoundingClientRect();
                 const cardCenter = rect.left + rect.width / 2;
@@ -863,20 +861,20 @@
 
             if (!bestCard) return;
 
-            // 2. 找到 Step 1 的容器
-            const container = bestCard.querySelector('.step-container .chips-container');
+            // 2. 找到 Step 1 的加号容器
+            const wrapper = bestCard.querySelector('.step-container .chips-container .add-btn-wrapper');
             
-            if (container) {
-                if(container.querySelector('.bubble-tip')) return;
+            if (wrapper) {
+                if(wrapper.querySelector('.bubble-tip')) return;
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble-tip';
                 bubble.innerText = '没找到？点我添加，还能发音！';
                 
-                // 3. 关键：插在最前面 (prepend)，配合 CSS relative，它会占据一行空间
-                container.prepend(bubble);
+                // 3. 关键：插在容器末尾 (CSS flex-col 会让它排在加号下面)
+                wrapper.appendChild(bubble);
 
-                // 4. 15秒后自动折叠消失
+                // 4. 自动消失
                 setTimeout(() => {
                     dismissBubble(bubble);
                 }, 15000);
@@ -886,10 +884,9 @@
         function dismissBubble(element) {
             if(!element) return;
             element.classList.add('fade-out');
-            // 动画结束后移除 DOM
             setTimeout(() => {
                 element.remove();
-            }, 600); // 略大于 CSS transition 时间
+            }, 600); 
         }
 
         // --- 其他逻辑保持不变 ---
@@ -976,7 +973,6 @@
             else { showToast(`🤔 再试一次，听起来像：\n"${spoken}"`); }
         }
         
-        // AI 陪练相关
         function addBotMsg(text, chips=[], autoMic=false, callback=null) {
             const body = document.getElementById('chatBody');
             const d = document.createElement('div'); d.className='msg bot'; d.innerText=text; body.appendChild(d);
@@ -1064,7 +1060,6 @@
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
         function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
     </script>
-
 </body>
 </html>
       

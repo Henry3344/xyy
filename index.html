@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Survival English Guide</title>
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="生存英语">
@@ -11,40 +12,38 @@
     <meta name="theme-color" content="#1c1c1e">
     
     <style>
-        /* === V37.3 完全复活版样式 === */
+        /* ... (保留你现在的 V33.4 样式，不用动) ... */
+    </style>
+</head>
+
+    <style>
+        /* --- V33.4 样式表：点击穿透 + 底部避让版 --- */
         :root {
             --bg-body: #f2f2f7; --bg-card: #ffffff; --text-main: #1c1c1e; --text-sub: #8e8e93;
             --primary: #007aff; --primary-light: #e5f1ff; --border: #c6c6c8;
             --chip-bg: #ffffff; --chip-border: #d1d1d6; --nav-bg: rgba(255,255,255,0.95);
             --shadow: rgba(0,0,0,0.08); --display-area: #f2f2f7; --danger: #ff3b30; --accent: #5856d6;
-            --hint-bg: rgba(255, 255, 255, 0.85); --gold: #ffcc00;
+            --hint-bg: rgba(255, 255, 255, 0.85);
         }
         [data-theme="dark"] {
             --bg-body: #000000; --bg-card: #1c1c1e; --text-main: #ffffff; --text-sub: #aeaeb2;
             --primary: #0a84ff; --primary-light: #1c1c1e; --border: #38383a; --chip-bg: #2c2c2e;
             --chip-border: #3a3a3c; --nav-bg: rgba(28,28,30,0.95); --shadow: rgba(255,255,255,0.05);
             --display-area: #2c2c2e; --danger: #ff453a; --accent: #5e5ce6;
-            --hint-bg: rgba(28, 28, 30, 0.85); --gold: #ffd60a;
+            --hint-bg: rgba(28, 28, 30, 0.85);
         }
 
         html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-body); color: var(--text-main); display: flex; flex-direction: column; transition: background 0.3s; -webkit-tap-highlight-color: transparent; }
         
         .header-container { flex: 0 0 auto; background: var(--nav-bg); backdrop-filter: blur(15px); z-index: 1000; border-bottom: 1px solid var(--border); padding-top: env(safe-area-inset-top); }
         .top-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; max-width: 650px; margin: 0 auto; }
-        
-        .title-group { display: flex; align-items: center; gap: 8px; }
         .app-title { font-size: 1.1em; font-weight: 800; margin: 0; }
-        .level-badge { background: var(--gold); color: black; padding: 2px 8px; border-radius: 10px; font-size: 0.75em; font-weight: 900; box-shadow: 0 2px 5px rgba(255, 204, 0, 0.3); transition: transform 0.2s; cursor: default; }
-        .level-badge.bump { transform: scale(1.4); }
-
         .header-actions { display: flex; gap: 12px; }
         .icon-btn { background: none; border: 1px solid var(--border); color: var(--text-main); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .icon-btn.danger { border-color: var(--danger); color: var(--danger); }
-        
         .search-row { padding: 0 15px 8px 15px; max-width: 650px; margin: 0 auto; }
         .search-input { width: 100%; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); box-sizing: border-box; outline: none; transition: color 0.5s; }
         .search-input.fade-text { color: transparent; }
-        
         .nav-scroll { display: flex; overflow-x: auto; padding: 0 15px 10px 15px; gap: 8px; max-width: 650px; margin: 0 auto; scrollbar-width: none; }
         .nav-scroll::-webkit-scrollbar { display: none; }
         .nav-btn { flex: 0 0 auto; background: var(--primary-light); color: var(--primary); padding: 5px 10px; border-radius: 14px; font-weight: 600; font-size: 0.8em; text-decoration: none; cursor: pointer; }
@@ -55,7 +54,17 @@
         #content-area::-webkit-scrollbar { display: none; }
         .snap-spacer { flex: 0 0 7.5vw; } 
         
-        .unit-card { flex: 0 0 85vw; max-width: 500px; background: var(--bg-card); border-radius: 20px; padding: 20px; box-shadow: 0 8px 30px var(--shadow); border: 1px solid var(--border); scroll-snap-align: center; scroll-snap-stop: always; height: 98%; max-height: 85vh; overflow-y: auto; position: relative; padding-bottom: 140px; box-sizing: border-box; }
+        .unit-card { 
+            flex: 0 0 85vw; max-width: 500px; background: var(--bg-card); 
+            border-radius: 20px; padding: 20px; box-shadow: 0 8px 30px var(--shadow); 
+            border: 1px solid var(--border); 
+            scroll-snap-align: center; 
+            scroll-snap-stop: always; 
+            height: 98%; max-height: 85vh; overflow-y: auto; position: relative; 
+            /* 核心修改：底部增加到 120px，保证内容能滑出按钮遮挡区 */
+            padding-bottom: 120px; 
+            box-sizing: border-box; 
+        }
         .unit-header { font-size: 1.3em; font-weight: 800; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid var(--display-area); padding-bottom: 10px; display: flex; justify-content: space-between; }
         .sort-rank { font-size: 0.6em; color: var(--text-sub); opacity: 0.5; }
 
@@ -70,7 +79,6 @@
         .highlight { color: var(--primary); text-decoration: underline; text-decoration-thickness: 3px; cursor: pointer; }
         .translation { color: var(--text-sub); font-size: 0.9em; white-space: normal; }
 
-        /* 核心修复：Step 旁边的小按钮 */
         .action-group { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
         .btn-mini { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1em; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); box-shadow: 0 1px 3px var(--shadow); transition: all 0.2s; }
         .btn-mini:active { transform: scale(0.92); }
@@ -80,12 +88,24 @@
         .chips-container { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; align-items: flex-start; }
         .chip { background: var(--chip-bg); border: 1px solid var(--chip-border); padding: 6px 12px; border-radius: 16px; font-size: 0.9em; cursor: pointer; font-weight: 600; color: var(--text-main); }
         .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
         .add-btn-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; } 
         .add-chip-btn { border: 1px dashed var(--text-sub); background: transparent; padding: 6px 10px; color: var(--text-sub); }
         
-        /* 核心修复：红色气泡提示 */
-        .bubble-tip { position: relative; display: block; margin-top: 10px; background: var(--danger); color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.8em; font-weight: bold; width: max-content; max-width: 200px; white-space: normal; line-height: 1.3; text-align: center; animation: popUp 0.3s ease-out; box-shadow: 0 4px 10px rgba(255, 59, 48, 0.4); z-index: 200; }
-        .bubble-tip::after { content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: transparent transparent var(--danger) transparent; }
+        .bubble-tip { 
+            position: relative; display: block; margin-top: 10px; 
+            background: var(--danger); color: white; padding: 8px 12px; border-radius: 8px; 
+            font-size: 0.8em; font-weight: bold; 
+            width: max-content; max-width: 200px; 
+            white-space: normal; line-height: 1.3; text-align: center; 
+            animation: popUp 0.3s ease-out; box-shadow: 0 4px 10px rgba(255, 59, 48, 0.4); 
+            z-index: 200;
+        }
+        .bubble-tip::after { 
+            content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -6px; 
+            border-width: 6px; border-style: solid; 
+            border-color: transparent transparent var(--danger) transparent; 
+        }
         .bubble-tip.fade-out { opacity: 0; margin-top: 0; padding: 0; height: 0; overflow: hidden; transition: all 0.5s ease; }
         @keyframes popUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -97,19 +117,47 @@
         .combo-box { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px; border-radius: 16px; margin-top: 20px; position: relative; }
         .combo-title { font-size: 0.8em; font-weight: bold; opacity: 0.8; margin-bottom: 8px; display: flex; justify-content: space-between; }
         .combo-text { padding-right: 40px; font-weight: 600; margin-bottom: 10px; line-height: 1.4; }
-        
-        .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; z-index: 20; }
-        .btn-slow { position: absolute; top: 15px; right: 60px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2em; cursor: pointer; z-index: 20; }
+        .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; }
 
-        .float-controls { position: fixed; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; align-items: flex-end; pointer-events: none; }
-        .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3em; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative; pointer-events: auto; }
+        /* --- 核心修复：悬浮球穿透设置 --- */
+        .float-controls { 
+            position: fixed; bottom: 40px; right: 20px; 
+            display: flex; flex-direction: column; gap: 15px; 
+            z-index: 2000; align-items: flex-end; 
+            /* 关键：容器不挡鼠标，只有里面的按钮挡鼠标 */
+            pointer-events: none; 
+        }
+        
+        .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { 
+            width: 42px; height: 42px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.3em; border: none; cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative;
+            /* 关键：按钮自身恢复点击 */
+            pointer-events: auto; 
+        }
+        
         .fab-quiz { background: var(--danger); color: white; width: auto; padding: 8px 16px; border-radius: 30px; font-size: 0.85em; }
         .fab-random { background: var(--accent); color: white; }
+        
         .fab-robot { background: #000; color: white; border: 2px solid #00ff00; }
-        .robot-speech-bubble { position: absolute; bottom: 0; right: 55px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); padding: 8px 12px; border-radius: 12px 12px 0 12px; font-size: 0.85em; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.15); width: max-content; max-width: 160px; opacity: 0; transform: translateX(10px); transition: all 0.3s ease; pointer-events: none; }
+        .robot-speech-bubble {
+            position: absolute; bottom: 0; right: 55px; 
+            background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);
+            padding: 8px 12px; border-radius: 12px 12px 0 12px; 
+            font-size: 0.85em; font-weight: bold; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            width: max-content; max-width: 160px;
+            opacity: 0; transform: translateX(10px); transition: all 0.3s ease; pointer-events: none;
+        }
         .robot-speech-bubble.visible { opacity: 1; transform: translateX(0); }
-        .robot-speech-bubble::after { content: ''; position: absolute; bottom: 10px; right: -6px; border-width: 6px; border-style: solid; border-color: transparent transparent transparent var(--bg-card); }
+        .robot-speech-bubble::after {
+            content: ''; position: absolute; bottom: 10px; right: -6px;
+            border-width: 6px; border-style: solid; 
+            border-color: transparent transparent transparent var(--bg-card); 
+        }
         [data-theme="dark"] .robot-speech-bubble::after { border-left-color: var(--bg-card); }
+
         .robot-badge { position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: #ff3b30; border-radius: 50%; border: 2px solid #fff; display: none; }
         .fab-tools { background: #ff9f0a; color: white; }
 
@@ -171,606 +219,641 @@
 
         .fixed-footer { flex: 0 0 auto; text-align: center; color: var(--text-sub); font-size: 0.6em; padding: 3px 0; border-top: 1px solid var(--border); background: var(--bg-body); opacity: 0.5; }
     </style>
+
 </head>
 <body>
-    <div class="header-container">
+
+    <div class="header-container" id="mainHeader">
         <div class="top-row">
-            <div class="title-group">
-                <div class="app-title">🇺🇸 Survival English Guide</div>
-                <div class="level-badge" id="userLevel">Lv.1</div>
-            </div>
+            <div class="app-title">🇺🇸 Survival English Guide</div>
             <div class="header-actions">
-                <button class="icon-btn danger" onclick="toggleEmergency()">🆘</button>
-                <button class="icon-btn" onclick="toggleTheme()">🌗</button>
+                <button class="icon-btn danger" onclick="toggleEmergency()" title="应急模式">⚡</button>
+                <button class="icon-btn" onclick="toggleTheme()" title="切换模式">🌗</button>
             </div>
         </div>
         
         <div class="search-row">
-            <input type="text" class="search-input" id="searchBox" placeholder="🔍 搜场景/单词..." oninput="filterUnits()">
+            <input type="text" class="search-input" id="searchBox" placeholder="🔍 搜索场景 (如: 退货, coffee...)" onkeyup="filterUnits()">
         </div>
 
         <div class="nav-scroll">
-            <a class="nav-btn" onclick="scrollToUnit('u1')">邻居</a>
-            <a class="nav-btn" onclick="scrollToUnit('u2')">位置</a>
-            <a class="nav-btn" onclick="scrollToUnit('u3')">内急</a>
-            <a class="nav-btn" onclick="scrollToUnit('u4')">银行</a>
-            <a class="nav-btn" onclick="scrollToUnit('u5')">结账</a>
-            <a class="nav-btn" onclick="scrollToUnit('u6')">点餐</a>
-            <a class="nav-btn" onclick="scrollToUnit('u7')">聚餐</a>
-            <a class="nav-btn" onclick="scrollToUnit('u8')">叙旧</a>
-            <a class="nav-btn" onclick="scrollToUnit('u9')">打车</a>
-            <a class="nav-btn" onclick="scrollToUnit('u10')">救命</a>
-            <a class="nav-btn" onclick="scrollToUnit('u11')">不懂</a>
-            <a class="nav-btn" onclick="scrollToUnit('u12')">退货</a>
-            <a class="nav-btn" onclick="scrollToUnit('u13')">预约</a>
+            <a onclick="scrollToUnit('u1')" class="nav-btn">邻居</a>
+            <a onclick="scrollToUnit('u2')" class="nav-btn">位置</a>
+            <a onclick="scrollToUnit('u3')" class="nav-btn">洗手间</a>
+            <a onclick="scrollToUnit('u4')" class="nav-btn">银行</a>
+            <a onclick="scrollToUnit('u5')" class="nav-btn">结账</a>
+            <a onclick="scrollToUnit('u6')" class="nav-btn">点餐</a>
+            <a onclick="scrollToUnit('u7')" class="nav-btn">聚餐</a>
+            <a onclick="scrollToUnit('u8')" class="nav-btn">叙旧</a>
+            <a onclick="scrollToUnit('u9')" class="nav-btn">打车</a>
+            <a onclick="scrollToUnit('u10')" class="nav-btn">急救</a>
+            <a onclick="scrollToUnit('u11')" class="nav-btn">没听懂</a>
+            <a onclick="scrollToUnit('u12')" class="nav-btn">退货</a>
+            <a onclick="scrollToUnit('u13')" class="nav-btn">预约</a>
         </div>
+    </div>
+
+    <div class="emergency-overlay" id="emergencyOverlay">
+        <div class="emergency-close" onclick="toggleEmergency()">✕</div>
+        <div class="emergency-card" onclick="speakDirect('I need help! Please call 911.')">
+            <div>
+                <div class="emergency-text" style="color: #ff3b30;">I NEED HELP!<br>CALL 911</div>
+                <div class="emergency-sub">救命！请打911</div>
+            </div>
+        </div>
+        <div class="emergency-card" onclick="speakDirect('I do not speak English. Please use a translation app.')">
+            <div>
+                <div class="emergency-text">I DON'T SPEAK ENGLISH</div>
+                <div class="emergency-sub">我不会英语 (请用翻译软件)</div>
+            </div>
+        </div>
+        <div class="emergency-card" onclick="speakDirect('I am lost. Can you help me?')">
+            <div>
+                <div class="emergency-text">I AM LOST<br>CAN YOU HELP?</div>
+                <div class="emergency-sub">我迷路了，能帮我吗？</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="randomModal">
+        <div class="modal-card">
+            <div class="modal-title">🎲 随机场景挑战</div>
+            <div class="modal-content-text" id="modalQuestion" style="font-weight:bold; font-size: 1.4em;">...</div>
+            <div class="modal-actions">
+                <button class="modal-btn btn-close" onclick="closeModal('randomModal')">关闭</button>
+                <button class="modal-btn btn-reveal" onclick="revealRandomAnswer()">查看答案</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal-card">
+            <div class="modal-title">📅 月度暖心小结</div>
+            <div class="modal-content-text" id="reportContent" style="text-align: left; font-size: 1em;">...</div>
+            <div class="modal-actions">
+                <button class="modal-btn btn-reveal" onclick="closeModal('reportModal')">继续加油！</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="float-controls">
+        <button class="fab-random" onclick="startRandomDrill()" title="随机抽查">🎲</button>
+        <button class="fab-quiz" onclick="toggleQuizMode()">
+            <span class="quiz-default-text">👁️ 遮挡特训</span>
+            <span class="quiz-active-text">✅ 恢复显示</span>
+        </button>
     </div>
 
     <div id="content-area">
-        
-        <div class="unit-card" id="u1" data-name="Neighbor" data-keywords="neighbor hello hi greeting 搬家 装修 新来 陌生人 问候">
-            <div class="unit-header">
-                <span>邻居打招呼</span>
-                <span class="sort-rank">#1</span>
-            </div>
-            
+    <div class="unit-card" id="u1" data-name="邻居打招呼" data-keywords="邻居 打招呼 介绍 neighbor">
+            <div class="unit-header">邻居打招呼<span class="sort-rank"></span></div>
             <div class="step-container">
                 <span class="step-label">Step 1: 介绍 <span class="pattern-box">Hi, I'm ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Hi, I'm <span class="highlight" id="u1-s1-word">your new neighbor</span>.</div>
-                        <div class="translation" id="u1-s1-trans">嗨，我是你的新邻居。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u1-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">Hi, I'm <span class="highlight" id="u1-s1-word">your new neighbor</span>.</div><div class="translation" id="u1-s1-trans">嗨，我是你的新邻居。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u1-s1-word', 'Hi, I am', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u1-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(1, 1, 'Hi, I\'m', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(1, 1, 'your new neighbor', '你的新邻居', 'Hi, I am', '', this)">your new neighbor</div>
+                    <div class="chip" onclick="updateUnit(1, 1, 'Henry', 'Henry', 'Hi, I am', '', this)">Henry</div>
+                    <div class="chip" onclick="updateUnit(1, 1, 'moving in', '刚搬进来', 'Hi, I am', '', this)">moving in</div>
+                    <div class="chip" onclick="updateUnit(1, 1, 'living next door', '住隔壁的', 'Hi, I am', '', this)">living next door</div>
+                    <div class="chip" onclick="updateUnit(1, 1, 'new here', '新来的', 'Hi, I am', '', this)">new here</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(1, 1, 'Hi, I am', '')">＋</button></div>
                 </div>
             </div>
-
+            <hr class="divider">
             <div class="step-container">
                 <span class="step-label">Step 2: 住址 <span class="pattern-box">I live in ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">I live in <span class="highlight" id="u1-s2-word">Apt 302</span>.</div>
-                        <div class="translation" id="u1-s2-trans">我住在302室。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u1-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">I live in <span class="highlight" id="u1-s2-word">Apt 302</span>.</div><div class="translation" id="u1-s2-trans">我住在302室。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u1-s2-word', 'I live in', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u1-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(1, 2, 'I live in', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(1, 2, 'Apt 302', '302室', 'I live in', '', this)">Apt 302</div>
+                    <div class="chip" onclick="updateUnit(1, 2, 'next door', '隔壁', 'I live', '', this)">next door</div>
+                    <div class="chip" onclick="updateUnit(1, 2, 'downstairs', '楼下', 'I live', '', this)">downstairs</div>
+                    <div class="chip" onclick="updateUnit(1, 2, 'upstairs', '楼上', 'I live', '', this)">upstairs</div>
+                    <div class="chip" onclick="updateUnit(1, 2, 'this building', '这栋楼', 'I live in', '', this)">this building</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(1, 2, 'I live in', '')">＋</button></div>
                 </div>
             </div>
-
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">Hi, I'm your new neighbor. I live in Apt 302.</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"Hi, I'm Henry. I live next door, nice to meet you."</div>
+                <button class="combo-audio-btn" onclick="speakDirect('Hi, I am Henry. I live next door, nice to meet you.')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
 
-        <div class="unit-card" id="u2" data-name="Location" data-keywords="map where lost direction 迷路 导航 地图 怎么走 位置">
-            <div class="unit-header">
-                <span>询问位置</span>
-                <span class="sort-rank">#2</span>
-            </div>
+        <div class="unit-card" id="u2" data-name="询问位置" data-keywords="位置 找路 问路 location looking for">
+            <div class="unit-header">询问位置</div>
             <div class="step-container">
-                <span class="step-label">Step 1: 寻找 <span class="pattern-box">I'm looking for ...</span></span>
+                <span class="step-label">Step 1: 目的 <span class="pattern-box">I'm looking for ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Excuse me, I'm looking for <span class="highlight" id="u2-s1-word">the subway</span>.</div>
-                        <div class="translation" id="u2-s1-trans">打扰一下，我在找地铁站。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u2-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">Excuse me, I'm looking for <span class="highlight" id="u2-s1-word">Unit 5B</span>.</div><div class="translation" id="u2-s1-trans">打扰一下，我在找5B单元。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u2-s1-word', 'Excuse me, I am looking for', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u2-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(2, 1, 'Excuse me, I\'m looking for', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(2, 1, 'Unit 5B', '5B单元', 'Excuse me, I am looking for', '', this)">Unit 5B</div>
+                    <div class="chip" onclick="updateUnit(2, 1, 'the exit', '出口', 'Excuse me, I am looking for', '', this)">the exit</div>
+                    <div class="chip" onclick="updateUnit(2, 1, 'the elevator', '电梯', 'Excuse me, I am looking for', '', this)">the elevator</div>
+                    <div class="chip" onclick="updateUnit(2, 1, 'the mailroom', '收发室', 'Excuse me, I am looking for', '', this)">the mailroom</div>
+                    <div class="chip" onclick="updateUnit(2, 1, 'the gym', '健身房', 'Excuse me, I am looking for', '', this)">the gym</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(2, 1, 'Excuse me, I am looking for', '')">＋</button></div>
                 </div>
             </div>
+            <hr class="divider">
             <div class="step-container">
-                <span class="step-label">Step 2: 询问 <span class="pattern-box">Can you tell me ...?</span></span>
+                <span class="step-label">Step 2: 提问 <span class="pattern-box">Could you tell me ... ?</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Can you tell me <span class="highlight" id="u2-s2-word">where it is</span>?</div>
-                        <div class="translation" id="u2-s2-trans">能告诉我它在哪吗？</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u2-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">Could you tell me <span class="highlight" id="u2-s2-word">how to get there</span>?</div><div class="translation" id="u2-s2-trans">能告诉我怎么走吗？</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u2-s2-word', 'Could you tell me', '?')">🔊</button>
                 </div>
                 <div class="chips-container" id="u2-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(2, 2, 'Can you tell me', '?')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(2, 2, 'how to get there', '怎么走', 'Could you tell me', '吗', this)">how to get there</div>
+                    <div class="chip" onclick="updateUnit(2, 2, 'where it is', '它在哪', 'Could you tell me', '吗', this)">where it is</div>
+                    <div class="chip" onclick="updateUnit(2, 2, 'which way', '哪边走', 'Could you tell me', '吗', this)">which way</div>
+                    <div class="chip" onclick="updateUnit(2, 2, 'the address', '具体地址', 'Could you tell me', '吗', this)">the address</div>
+                    <div class="chip" onclick="updateUnit(2, 2, 'if it is far', '远不远', 'Could you tell me', '吗', this)">if it is far</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(2, 2, 'Could you tell me', '?')">＋</button></div>
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">Excuse me, I'm looking for the subway. Can you tell me where it is?</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"Excuse me, I'm looking for the mailroom. Could you tell me where it is?"</div>
+                <button class="combo-audio-btn" onclick="speakDirect('Excuse me, I am looking for the mailroom. Could you tell me where it is?')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
 
-        <div class="unit-card" id="u3" data-name="Borrowing" data-keywords="toilet restroom battery charge urgent emergency 内急 厕所 没电 充电 借用">
-            <div class="unit-header">
-                <span>紧急借用</span>
-                <span class="sort-rank">#3</span>
-            </div>
+        <div class="unit-card" id="u3" data-name="借用洗手间" data-keywords="洗手间 厕所 紧急 restroom urgent">
+            <div class="unit-header">借用洗手间</div>
             <div class="step-container">
-                <span class="step-label">Step 1: 借用 <span class="pattern-box">Could I borrow ...?</span></span>
+                <span class="step-label">Step 1: 礼貌请求 <span class="pattern-box">Could I use ... ?</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Could I borrow <span class="highlight" id="u3-s1-word">your phone charger</span>?</div>
-                        <div class="translation" id="u3-s1-trans">我能借用一下您的手机充电器吗？</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u3-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">Could I use your <span class="highlight" id="u3-s1-word">restroom</span>?</div><div class="translation" id="u3-s1-trans">我能借用一下您的洗手间吗？</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u3-s1-word', 'Could I use your', '?')">🔊</button>
                 </div>
                 <div class="chips-container" id="u3-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(3, 1, 'Could I borrow', '?')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(3, 1, 'restroom', '洗手间', 'Could I use your', '吗', this)">restroom</div>
+                    <div class="chip" onclick="updateUnit(3, 1, 'bathroom', '卫生间', 'Could I use your', '吗', this)">bathroom</div>
+                    <div class="chip" onclick="updateUnit(3, 1, 'charger', '充电器', 'Could I use your', '吗', this)">charger</div>
+                    <div class="chip" onclick="updateUnit(3, 1, 'phone', '电话', 'Could I use your', '吗', this)">phone</div>
+                    <div class="chip" onclick="updateUnit(3, 1, 'wifi', 'WiFi', 'Could I use your', '吗', this)">wifi</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(3, 1, 'Could I use your', '?')">＋</button></div>
                 </div>
             </div>
+            <hr class="divider">
             <div class="step-container">
-                <span class="step-label">Step 2: 原因 <span class="pattern-box">It's really ...</span></span>
+                <span class="step-label">Step 2: 补充说明 <span class="pattern-box">It's really ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">It's really <span class="highlight" id="u3-s2-word">urgent</span>.</div>
-                        <div class="translation" id="u3-s2-trans">真的很紧急。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u3-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">It's really <span class="highlight" id="u3-s2-word">urgent</span>.</div><div class="translation" id="u3-s2-trans">真的很紧急。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u3-s2-word', 'It is really', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u3-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(3, 2, 'It\'s really', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(3, 2, 'urgent', '紧急', 'It is really', '', this)">urgent</div>
+                    <div class="chip" onclick="updateUnit(3, 2, 'quick', '快(很快就好)', 'It will be really', '', this)">quick</div>
+                    <div class="chip" onclick="updateUnit(3, 2, 'important', '重要', 'It is really', '', this)">important</div>
+                    <div class="chip" onclick="updateUnit(3, 2, 'necessary', '有必要', 'It is really', '', this)">necessary</div>
+                    <div class="chip" onclick="updateUnit(3, 2, 'an emergency', '急事', 'It is', '', this)">an emergency</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(3, 2, 'It is really', '.')">＋</button></div>
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">Could I borrow your phone charger? It's really urgent.</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"Sorry to bother you, could I use your restroom? It's really urgent."</div>
+                <button class="combo-audio-btn" onclick="speakDirect('Sorry to bother you, could I use your restroom? It is really urgent.')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
 
-        <div class="unit-card" id="u4" data-name="Bank" data-keywords="money bank cash deposit withdraw 银行 钱 现金 转账 开户">
-            <div class="unit-header">
-                <span>银行办事</span>
-                <span class="sort-rank">#4</span>
-            </div>
+        <div class="unit-card" id="u4" data-name="银行办事" data-keywords="银行 开户 存款 bank">
+            <div class="unit-header">银行办事</div>
             <div class="step-container">
-                <span class="step-label">Step 1: 动作 <span class="pattern-box">I'd like to ...</span></span>
+                <span class="step-label">Step 1: 需求 <span class="pattern-box">I'd like to ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">I'd like to <span class="highlight" id="u4-s1-word">deposit cash</span>.</div>
-                        <div class="translation" id="u4-s1-trans">我想存现金。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u4-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">I'd like to <span class="highlight" id="u4-s1-word">open an account</span>.</div><div class="translation" id="u4-s1-trans">我想开一个账户。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u4-s1-word', 'I would like to', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u4-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(4, 1, 'I\'d like to', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(4, 1, 'open an account', '开个账户', 'I would like to', '', this)">open an account</div>
+                    <div class="chip" onclick="updateUnit(4, 1, 'deposit money', '存钱', 'I would like to', '', this)">deposit money</div>
+                    <div class="chip" onclick="updateUnit(4, 1, 'withdraw cash', '取钱', 'I would like to', '', this)">withdraw cash</div>
+                    <div class="chip" onclick="updateUnit(4, 1, 'exchange currency', '换汇', 'I would like to', '', this)">exchange currency</div>
+                    <div class="chip" onclick="updateUnit(4, 1, 'wire money', '汇款', 'I would like to', '', this)">wire money</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(4, 1, 'I would like to', '.')">＋</button></div>
                 </div>
             </div>
+            <hr class="divider">
             <div class="step-container">
-                <span class="step-label">Step 2: 证件 <span class="pattern-box">Here is my ...</span></span>
+                <span class="step-label">Step 2: 提供证件 <span class="pattern-box">Here is my ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Here is my <span class="highlight" id="u4-s2-word">ID card</span>.</div>
-                        <div class="translation" id="u4-s2-trans">这是我的身份证。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u4-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">Here is my <span class="highlight" id="u4-s2-word">ID card</span>.</div><div class="translation" id="u4-s2-trans">这是我的身份证。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u4-s2-word', 'Here is my', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u4-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(4, 2, 'Here is my', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(4, 2, 'ID card', '身份证', 'Here is my', '', this)">ID card</div>
+                    <div class="chip" onclick="updateUnit(4, 2, 'passport', '护照', 'Here is my', '', this)">passport</div>
+                    <div class="chip" onclick="updateUnit(4, 2, 'debit card', '借记卡', 'Here is my', '', this)">debit card</div>
+                    <div class="chip" onclick="updateUnit(4, 2, 'check', '支票', 'Here is my', '', this)">check</div>
+                    <div class="chip" onclick="updateUnit(4, 2, 'application form', '申请表', 'Here is my', '', this)">application form</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(4, 2, 'Here is my', '.')">＋</button></div>
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">I'd like to deposit cash. Here is my ID card.</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"I'd like to open an account. Here is my passport."</div>
+                <button class="combo-audio-btn" onclick="speakDirect('I would like to open an account. Here is my passport.')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
-
-        <div class="unit-card" id="u5" data-name="Checkout" data-keywords="pay bill cost credit card 结账 买单 多少钱 刷卡 支付宝">
-            <div class="unit-header">
-                <span>商店结账</span>
-                <span class="sort-rank">#5</span>
-            </div>
+        <div class="unit-card" id="u5" data-name="超市结账" data-keywords="超市 结账 支付 checkout">
+            <div class="unit-header">超市结账</div>
             <div class="step-container">
-                <span class="step-label">Step 1: 支付 <span class="pattern-box">I'll pay with ...</span></span>
+                <span class="step-label">Step 1: 支付方式 <span class="pattern-box">I'd like to pay by ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">I'll pay with <span class="highlight" id="u5-s1-word">credit card</span>.</div>
-                        <div class="translation" id="u5-s1-trans">我想用信用卡支付。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u5-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">I'd like to pay by <span class="highlight" id="u5-s1-word">credit card</span>.</div><div class="translation" id="u5-s1-trans">我想用信用卡支付。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u5-s1-word', 'I would like to pay by', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u5-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(5, 1, 'I\'ll pay with', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(5, 1, 'credit card', '信用卡', 'I would like to pay by', '', this)">credit card</div>
+                    <div class="chip" onclick="updateUnit(5, 1, 'cash', '现金', 'I would like to pay by', '', this)">cash</div>
+                    <div class="chip" onclick="updateUnit(5, 1, 'Apple Pay', 'Apple Pay', 'I would like to pay by', '', this)">Apple Pay</div>
+                    <div class="chip" onclick="updateUnit(5, 1, 'debit card', '借记卡', 'I would like to pay by', '', this)">debit card</div>
+                    <div class="chip" onclick="updateUnit(5, 1, 'gift card', '礼品卡', 'I would like to pay by', '', this)">gift card</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(5, 1, 'I would like to pay by', '.')">＋</button></div>
                 </div>
             </div>
+            <hr class="divider">
             <div class="step-container">
-                <span class="step-label">Step 2: 需求 <span class="pattern-box">Do you offer ...?</span></span>
+                <span class="step-label">Step 2: 询问 <span class="pattern-box">Do you offer ... ?</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Do you offer <span class="highlight" id="u5-s2-word">a receipt</span>?</div>
-                        <div class="translation" id="u5-s2-trans">你们提供收据吗？</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u5-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">Do you offer <span class="highlight" id="u5-s2-word">plastic bags</span>?</div><div class="translation" id="u5-s2-trans">你们提供塑料袋吗？</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u5-s2-word', 'Do you offer', '?')">🔊</button>
                 </div>
                 <div class="chips-container" id="u5-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(5, 2, 'Do you offer', '?')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(5, 2, 'plastic bags', '塑料袋', 'Do you offer', '吗', this)">plastic bags</div>
+                    <div class="chip" onclick="updateUnit(5, 2, 'a receipt', '收据', 'Do you offer', '吗', this)">a receipt</div>
+                    <div class="chip" onclick="updateUnit(5, 2, 'cash back', '现金返还', 'Do you offer', '吗', this)">cash back</div>
+                    <div class="chip" onclick="updateUnit(5, 2, 'gift wrapping', '礼品包装', 'Do you offer', '吗', this)">gift wrapping</div>
+                    <div class="chip" onclick="updateUnit(5, 2, 'discounts', '折扣', 'Do you offer', '吗', this)">discounts</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(5, 2, 'Do you offer', '?')">＋</button></div>
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">I'll pay with credit card. Do you offer a receipt?</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"I'll pay by credit card. Do you offer a receipt?"</div>
+                <button class="combo-audio-btn" onclick="speakDirect('I will pay by credit card. Do you offer a receipt?')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
-        </div>
-        <div class="unit-card" id="u6" data-name="Ordering" data-keywords="eat food drink menu spicy hungry 点餐 吃饭 菜单 忌口 外卖 打包">
-            <div class="unit-header">
-                <span>餐厅点餐</span>
-                <span class="sort-rank">#6</span>
-            </div>
-            <div class="step-container">
-                <span class="step-label">Step 1: 想要 <span class="pattern-box">I'd like ...</span></span>
-                <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">I'd like <span class="highlight" id="u6-s1-word">the menu</span>.</div>
-                        <div class="translation" id="u6-s1-trans">我想要菜单。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u6-s1-word')">🔊</button>
-                </div>
-                <div class="chips-container" id="u6-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(6, 1, 'I\'d like', '.')">+</button></div>
-                </div>
-            </div>
-            <div class="step-container">
-                <span class="step-label">Step 2: 忌口 <span class="pattern-box">Please don't ...</span></span>
-                <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Please don't <span class="highlight" id="u6-s2-word">add sugar</span>.</div>
-                        <div class="translation" id="u6-s2-trans">请不要加糖。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u6-s2-word')">🔊</button>
-                </div>
-                <div class="chips-container" id="u6-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(6, 2, 'Please don\'t', '.')">+</button></div>
-                </div>
-            </div>
-            <div class="divider"></div>
-            <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">I'd like the menu. Please don't add sugar.</div>
-            </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
 
-        <div class="unit-card" id="u7" data-name="Splitting" data-keywords="treat split share dinner party 聚餐 请客 AA制 均摊">
-            <div class="unit-header">
-                <span>聚餐买单</span>
-                <span class="sort-rank">#7</span>
+        <div class="unit-card" id="u6" data-name="餐厅点餐" data-keywords="点餐 吃饭 餐厅 order food">
+            <div class="unit-header">餐厅点餐</div>
+            <div class="step-container">
+                <span class="step-label">Step 1: 我想要 <span class="pattern-box">I'd like ...</span></span>
+                <div class="display-area">
+                    <div class="text-content"><div class="english-sentence">I'd like <span class="highlight" id="u6-s1-word">the steak</span>.</div><div class="translation" id="u6-s1-trans">我想要牛排。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u6-s1-word', 'I would like', '.')">🔊</button>
+                </div>
+                <div class="chips-container" id="u6-s1-chips">
+                    <div class="chip active" onclick="updateUnit(6, 1, 'the steak', '牛排', 'I would like', '', this)">the steak</div>
+                    <div class="chip" onclick="updateUnit(6, 1, 'a salad', '沙拉', 'I would like', '', this)">a salad</div>
+                    <div class="chip" onclick="updateUnit(6, 1, 'a burger', '汉堡', 'I would like', '', this)">a burger</div>
+                    <div class="chip" onclick="updateUnit(6, 1, 'the pasta', '意面', 'I would like', '', this)">the pasta</div>
+                    <div class="chip" onclick="updateUnit(6, 1, 'some water', '一些水', 'I would like', '', this)">some water</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(6, 1, 'I would like', '.')">＋</button></div>
+                </div>
             </div>
+            <hr class="divider">
+            <div class="step-container">
+                <span class="step-label">Step 2: 忌口 <span class="pattern-box">No ... please.</span></span>
+                <div class="display-area">
+                    <div class="text-content"><div class="english-sentence">No <span class="highlight" id="u6-s2-word">onions</span> please.</div><div class="translation" id="u6-s2-trans">请不要洋葱。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u6-s2-word', 'No', 'please.')">🔊</button>
+                </div>
+                <div class="chips-container" id="u6-s2-chips">
+                    <div class="chip active" onclick="updateUnit(6, 2, 'onions', '洋葱', 'No', 'please', this)">onions</div>
+                    <div class="chip" onclick="updateUnit(6, 2, 'ice', '冰', 'No', 'please', this)">ice</div>
+                    <div class="chip" onclick="updateUnit(6, 2, 'spice', '辣', 'No', 'please', this)">spice</div>
+                    <div class="chip" onclick="updateUnit(6, 2, 'sugar', '糖', 'No', 'please', this)">sugar</div>
+                    <div class="chip" onclick="updateUnit(6, 2, 'cilantro', '香菜', 'No', 'please', this)">cilantro</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(6, 2, 'No', 'please.')">＋</button></div>
+                </div>
+            </div>
+            <div class="combo-box">
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"I'd like the burger. No onions please."</div>
+                <button class="combo-audio-btn" onclick="speakDirect('I would like the burger. No onions please.')">🔊</button>
+            </div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
+        </div>
+
+        <div class="unit-card" id="u7" data-name="朋友聚餐" data-keywords="聚餐 买单 AA制 split bill">
+            <div class="unit-header">朋友聚餐</div>
             <div class="step-container">
                 <span class="step-label">Step 1: 提议 <span class="pattern-box">Let's ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Let's <span class="highlight" id="u7-s1-word">split the bill</span>.</div>
-                        <div class="translation" id="u7-s1-trans">咱们平摊吧。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u7-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">Let's <span class="highlight" id="u7-s1-word">split the bill</span>.</div><div class="translation" id="u7-s1-trans">咱们AA制吧。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u7-s1-word', 'Let us', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u7-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(7, 1, 'Let\'s', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(7, 1, 'split the bill', 'AA制', 'Let us', '', this)">split the bill</div>
+                    <div class="chip" onclick="updateUnit(7, 1, 'share this', '分着吃这个', 'Let us', '', this)">share this</div>
+                    <div class="chip" onclick="updateUnit(7, 1, 'get dessert', '点个甜点', 'Let us', '', this)">get dessert</div>
+                    <div class="chip" onclick="updateUnit(7, 1, 'grab a drink', '喝一杯', 'Let us', '', this)">grab a drink</div>
+                    <div class="chip" onclick="updateUnit(7, 1, 'go dutch', '各付各的', 'Let us', '', this)">go dutch</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(7, 1, 'Let us', '.')">＋</button></div>
                 </div>
             </div>
+            <hr class="divider">
             <div class="step-container">
-                <span class="step-label">Step 2: 决定 <span class="pattern-box">It's ...</span></span>
+                <span class="step-label">Step 2: 请客 <span class="pattern-box">It's on ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">It's <span class="highlight" id="u7-s2-word">on me</span>.</div>
-                        <div class="translation" id="u7-s2-trans">今天我请客。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u7-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">It's on <span class="highlight" id="u7-s2-word">me</span>.</div><div class="translation" id="u7-s2-trans">我请客。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u7-s2-word', 'It is on', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u7-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(7, 2, 'It\'s', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(7, 2, 'me', '我(请客)', 'It is on', '', this)">me</div>
+                    <div class="chip" onclick="updateUnit(7, 2, 'the house', '老板(免单)', 'It is on', '', this)">the house</div>
+                    <div class="chip" onclick="updateUnit(7, 2, 'Henry', 'Henry', 'It is on', '', this)">Henry</div>
+                    <div class="chip" onclick="updateUnit(7, 2, 'my treat', '我请客(同义)', 'This is', '', this)">my treat</div>
+                    <div class="chip" onclick="updateUnit(7, 2, 'the company', '公司(报销)', 'It is on', '', this)">the company</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(7, 2, 'It is on', '.')">＋</button></div>
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">Let's split the bill. It's on me today.</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"No need to split. It's on me tonight."</div>
+                <button class="combo-audio-btn" onclick="speakDirect('No need to split. It is on me tonight.')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
 
-        <div class="unit-card" id="u8" data-name="Catchup" data-keywords="chat coffee long time contact 叙旧 聊天 喝茶 微信">
-            <div class="unit-header">
-                <span>朋友叙旧</span>
-                <span class="sort-rank">#8</span>
-            </div>
+        <div class="unit-card" id="u8" data-name="偶遇叙旧" data-keywords="叙旧 聊天 寒暄 long time">
+            <div class="unit-header">偶遇叙旧</div>
             <div class="step-container">
-                <span class="step-label">Step 1: 感叹 <span class="pattern-box">Long time ...</span></span>
+                <span class="step-label">Step 1: 问候 <span class="pattern-box">How's ... ?</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Long time <span class="highlight" id="u8-s1-word">no see</span>!</div>
-                        <div class="translation" id="u8-s1-trans">好久不见！</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u8-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">Long time no see! How's <span class="highlight" id="u8-s1-word">everything</span>?</div><div class="translation" id="u8-s1-trans">好久不见！一切都好吗？</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u8-s1-word', 'Long time no see! How is', '?')">🔊</button>
                 </div>
                 <div class="chips-container" id="u8-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(8, 1, 'Long time', '!')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(8, 1, 'everything', '一切', 'How is', '?', this)">everything</div>
+                    <div class="chip" onclick="updateUnit(8, 1, 'your family', '家人', 'How is', '?', this)">your family</div>
+                    <div class="chip" onclick="updateUnit(8, 1, 'work', '工作', 'How is', '?', this)">work</div>
+                    <div class="chip" onclick="updateUnit(8, 1, 'life', '生活', 'How is', '?', this)">life</div>
+                    <div class="chip" onclick="updateUnit(8, 1, 'your dog', '你的狗', 'How is', '?', this)">your dog</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(8, 1, 'How is', '?')">＋</button></div>
                 </div>
             </div>
+            <hr class="divider">
             <div class="step-container">
-                <span class="step-label">Step 2: 提议 <span class="pattern-box">We should ...</span></span>
+                <span class="step-label">Step 2: 约定 <span class="pattern-box">We should ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">We should <span class="highlight" id="u8-s2-word">catch up</span>.</div>
-                        <div class="translation" id="u8-s2-trans">我们应该叙叙旧。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u8-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">We should <span class="highlight" id="u8-s2-word">catch up</span>.</div><div class="translation" id="u8-s2-trans">我们应该叙叙旧。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u8-s2-word', 'We should', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u8-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(8, 2, 'We should', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(8, 2, 'catch up', '叙叙旧', 'We should', '', this)">catch up</div>
+                    <div class="chip" onclick="updateUnit(8, 2, 'hang out', '出来玩', 'We should', '', this)">hang out</div>
+                    <div class="chip" onclick="updateUnit(8, 2, 'grab coffee', '喝杯咖啡', 'We should', '', this)">grab coffee</div>
+                    <div class="chip" onclick="updateUnit(8, 2, 'keep in touch', '保持联系', 'We should', '', this)">keep in touch</div>
+                    <div class="chip" onclick="updateUnit(8, 2, 'have dinner', '吃个饭', 'We should', '', this)">have dinner</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(8, 2, 'We should', '.')">＋</button></div>
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">Long time no see! We should catch up.</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"Long time no see! We should grab coffee sometime."</div>
+                <button class="combo-audio-btn" onclick="speakDirect('Long time no see! We should grab coffee sometime.')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
-
-        <div class="unit-card" id="u9" data-name="Taxi" data-keywords="taxi uber ride airport address 打车 司机 机场 车站 赶时间">
-            <div class="unit-header">
-                <span>打车出行</span>
-                <span class="sort-rank">#9</span>
-            </div>
+        <div class="unit-card" id="u9" data-name="打车出行" data-keywords="打车 司机 taxi uber ride">
+            <div class="unit-header">打车出行</div>
             <div class="step-container">
-                <span class="step-label">Step 1: 目的 <span class="pattern-box">I'm going to ...</span></span>
+                <span class="step-label">Step 1: 目的地 <span class="pattern-box">I'm going to ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">I'm going to <span class="highlight" id="u9-s1-word">JFK airport</span>.</div>
-                        <div class="translation" id="u9-s1-trans">我要去JFK机场。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u9-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">I'm going to <span class="highlight" id="u9-s1-word">JFK Airport</span>.</div><div class="translation" id="u9-s1-trans">我要去JFK机场。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u9-s1-word', 'I am going to', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u9-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(9, 1, 'I\'m going to', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(9, 1, 'JFK Airport', 'JFK机场', 'I am going to', '', this)">JFK Airport</div>
+                    <div class="chip" onclick="updateUnit(9, 1, 'Times Square', '时代广场', 'I am going to', '', this)">Times Square</div>
+                    <div class="chip" onclick="updateUnit(9, 1, 'this address', '这个地址', 'I am going to', '', this)">this address</div>
+                    <div class="chip" onclick="updateUnit(9, 1, 'Flushing', '法拉盛', 'I am going to', '', this)">Flushing</div>
+                    <div class="chip" onclick="updateUnit(9, 1, 'Main Street', '主街', 'I am going to', '', this)">Main Street</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(9, 1, 'I am going to', '.')">＋</button></div>
                 </div>
             </div>
+            <hr class="divider">
             <div class="step-container">
-                <span class="step-label">Step 2: 下车 <span class="pattern-box">Drop me off ...</span></span>
+                <span class="step-label">Step 2: 下车点 <span class="pattern-box">Drop me off ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Drop me off <span class="highlight" id="u9-s2-word">right here</span>.</div>
-                        <div class="translation" id="u9-s2-trans">就在这下车。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u9-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">Drop me off <span class="highlight" id="u9-s2-word">here</span>.</div><div class="translation" id="u9-s2-trans">就在这儿下。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u9-s2-word', 'Drop me off', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u9-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(9, 2, 'Drop me off', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(9, 2, 'here', '这儿', 'Drop me off', '', this)">here</div>
+                    <div class="chip" onclick="updateUnit(9, 2, 'at the corner', '路口', 'Drop me off', '', this)">at the corner</div>
+                    <div class="chip" onclick="updateUnit(9, 2, 'across the street', '街对面', 'Drop me off', '', this)">across the street</div>
+                    <div class="chip" onclick="updateUnit(9, 2, 'by the light', '红绿灯旁', 'Drop me off', '', this)">by the light</div>
+                    <div class="chip" onclick="updateUnit(9, 2, 'in front of the hotel', '酒店门口', 'Drop me off', '', this)">in front of the hotel</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(9, 2, 'Drop me off', '.')">＋</button></div>
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">I'm going to JFK airport. Drop me off right here.</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"I'm going to Main Street. Drop me off at the corner."</div>
+                <button class="combo-audio-btn" onclick="speakDirect('I am going to Main Street. Drop me off at the corner.')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
 
-        <div class="unit-card" id="u10" data-name="Medical" data-keywords="help sick pain doctor 911 救命 疼 医生 医院 报警">
-            <div class="unit-header">
-                <span>医疗救命</span>
-                <span class="sort-rank">#10</span>
-            </div>
+        <div class="unit-card" id="u10" data-name="紧急求助" data-keywords="急救 医生 警察 help 911">
+            <div class="unit-header">紧急求助</div>
             <div class="step-container">
                 <span class="step-label">Step 1: 需求 <span class="pattern-box">I need ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">I need <span class="highlight" id="u10-s1-word">a doctor</span>.</div>
-                        <div class="translation" id="u10-s1-trans">我需要医生。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u10-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">I need <span class="highlight" id="u10-s1-word">a doctor</span>.</div><div class="translation" id="u10-s1-trans">我需要医生。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u10-s1-word', 'I need', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u10-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(10, 1, 'I need', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(10, 1, 'a doctor', '医生', 'I need', '', this)">a doctor</div>
+                    <div class="chip" onclick="updateUnit(10, 1, 'help', '帮助', 'I need', '', this)">help</div>
+                    <div class="chip" onclick="updateUnit(10, 1, 'an ambulance', '救护车', 'I need', '', this)">an ambulance</div>
+                    <div class="chip" onclick="updateUnit(10, 1, 'the police', '警察', 'I need', '', this)">the police</div>
+                    <div class="chip" onclick="updateUnit(10, 1, 'a translator', '翻译', 'I need', '', this)">a translator</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(10, 1, 'I need', '.')">＋</button></div>
                 </div>
             </div>
+            <hr class="divider">
             <div class="step-container">
-                <span class="step-label">Step 2: 症状 <span class="pattern-box">I feel ...</span></span>
+                <span class="step-label">Step 2: 状况 <span class="pattern-box">I feel ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">I feel <span class="highlight" id="u10-s2-word">dizzy</span>.</div>
-                        <div class="translation" id="u10-s2-trans">我感到头晕。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u10-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">I feel <span class="highlight" id="u10-s2-word">dizzy</span>.</div><div class="translation" id="u10-s2-trans">我头晕。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u10-s2-word', 'I feel', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u10-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(10, 2, 'I feel', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(10, 2, 'dizzy', '头晕', 'I feel', '', this)">dizzy</div>
+                    <div class="chip" onclick="updateUnit(10, 2, 'pain', '疼', 'I feel', '', this)">pain</div>
+                    <div class="chip" onclick="updateUnit(10, 2, 'sick', '恶心/生病', 'I feel', '', this)">sick</div>
+                    <div class="chip" onclick="updateUnit(10, 2, 'hurt', '受伤了', 'I am', '', this)">hurt</div>
+                    <div class="chip" onclick="updateUnit(10, 2, 'cannot breathe', '无法呼吸', 'I', '', this)">cannot breathe</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(10, 2, 'I feel', '.')">＋</button></div>
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">I need a doctor. I feel dizzy.</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"I need an ambulance. I cannot breathe."</div>
+                <button class="combo-audio-btn" onclick="speakDirect('I need an ambulance. I cannot breathe.')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
 
-        <div class="unit-card" id="u11" data-name="Confused" data-keywords="what pardon repeat understand 听不懂 翻译 再说一遍 啥意思">
-            <div class="unit-header">
-                <span>完全听不懂</span>
-                <span class="sort-rank">#11</span>
-            </div>
+        <div class="unit-card" id="u11" data-name="没听懂" data-keywords="听不懂 重复 慢点 understand">
+            <div class="unit-header">没听懂</div>
             <div class="step-container">
-                <span class="step-label">Step 1: 请求 <span class="pattern-box">Could you ...?</span></span>
+                <span class="step-label">Step 1: 请求 <span class="pattern-box">Could you ... ?</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Could you <span class="highlight" id="u11-s1-word">speak slowly</span>?</div>
-                        <div class="translation" id="u11-s1-trans">能说慢点吗？</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u11-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">Could you <span class="highlight" id="u11-s1-word">say that again</span>?</div><div class="translation" id="u11-s1-trans">能再说一遍吗？</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u11-s1-word', 'Could you', '?')">🔊</button>
                 </div>
                 <div class="chips-container" id="u11-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(11, 1, 'Could you', '?')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(11, 1, 'say that again', '再说一遍', 'Could you', '?', this)">say that again</div>
+                    <div class="chip" onclick="updateUnit(11, 1, 'speak slower', '说慢点', 'Could you', '?', this)">speak slower</div>
+                    <div class="chip" onclick="updateUnit(11, 1, 'write it down', '写下来', 'Could you', '?', this)">write it down</div>
+                    <div class="chip" onclick="updateUnit(11, 1, 'show me', '指给我看', 'Could you', '?', this)">show me</div>
+                    <div class="chip" onclick="updateUnit(11, 1, 'translate', '翻译一下', 'Could you', '?', this)">translate</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(11, 1, 'Could you', '?')">＋</button></div>
                 </div>
             </div>
+            <hr class="divider">
             <div class="step-container">
-                <span class="step-label">Step 2: 陈述 <span class="pattern-box">I don't ...</span></span>
+                <span class="step-label">Step 2: 说明 <span class="pattern-box">I don't ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">I don't <span class="highlight" id="u11-s2-word">understand</span>.</div>
-                        <div class="translation" id="u11-s2-trans">我听不懂。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u11-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">I don't <span class="highlight" id="u11-s2-word">understand</span>.</div><div class="translation" id="u11-s2-trans">我不明白。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u11-s2-word', 'I do not', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u11-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(11, 2, 'I don\'t', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(11, 2, 'understand', '明白', 'I do not', '', this)">understand</div>
+                    <div class="chip" onclick="updateUnit(11, 2, 'speak English', '会说英语', 'I do not', 'well', this)">speak English</div>
+                    <div class="chip" onclick="updateUnit(11, 2, 'know', '知道', 'I do not', '', this)">know</div>
+                    <div class="chip" onclick="updateUnit(11, 2, 'get it', '懂', 'I do not', '', this)">get it</div>
+                    <div class="chip" onclick="updateUnit(11, 2, 'hear you', '听清', 'I did not', '', this)">hear you</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(11, 2, 'I do not', '.')">＋</button></div>
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">Could you speak slowly? I don't understand.</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"Sorry, I don't speak English well. Could you write it down?"</div>
+                <button class="combo-audio-btn" onclick="speakDirect('Sorry, I do not speak English well. Could you write it down?')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
 
-        <div class="unit-card" id="u12" data-name="Return" data-keywords="return refund exchange broken 退货 退款 换货 坏了 质量">
-            <div class="unit-header">
-                <span>商店退货</span>
-                <span class="sort-rank">#12</span>
-            </div>
+        <div class="unit-card" id="u12" data-name="购物退货" data-keywords="退货 退款 换货 return refund">
+            <div class="unit-header">购物退货</div>
             <div class="step-container">
-                <span class="step-label">Step 1: 意图 <span class="pattern-box">I'd like to ...</span></span>
+                <span class="step-label">Step 1: 目的 <span class="pattern-box">I'd like to ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">I'd like to <span class="highlight" id="u12-s1-word">return this</span>.</div>
-                        <div class="translation" id="u12-s1-trans">我想退这个。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u12-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">I'd like to <span class="highlight" id="u12-s1-word">return this</span>.</div><div class="translation" id="u12-s1-trans">我想退货。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u12-s1-word', 'I would like to', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u12-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(12, 1, 'I\'d like to', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(12, 1, 'return this', '退货', 'I would like to', '', this)">return this</div>
+                    <div class="chip" onclick="updateUnit(12, 1, 'exchange this', '换货', 'I would like to', '', this)">exchange this</div>
+                    <div class="chip" onclick="updateUnit(12, 1, 'get a refund', '退款', 'I would like to', '', this)">get a refund</div>
+                    <div class="chip" onclick="updateUnit(12, 1, 'try this on', '试穿', 'I would like to', '', this)">try this on</div>
+                    <div class="chip" onclick="updateUnit(12, 1, 'cancel this', '取消这个', 'I would like to', '', this)">cancel this</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(12, 1, 'I would like to', '.')">＋</button></div>
                 </div>
             </div>
+            <hr class="divider">
             <div class="step-container">
-                <span class="step-label">Step 2: 理由 <span class="pattern-box">Because it ...</span></span>
+                <span class="step-label">Step 2: 理由 <span class="pattern-box">It's ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">Because it <span class="highlight" id="u12-s2-word">is broken</span>.</div>
-                        <div class="translation" id="u12-s2-trans">因为它坏了。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u12-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">It's <span class="highlight" id="u12-s2-word">broken</span>.</div><div class="translation" id="u12-s2-trans">它坏了。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u12-s2-word', 'It is', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u12-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(12, 2, 'Because it', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(12, 2, 'broken', '坏了', 'It is', '', this)">broken</div>
+                    <div class="chip" onclick="updateUnit(12, 2, 'too small', '太小了', 'It is', '', this)">too small</div>
+                    <div class="chip" onclick="updateUnit(12, 2, 'the wrong size', '尺码不对', 'It is', '', this)">the wrong size</div>
+                    <div class="chip" onclick="updateUnit(12, 2, 'not working', '坏了/不工作', 'It is', '', this)">not working</div>
+                    <div class="chip" onclick="updateUnit(12, 2, 'expired', '过期了', 'It is', '', this)">expired</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(12, 2, 'It is', '.')">＋</button></div>
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">I'd like to return this. Because it is broken.</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"I'd like to return this. It is too small."</div>
+                <button class="combo-audio-btn" onclick="speakDirect('I would like to return this. It is too small.')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
 
-        <div class="unit-card" id="u13" data-name="Reservation" data-keywords="schedule time book reserve 预约 时间 订位 改期">
-            <div class="unit-header">
-                <span>预约/改期</span>
-                <span class="sort-rank">#13</span>
-            </div>
+        <div class="unit-card" id="u13" data-name="预约时间" data-keywords="预约 时间 安排 appointment">
+            <div class="unit-header">预约时间</div>
             <div class="step-container">
                 <span class="step-label">Step 1: 动作 <span class="pattern-box">I'd like to ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">I'd like to <span class="highlight" id="u13-s1-word">book a table</span>.</div>
-                        <div class="translation" id="u13-s1-trans">我想订位。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u13-s1-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">I'd like to <span class="highlight" id="u13-s1-word">make an appointment</span>.</div><div class="translation" id="u13-s1-trans">我想预约。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u13-s1-word', 'I would like to', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u13-s1-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(13, 1, 'I\'d like to', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(13, 1, 'make an appointment', '预约', 'I would like to', '', this)">make an appointment</div>
+                    <div class="chip" onclick="updateUnit(13, 1, 'reschedule', '改期', 'I would like to', '', this)">reschedule</div>
+                    <div class="chip" onclick="updateUnit(13, 1, 'cancel', '取消', 'I would like to', '', this)">cancel</div>
+                    <div class="chip" onclick="updateUnit(13, 1, 'confirm', '确认', 'I would like to', '', this)">confirm</div>
+                    <div class="chip" onclick="updateUnit(13, 1, 'book a table', '订位(吃饭)', 'I would like to', '', this)">book a table</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(13, 1, 'I would like to', '.')">＋</button></div>
                 </div>
             </div>
+            <hr class="divider">
             <div class="step-container">
-                <span class="step-label">Step 2: 时间 <span class="pattern-box">For ...</span></span>
+                <span class="step-label">Step 2: 时间 <span class="pattern-box">At ...</span></span>
                 <div class="display-area">
-                    <div class="text-content">
-                        <div class="english-sentence">For <span class="highlight" id="u13-s2-word">7:00 PM</span>.</div>
-                        <div class="translation" id="u13-s2-trans">在晚上7点。</div>
-                    </div>
-                    <button class="btn-mini" onclick="speakWholeSentence('u13-s2-word')">🔊</button>
+                    <div class="text-content"><div class="english-sentence">At <span class="highlight" id="u13-s2-word">2 PM</span>.</div><div class="translation" id="u13-s2-trans">在下午2点。</div></div>
+                    <button class="btn-audio" onclick="speakWholeSentence('u13-s2-word', 'At', '.')">🔊</button>
                 </div>
                 <div class="chips-container" id="u13-s2-chips">
-                    <div class="add-btn-wrapper"><button class="add-chip-btn" onclick="addCustomChip(13, 2, 'For', '.')">+</button></div>
+                    <div class="chip active" onclick="updateUnit(13, 2, '2 PM', '下午2点', 'At', '', this)">2 PM</div>
+                    <div class="chip" onclick="updateUnit(13, 2, '3:30', '3点半', 'At', '', this)">3:30</div>
+                    <div class="chip" onclick="updateUnit(13, 2, 'noon', '中午', 'At', '', this)">noon</div>
+                    <div class="chip" onclick="updateUnit(13, 2, 'tomorrow morning', '明天早上', 'On', '', this)">tomorrow morning</div>
+                    <div class="chip" onclick="updateUnit(13, 2, 'next week', '下周', 'In', '', this)">next week</div>
+                    <div class="add-btn-wrapper"><button class="chip add-chip-btn" onclick="addCustomChip(13, 2, 'At', '.')">＋</button></div>
                 </div>
             </div>
-            <div class="divider"></div>
             <div class="combo-box">
-                <div class="combo-title">🚀 完整句子</div>
-                <div class="combo-text">I'd like to book a table. For 7:00 PM.</div>
+                <div class="combo-title">🚀 逻辑构造</div>
+                <div class="combo-text">"I'd like to make an appointment. At 2 PM, please."</div>
+                <button class="combo-audio-btn" onclick="speakDirect('I would like to make an appointment. At 2 PM, please.')">🔊</button>
             </div>
-            <div class="scroll-hint">向下滑动显示更多 ↓</div>
+            <div class="scroll-hint">⬇️ 向下滑动查看更多</div>
         </div>
-    </div><div class="float-controls"></div>
 
-    <div id="emergencyOverlay" class="emergency-overlay">
-        <span class="emergency-close" onclick="toggleEmergency()">✕</span>
-        <div class="emergency-card" onclick="speakDirect('I need an ambulance! Help!')">
-            <div>
-                <div class="emergency-text">🚑 叫救护车</div>
-                <div class="emergency-sub">I need an ambulance!</div>
-            </div>
-        </div>
-        <div class="emergency-card" onclick="speakDirect('Call the police! Emergency!')">
-            <div>
-                <div class="emergency-text">🚓 报警 (911)</div>
-                <div class="emergency-sub">Call the police!</div>
-            </div>
-        </div>
-        <div class="emergency-card" onclick="speakDirect('I need a translator. Chinese please.')">
-            <div>
-                <div class="emergency-text">🗣️ 找翻译</div>
-                <div class="emergency-sub">I need a Chinese translator.</div>
-            </div>
-        </div>
+    </div> <div class="fixed-footer">
+        <p>&copy; <span id="year"></span> Henry's Survival English Guide.</p>
     </div>
 
-    <div id="randomModal" class="modal-overlay">
-        <div class="modal-card">
-            <div class="modal-title">🔥 突击检查！</div>
-            <p id="modalQuestion" style="font-size:1.2em; margin-bottom:20px; color:var(--primary);">...</p>
-            <div class="modal-actions">
-                <button class="modal-btn btn-close" onclick="closeModal('randomModal')">跳过</button>
-                <button class="modal-btn btn-reveal" onclick="revealRandomAnswer()">去看看</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="fixed-footer">
-        © <span id="year">2025</span> Henry's Survival English Guide.
-    </div>
     <script>
-        // === 核心逻辑 (V37.3: 完全体复活版) ===
+        // === 核心逻辑 (V35.0: 文案优化 + 终极稳定版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
         let recognition = null; 
         
-        // 🏆 经验值系统
-        let userXP = 0;
-        
         let aiState = { active: false, currentUnit: null, currentStep: 0, score: 0, total: 0, currentTargetEng: "", currentTargetCn: "", waitingForSpeech: false, silenceTimer: null, idleTimer: null };
 
-        // 🔥 超全生活场景词库 (已严格检查语法)
+        // 扩充词库 (Unit -> Step -> [{e:英文, c:中文}])
         const extraVocab = {
             1: { 1: [{e:"new neighbor", c:"新邻居"}, {e:"from 3B", c:"3B的住户"}, {e:"just moved in", c:"刚搬来的"}, {e:"Henry", c:"Henry"}, {e:"living downstairs", c:"住楼下的"}, {e:"the new guy", c:"新来的那个"}], 2: [{e:"down the hall", c:"走廊尽头"}, {e:"upstairs", c:"楼上"}, {e:"next door", c:"隔壁"}, {e:"in unit 402", c:"402室"}, {e:"across the street", c:"马路对面"}] },
             2: { 1: [{e:"the subway", c:"地铁站"}, {e:"the restroom", c:"洗手间"}, {e:"the exit", c:"出口"}, {e:"an elevator", c:"电梯"}, {e:"a pharmacy", c:"药房"}, {e:"the bus stop", c:"公交站"}], 2: [{e:"where it is", c:"它在哪"}, {e:"which floor", c:"在几楼"}, {e:"the direction", c:"方向"}, {e:"how to get there", c:"怎么走"}] },
-            3: { 1: [{e:"phone charger", c:"手机充电器"}, {e:"wifi password", c:"WiFi密码"}, {e:"pen", c:"笔"}, {e:"lighter", c:"打火机"}, {e:"umbrella", c:"雨伞"}, {e:"power bank", c:"充电宝"}], 2: [{e:"urgent", c:"紧急/内急"}, {e:"an emergency", c:"急事"}, {e:"dying", c:"快没电了"}, {e:"running low", c:"电量低"}, {e:"important", c:"很重要"}] },
+            3: { 1: [{e:"phone charger", c:"手机充电器"}, {e:"wifi password", c:"WiFi密码"}, {e:"pen", c:"笔"}, {e:"lighter", c:"打火机"}, {e:"umbrella", c:"雨伞"}, {e:"power bank", c:"充电宝"}], 2: [{e:"urgent", c:"紧急"}, {e:"an emergency", c:"急事"}, {e:"dying", c:"快没电了"}, {e:"running low", c:"电量低"}, {e:"important", c:"很重要"}] },
             4: { 1: [{e:"deposit cash", c:"存现金"}, {e:"withdraw money", c:"取钱"}, {e:"transfer funds", c:"转账"}, {e:"open an account", c:"开户"}, {e:"change PIN", c:"改密码"}], 2: [{e:"ID card", c:"身份证"}, {e:"passport", c:"护照"}, {e:"debit card", c:"借记卡"}, {e:"check", c:"支票"}, {e:"account number", c:"账号"}] },
             5: { 1: [{e:"credit card", c:"信用卡"}, {e:"Apple Pay", c:"Apple Pay"}, {e:"cash", c:"现金"}, {e:"Venmo", c:"Venmo"}, {e:"Zelle", c:"Zelle"}, {e:"AliPay", c:"支付宝"}], 2: [{e:"a receipt", c:"收据"}, {e:"a discount", c:"折扣"}, {e:"cash back", c:"返现"}, {e:"small change", c:"零钱"}, {e:"a bag", c:"袋子"}] },
             6: { 1: [{e:"tap water", c:"自来水"}, {e:"the menu", c:"菜单"}, {e:"napkins", c:"餐巾纸"}, {e:"a refill", c:"续杯"}, {e:"chopsticks", c:"筷子"}, {e:"a box", c:"打包盒"}], 2: [{e:"add sugar", c:"加糖"}, {e:"make it spicy", c:"做成辣的"}, {e:"add ice", c:"加冰"}, {e:"put cilantro", c:"放香菜"}, {e:"rush it", c:"快一点"}] },
@@ -783,44 +866,29 @@
             13: { 1: [{e:"book a table", c:"订位"}, {e:"make a reservation", c:"预约"}, {e:"cancel my appointment", c:"取消预约"}, {e:"reschedule", c:"改期"}], 2: [{e:"7:00 PM", c:"晚上7点"}, {e:"noon", c:"中午"}, {e:"tomorrow morning", c:"明早"}, {e:"next Monday", c:"下周一"}] }
         };
 
-        // --- 核心：Step 旁小喇叭的逻辑 ---
-        function speakWholeSentence(elementId) {
-            const el = document.getElementById(elementId);
-            if (el) {
-                // 找到父级 step-container
-                const container = el.closest('.display-area');
-                if (container) {
-                    const fullText = container.querySelector('.english-sentence').innerText;
-                    speakDirect(fullText);
-                }
-            }
-        }
-
         window.onload = function() {
-            // 基础初始化
-            try { document.getElementById('year').innerText = new Date().getFullYear(); } catch(e){}
+            document.getElementById('year').innerText = new Date().getFullYear();
             loadTheme();
             
-            // 安全加载数据
-            try { loadXP(); } catch(e) { console.log('XP reset'); userXP=0; }
-            try { loadUsageData(); } catch(e) { console.log('Usage reset'); usageData={}; }
-            try { loadCustomChips(); } catch(e) { console.log('Chips reset'); }
-
-            // 功能注入
+            // 🚀 1. 界面文案更新
+            updateUIStrings();
+            
             injectExtraChips();
-            injectSmartKeywords(); 
+            loadCustomChips();
+            loadUsageData();
+            injectSmartKeywords();
             injectShowCardDOM();
             injectChatDOM();
             injectToolboxDOM(); 
             initSpeechRecognition();
+            checkMonthlyReport(); 
             
-            // 🚀 核心：硬核注入底部按钮 (大喇叭 + 乌龟)
+            // 🚀 2. 硬核注入喇叭 (保证克隆前有 onclick)
             injectLogicButtons();
             
-            // 排序与循环
+            // 🚀 3. 排序 + 循环
             autoSortUnits(); 
             
-            // 恢复选择状态
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
                     restoreSelection(i, 1);
@@ -828,11 +896,9 @@
                 }
             }
             
-            // 红色气泡与滚动提示
-            setTimeout(() => { initBubbleTip(); }, 1500); // 延迟一点显示，确保加载
+            setTimeout(() => { initBubbleTip(); }, 1000);
             initScrollHints();
-            
-            // 悬浮球注入
+            rebuildActionButtons(); 
             addFloatingControls(); 
             startSmartSearchAnimation();
             
@@ -840,334 +906,137 @@
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 🏆 等级系统 ---
-        function loadXP() {
-            const stored = localStorage.getItem('user_xp');
-            userXP = stored ? parseInt(stored) : 0;
-            if(isNaN(userXP)) userXP = 0;
-            updateLevelDisplay();
-        }
-        function gainXP(amount = 1) {
-            userXP += amount;
-            localStorage.setItem('user_xp', userXP);
-            updateLevelDisplay();
-        }
-        function updateLevelDisplay() {
-            let level = Math.floor(userXP / 10) + 1;
-            if (level > 99) level = 99;
-            const badge = document.getElementById('userLevel');
-            if (badge) {
-                if (badge.innerText !== `Lv.${level}`) {
-                    badge.classList.add('bump');
-                    setTimeout(() => badge.classList.remove('bump'), 200);
-                }
-                badge.innerText = `Lv.${level}`;
-            }
-        }
-
-        // --- 🚀 核心：硬核注入底部按钮 (喇叭 + 乌龟) ---
-        function injectLogicButtons() {
-            const boxes = document.querySelectorAll('.combo-box');
-            boxes.forEach(box => {
-                box.querySelectorAll('.combo-audio-btn, .btn-slow').forEach(b => b.remove());
-                
-                // 1. 创建普通喇叭 🔊
-                const btnNormal = document.createElement('button');
-                btnNormal.className = 'combo-audio-btn';
-                btnNormal.innerHTML = '🔊'; 
-                btnNormal.style.zIndex = "20"; 
-                btnNormal.setAttribute('onclick', 'handleLogicClick(event, this, 1.0)'); 
-                box.appendChild(btnNormal);
-
-                // 2. 创建龟速按钮 🐢
-                const btnSlow = document.createElement('button');
-                btnSlow.className = 'btn-slow';
-                btnSlow.innerHTML = '🐢'; 
-                btnSlow.style.zIndex = "20"; 
-                btnSlow.setAttribute('onclick', 'handleLogicClick(event, this, 0.6)'); 
-                box.appendChild(btnSlow);
+        // --- 🚀 新功能：文案更新 ---
+        function updateUIStrings() {
+            document.querySelectorAll('.combo-title').forEach(el => {
+                // 替换旧文案，保留小火箭
+                el.innerHTML = el.innerHTML.replace('逻辑构造', '完整句子（示例）');
             });
         }
 
-        // --- 🚀 全局处理函数 (支持语速参数) ---
-        window.handleLogicClick = function(e, btn, rate) {
+        // --- 🚀 核心修复：硬核注入底部喇叭 ---
+        function injectLogicButtons() {
+            const boxes = document.querySelectorAll('.combo-box');
+            boxes.forEach(box => {
+                const oldBtn = box.querySelector('.combo-audio-btn');
+                if (oldBtn) oldBtn.remove();
+                const newBtn = document.createElement('button');
+                newBtn.className = 'combo-audio-btn';
+                newBtn.innerHTML = '🔊'; 
+                newBtn.style.zIndex = "10"; 
+                // 直接写入属性，克隆免疫
+                newBtn.setAttribute('onclick', 'handleLogicClick(event, this)');
+                box.appendChild(newBtn);
+            });
+        }
+
+        // --- 🚀 全局处理函数 ---
+        window.handleLogicClick = function(e, btn) {
             e.stopPropagation();
-            gainXP(1);
             if(navigator.vibrate) navigator.vibrate(15);
-            
             btn.style.transform = "scale(0.9)";
             setTimeout(() => btn.style.transform = "scale(1)", 150);
-
             const container = btn.closest('.combo-box');
             if (container) {
                 const textEl = container.querySelector('.combo-text');
-                if (textEl) {
-                    speakDirect(textEl.innerText, null, rate);
-                }
+                if (textEl) speakDirect(textEl.innerText);
             }
         }
 
-        // --- 🔍 智能搜索覆盖 ---
-        function injectSmartKeywords() {
-            const baseMap = {
-                1: "neighbor hello hi greeting 搬家 装修 新来 陌生人 问候",
-                2: "map where lost direction 迷路 导航 地图 怎么走 位置",
-                3: "toilet restroom battery charge urgent emergency 内急 厕所 没电 充电 借用 拉肚子 大姨妈",
-                4: "money bank cash deposit withdraw 银行 钱 现金 转账 开户 汇率",
-                5: "pay bill cost credit card 结账 买单 多少钱 刷卡 支付宝",
-                6: "eat food drink menu spicy hungry 点餐 吃饭 菜单 忌口 外卖 打包",
-                7: "treat split share dinner party 聚餐 请客 AA制 均摊",
-                8: "chat coffee long time contact 叙旧 聊天 喝茶 微信",
-                9: "taxi uber ride airport address 打车 司机 机场 车站 赶时间",
-                10: "help sick pain doctor 911 救命 疼 医生 医院 报警",
-                11: "what pardon repeat understand 听不懂 翻译 再说一遍 啥意思",
-                12: "return refund exchange broken 退货 退款 换货 坏了 质量",
-                13: "schedule time book reserve 预约 时间 订位 改期"
-            };
-            
-            for (let u in extraVocab) {
-                let keywords = baseMap[u] || "";
-                for (let s in extraVocab[u]) {
-                    extraVocab[u][s].forEach(item => {
-                        keywords += " " + item.c + " " + item.e;
-                    });
-                }
-                const card = document.getElementById(`u${u}`);
-                if (card) {
-                    const old = card.getAttribute('data-keywords') || "";
-                    card.setAttribute('data-keywords', old + " " + keywords);
-                }
+        // --- 气泡逻辑 ---
+        function initBubbleTip(targetCard) {
+            if (!targetCard) targetCard = document.querySelector('#content-area .unit-card:not(.clone)');
+            if (!targetCard) return;
+            const wrapper = targetCard.querySelector('.step-container .chips-container .add-btn-wrapper');
+            if (wrapper) {
+                if(wrapper.querySelector('.bubble-tip')) return;
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble-tip';
+                bubble.innerText = '没找到你想要的？现在可以点击添加！';
+                wrapper.appendChild(bubble);
+                setTimeout(() => { dismissBubble(bubble); }, 15000);
             }
         }
+        function dismissBubble(element) { if(element) { element.classList.add('fade-out'); setTimeout(() => { element.remove(); }, 600); } }
 
         // --- 场景搜索引导 ---
         function startSmartSearchAnimation() {
             const input = document.getElementById('searchBox');
-            if(!input) return;
             const hour = new Date().getHours();
-            
-            let prompts = [
-                { t: "完全听不懂对方说什么？", k: "翻译" },
-                { t: "找不到洗手间很尴尬？", k: "内急" }
-            ];
-
-            if (hour >= 5 && hour < 10) { 
-                prompts.push({ t: "赶时间上班怕迟到？", k: "打车" });
-                prompts.push({ t: "刚搬来还没认识邻居？", k: "邻居" });
-            } else if (hour >= 11 && hour < 14) { 
-                prompts.push({ t: "不知道该怎么点餐？", k: "点餐" });
-                prompts.push({ t: "和同事吃饭怕冷场？", k: "聊天" });
-                prompts.push({ t: "买单时想AA制？", k: "AA" });
-            } else if (hour >= 14 && hour < 18) { 
-                prompts.push({ t: "下班想去喝杯咖啡？", k: "咖啡" });
-                prompts.push({ t: "银行柜员没有中文服务？", k: "银行" });
-                prompts.push({ t: "买的东西不合适想退？", k: "退货" });
-            } else if (hour >= 18 && hour < 22) { 
-                prompts.push({ t: "晚上聚会想请客？", k: "买单" });
-                prompts.push({ t: "不想做饭想叫外卖？", k: "外卖" });
-            } else { 
-                prompts.push({ t: "半夜回家要打Uber？", k: "打车" });
-                prompts.push({ t: "身体不舒服想看医生？", k: "救命" });
-                prompts.push({ t: "遇到紧急情况？", k: "警察" });
-            }
-
-            prompts.sort(() => Math.random() - 0.5);
-            let idx = 0;
-            updatePlaceholder();
-
-            setInterval(() => {
-                if (document.activeElement === input && input.value !== "") return; 
-                input.classList.add('fade-text');
-                setTimeout(() => {
-                    idx = (idx + 1) % prompts.length;
-                    updatePlaceholder();
-                    input.classList.remove('fade-text');
-                }, 500); 
-            }, 5000);
-
-            function updatePlaceholder() {
-                const item = prompts[idx];
-                input.setAttribute('placeholder', `${item.t} 搜 "${item.k}" 试试...`);
-            }
+            let prompts = [ { t: "完全听不懂对方说什么？", k: "翻译" }, { t: "找不到洗手间很尴尬？", k: "内急" } ];
+            if (hour >= 5 && hour < 10) { prompts.push({ t: "赶时间上班怕迟到？", k: "打车" }); prompts.push({ t: "刚搬来还没认识邻居？", k: "邻居" }); } 
+            else if (hour >= 11 && hour < 14) { prompts.push({ t: "不知道该怎么点餐？", k: "点餐" }); prompts.push({ t: "和同事吃饭怕冷场？", k: "聊天" }); prompts.push({ t: "买单时想AA制？", k: "AA" }); } 
+            else if (hour >= 14 && hour < 18) { prompts.push({ t: "下班想去喝杯咖啡？", k: "咖啡" }); prompts.push({ t: "银行柜员没有中文服务？", k: "银行" }); prompts.push({ t: "买的东西不合适想退？", k: "退货" }); } 
+            else if (hour >= 18 && hour < 22) { prompts.push({ t: "晚上聚会想请客？", k: "买单" }); prompts.push({ t: "不想做饭想叫外卖？", k: "外卖" }); } 
+            else { prompts.push({ t: "半夜回家要打Uber？", k: "打车" }); prompts.push({ t: "身体不舒服想看医生？", k: "救命" }); prompts.push({ t: "遇到紧急情况？", k: "警察" }); }
+            prompts.sort(() => Math.random() - 0.5); let idx = 0; updatePlaceholder();
+            setInterval(() => { if (document.activeElement === input && input.value !== "") return; input.classList.add('fade-text'); setTimeout(() => { idx = (idx + 1) % prompts.length; updatePlaceholder(); input.classList.remove('fade-text'); }, 500); }, 5000);
+            function updatePlaceholder() { const item = prompts[idx]; input.setAttribute('placeholder', `${item.t} 搜 "${item.k}" 试试...`); }
         }
 
-        // 修改 speakDirect 支持语速
-        function speakDirect(text, callback, rate = 0.9) { 
-            window.speechSynthesis.cancel(); 
-            const hasEnglishContext = /[a-zA-Z]{2,}/.test(text); 
-            const utterance = new SpeechSynthesisUtterance(text); 
-            utterance.lang = hasEnglishContext ? 'en-US' : 'zh-CN'; 
-            utterance.rate = rate; 
-            if(callback) utterance.onend = callback; 
-            window.speechSynthesis.speak(utterance); 
-        }
-        function speakWholeSentence(wordId) {
-            const el = document.getElementById(wordId);
-            if (el) {
-                const container = el.closest('.display-area');
-                if (container) {
-                    const text = container.querySelector('.english-sentence').innerText;
-                    speakDirect(text);
-                }
-            }
-        }
-
-        // --- 核心修复：注入单词药丸 (Pills) ---
-        function injectExtraChips() {
-            for (let u in extraVocab) {
-                for (let s in extraVocab[u]) {
-                    const container = document.getElementById(`u${u}-s${s}-chips`);
-                    if (!container) continue;
-                    const wrapper = container.querySelector('.add-btn-wrapper');
-                    
-                    extraVocab[u][s].forEach(item => {
-                        // 防止重复注入
-                        let exists = false;
-                        container.querySelectorAll('.chip').forEach(c => { if(c.innerText === item.e) exists = true; });
-                        if(exists) return;
-
-                        const btn = document.createElement('div');
-                        btn.className = 'chip';
-                        btn.innerText = item.e;
-                        // 绑定点击事件
-                        btn.onclick = () => updateUnit(u, s, item.e, item.c, '', '', btn);
-                        container.insertBefore(btn, wrapper);
-                    });
-                }
-            }
-        }
-
-        // --- 核心修复：排序与循环布局 ---
-        function autoSortUnits() {
-            const container = document.getElementById('content-area');
-            const cards = Array.from(document.querySelectorAll('.unit-card'));
-            
-            // 根据使用频率排序
-            cards.sort((a, b) => {
-                const idA = a.id.replace('u','');
-                const idB = b.id.replace('u','');
-                return (usageData[idB] || 0) - (usageData[idA] || 0);
-            });
-            
-            // 重新插入 DOM
-            cards.forEach(card => container.appendChild(card));
-            
-            // 插入末尾占位符 (防止最后一个卡片被挡住)
-            let spacer = document.getElementById('end-spacer');
-            if(!spacer) {
-                spacer = document.createElement('div');
-                spacer.id = 'end-spacer';
-                spacer.className = 'snap-spacer';
-                container.appendChild(spacer);
-            } else {
-                container.appendChild(spacer);
-            }
-        }
-
-        // --- AI 与 语音识别 ---
+        // --- 其他基础逻辑 ---
+        function speakWholeSentence(wordId, p, x) { const wordEl = document.getElementById(wordId); if(wordEl) { const container = wordEl.closest('.text-content'); if (container) speakDirect(container.innerText); } }
+        function injectExtraChips() { for (let u = 1; u <= 13; u++) { for (let s = 1; s <= 2; s++) { const container = document.getElementById(`u${u}-s${s}-chips`); if (!container || !extraVocab[u] || !extraVocab[u][s]) continue; const existing = Array.from(container.querySelectorAll('.chip')).map(c => c.innerText); const wrapper = container.querySelector('.add-btn-wrapper'); extraVocab[u][s].forEach(item => { if (!existing.includes(item.e)) { const btn = document.createElement('div'); btn.className = 'chip'; btn.innerText = item.e; btn.onclick = function() { updateUnit(u, s, item.e, item.c, "", "", this); }; if(wrapper) container.insertBefore(btn, wrapper); else container.appendChild(btn); } }); } } }
+        function autoSortUnits() { const container = document.getElementById('content-area'); const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); const hour = new Date().getHours(); let timeWeights = {}; if (hour >= 5 && hour < 10) { timeWeights = { 1: 50, 9: 40, 4: 30 }; } else if (hour >= 11 && hour < 14) { timeWeights = { 6: 50, 7: 40, 5: 30 }; } else if (hour >= 17 && hour < 21) { timeWeights = { 8: 50, 7: 40, 6: 30 }; } else if (hour >= 21 || hour < 4) { timeWeights = { 9: 60, 10: 50, 3: 40 }; } cards.sort((a, b) => { const idA = parseInt(a.id.replace('u', '')); const idB = parseInt(b.id.replace('u', '')); let scoreA = usageData[idA] || 0; let scoreB = usageData[idB] || 0; scoreA += (timeWeights[idA] || 0); scoreB += (timeWeights[idB] || 0); return scoreB - scoreA; }); container.innerHTML = ""; cards.forEach(card => container.appendChild(card)); initInfiniteLoop(container, cards); }
+        function initInfiniteLoop(container, cards) { container.querySelectorAll('.snap-spacer, .unit-card.clone').forEach(el => el.remove()); if (cards.length < 2) return; const firstCard = cards[0]; const lastCard = cards[cards.length - 1]; setTimeout(() => initBubbleTip(firstCard), 500); const cloneFirst = firstCard.cloneNode(true); const cloneLast = lastCard.cloneNode(true); [cloneFirst, cloneLast].forEach(el => { el.classList.add('clone'); el.id = ""; el.querySelectorAll('[id]').forEach(c => c.removeAttribute('id')); }); const spacerStart = document.createElement('div'); spacerStart.className = 'snap-spacer'; const spacerEnd = document.createElement('div'); spacerEnd.className = 'snap-spacer'; container.insertBefore(spacerStart, container.firstChild); container.insertBefore(cloneLast, container.firstChild.nextSibling); container.appendChild(cloneFirst); container.appendChild(spacerEnd); requestAnimationFrame(() => { container.style.scrollBehavior = 'auto'; const offset = firstCard.offsetLeft - container.offsetLeft - (window.innerWidth * 0.075); container.scrollLeft = offset; setTimeout(() => { container.style.scrollBehavior = 'smooth'; }, 50); }); container.onscroll = () => { const sl = container.scrollLeft; const sw = container.scrollWidth; const cw = container.clientWidth; const buf = 10; if (sw - (sl + cw) < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = firstCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); } if (sl < buf) { container.style.scrollBehavior = 'auto'; container.scrollLeft = lastCard.offsetLeft - (window.innerWidth * 0.075); requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); }); } }; }
+        function rebuildActionButtons() { for(let i=1; i<=13; i++) { const card = document.getElementById(`u${i}`); if(!card) continue; const steps = card.querySelectorAll('.step-container'); steps.forEach((step, index) => { const displayArea = step.querySelector('.display-area'); if(displayArea) { const s = index + 1; const oldBtns = displayArea.querySelectorAll('button'); oldBtns.forEach(b => b.remove()); let group = displayArea.querySelector('.action-group'); if(!group) { group = document.createElement('div'); group.className = 'action-group'; displayArea.appendChild(group); } const btnAudio = createMiniBtn('🔊', () => { const wordEl = document.getElementById(`u${i}-s${s}-word`); if(wordEl) speakWholeSentence(wordEl.id, "", ""); }); group.appendChild(btnAudio); const btnMic = createMiniBtn('🎙️', function(e) { const wordEl = document.getElementById(`u${i}-s${s}-word`); if(wordEl) startSimpleListening(this, wordEl.parentElement.innerText); }); btnMic.classList.add('btn-mic'); group.appendChild(btnMic); const btnShow = createMiniBtn('👁️', () => { const wordEl = document.getElementById(`u${i}-s${s}-word`); const transEl = document.getElementById(`u${i}-s${s}-trans`); if(wordEl && transEl) openShowCard(wordEl.parentElement.innerText, transEl.innerText); }); group.appendChild(btnShow); } }); } }
+        function createMiniBtn(icon, onClick) { const btn = document.createElement('button'); btn.className = 'btn-mini'; btn.innerHTML = icon; btn.onclick = (e) => { e.stopPropagation(); triggerHaptic(); onClick.call(btn, e); }; return btn; }
+        let simpleTarget = "";
+        function startSimpleListening(btn, text) { if (!recognition) { alert("Browser not supported"); return; } triggerHaptic(); simpleTarget = text.toLowerCase().replace(/[.,?!]/g, '').trim(); recognition.onresult = (e) => { const spoken = e.results[e.results.length-1][0].transcript; handleSimpleResult(spoken); btn.classList.remove('listening'); }; recognition.onend = () => btn.classList.remove('listening'); document.querySelectorAll('.btn-mic').forEach(b => b.classList.remove('listening')); btn.classList.add('listening'); try { recognition.start(); showToast("🎤 请大声朗读..."); } catch(e){} }
+        function handleSimpleResult(spoken) { const cleanSpoken = spoken.toLowerCase().replace(/[.,?!]/g, '').trim(); if (cleanSpoken.includes(simpleTarget) || simpleTarget.includes(cleanSpoken)) { showToast(`🎉 太棒了！完美发音！\n"${spoken}"`); triggerHaptic(); } else { showToast(`🤔 再试一次，听起来像：\n"${spoken}"`); } }
+        function addBotMsg(text, chips=[], autoMic=false, callback=null) { const body = document.getElementById('chatBody'); const d = document.createElement('div'); d.className='msg bot'; d.innerText=text; body.appendChild(d); if(chips.length>0){ const g = document.createElement('div'); g.className='msg-btn-group'; chips.forEach(c=>{const b=document.createElement('div');b.className='msg-chip';b.innerText=c.text;b.onclick=()=>c.action();g.appendChild(b);}); body.appendChild(g); } speakDirect(text, ()=>{ if(autoMic) startChatListening(); if(callback) callback(); }); body.scrollTop = body.scrollHeight; }
+        function processAnswer(spokenText) { aiState.waitingForSpeech = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer); addUserMsg(spokenText); const target = aiState.currentTargetEng.toLowerCase().replace(/[^a-z ]/g, ""); const spoken = spokenText.toLowerCase().replace(/[^a-z ]/g, ""); const targetWords = target.split(" "); let matchCount = 0; targetWords.forEach(w => { if(spoken.includes(w)) matchCount++; }); const accuracy = matchCount / targetWords.length; if(accuracy >= 0.5) { aiState.score++; triggerHaptic(); addBotMsg("✅ 回答正确！太棒了！", [], false, () => { setTimeout(() => { aiState.currentStep++; askQuestion(); }, 2000); }); } else { triggerHaptic(); if(navigator.vibrate) navigator.vibrate(100); addBotMsg(`❌ 差点意思，正确读法是：\n"${aiState.currentTargetEng}"`, [], false, () => { speakDirect(aiState.currentTargetEng, () => { setTimeout(() => { aiState.currentStep++; askQuestion(); }, 3000); }); }); } aiState.total++; }
+        function endChat(completed) { aiState.active = false; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer); if(recognition) try { recognition.abort(); } catch(e){} document.getElementById('chatMicBtn').classList.remove('active'); let msg = "练习结束，下次继续！"; if(completed && aiState.total > 0) { const pct = Math.round((aiState.score / aiState.total) * 100); msg = `练习完成！🎉\n正确率 ${pct}%。继续加油！`; } addBotMsg(msg, [], false, () => { setTimeout(() => { const overlay = document.getElementById('chatOverlay'); if(overlay) overlay.style.display = 'none'; }, 6000); }); }
+        function askQuestion() { if(!aiState.active) return; const u = aiState.currentUnit; const s = aiState.currentStep; const wordEl = document.getElementById(`u${u}-s${s}-word`); const transEl = document.getElementById(`u${u}-s${s}-trans`); if(!wordEl || s > 2) { endChat(true); return; } const targetEng = wordEl.parentElement.innerText; aiState.currentTargetEng = targetEng; let targetCn = transEl.innerText; const savedData = JSON.parse(localStorage.getItem(`u${u}-s${s}`)); if(savedData) targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix); aiState.currentTargetCn = targetCn; addBotMsg(`Please translate:\n"${targetCn}"`, [], true); aiState.waitingForSpeech = true; if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer); aiState.silenceTimer = setTimeout(() => { if(aiState.waitingForSpeech && aiState.active) { speakDirect("Are you there?", () => { startChatListening(); }); } }, 20000); }
+        function manualMicClick() { if(aiState.waitingForSpeech) startChatListening(); else showToast("Wait for my question!"); }
         function initSpeechRecognition() { if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) { const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; recognition = new SpeechRecognition(); recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1; recognition.onresult = (e) => { console.log(e.results[0][0].transcript); }; } }
-        
+        function speakDirect(text, callback) { window.speechSynthesis.cancel(); const hasEnglishContext = /[a-zA-Z]{2,}/.test(text); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = hasEnglishContext ? 'en-US' : 'zh-CN'; utterance.rate = 0.9; if(callback) utterance.onend = callback; window.speechSynthesis.speak(utterance); }
         function injectChatDOM() { const div = document.createElement('div'); div.id = 'chatOverlay'; div.className = 'chat-overlay'; div.innerHTML = `<div class="chat-header"><span>🤖 AI Oral Tutor</span><span onclick="toggleChat()" style="cursor:pointer;font-size:1.2em;">✕</span></div><div class="chat-body" id="chatBody"></div><div class="chat-footer"><button id="chatMicBtn" class="mic-wave" onclick="manualMicClick()">🎙️</button><button class="nav-btn" onclick="endChat(false)" style="background:#ff3b30;color:white;border:none;">End</button></div>`; document.body.appendChild(div); }
         function addUserMsg(text) { const b=document.getElementById('chatBody'); const d=document.createElement('div'); d.className='msg user'; d.innerText=text; b.appendChild(d); b.scrollTop=b.scrollHeight; }
-        function addBotMsg(text, options) { const b=document.getElementById('chatBody'); const d=document.createElement('div'); d.className='msg bot'; d.innerText=text; b.appendChild(d); if(options){ const g=document.createElement('div'); g.className='msg-btn-group'; options.forEach(o=>{ const btn=document.createElement('div'); btn.className='msg-chip'; btn.innerText=o.text; btn.onclick=o.action; g.appendChild(btn); }); b.appendChild(g); } b.scrollTop=b.scrollHeight; speakDirect(text); }
-        
-        // 核心：中文句子生成逻辑
-        function getFullChineseSentence(u, s, cnWord, suffix) { let cw = cnWord; let sfx = suffix || "。"; let full = ""; if(sfx === '吗' || sfx === '?') sfx = "吗？"; switch(parseInt(u)) { case 1: full = (s==1) ? `嗨，我是${cw}。` : `我住在${cw}。`; break; case 2: full = (s==1) ? `打扰一下，我在找${cw}。` : `能告诉我${cw}${sfx}`; break; case 3: full = (s==1) ? `我能借用一下您的${cw}${sfx}` : `真的很有${cw}。`; break; case 4: full = (s==1) ? `我想${cw}。` : `这是我的${cw}。`; break; case 5: full = (s==1) ? `我想用${cw}支付。` : `你们提供${cw}${sfx}`; break; case 6: full = (s==1) ? `我想要${cw}。` : `请不要${cw}。`; break; case 7: full = (s==1) ? `咱们${cw}吧。` : `今天${cw}。`; break; case 8: full = (s==1) ? `好久不见！${cw}怎么样？` : `我们应该${cw}。`; break; case 9: full = (s==1) ? `我要去${cw}。` : `就在${cw}下车。`; break; case 10: full = (s==1) ? `我需要${cw}。` : `我感到${cw}。`; break; case 11: full = (s==1) ? `能${cw}吗？` : `我不${cw}。`; break; case 12: full = (s==1) ? `我想${cw}。` : `它${cw}。`; break; case 13: full = (s==1) ? `我想${cw}。` : `在${cw}。`; break; default: full = cw + sfx; } if(u==3 && s==2) { if(cw.includes('急')) full = "真的很紧急。"; if(cw.includes('快')) full = "会很快就好。"; } return full; }
-        
-        // --- 悬浮球与工具箱 ---
-        function addFloatingControls() { 
-            const c=document.querySelector('.float-controls'); 
-            if(!c) return;
-            const w=document.createElement('div'); w.style.position='relative'; 
-            const b=document.createElement('div'); b.id='robotBubble'; b.className='robot-speech-bubble'; b.innerText='嘿！想练练口语吗？点我！'; w.appendChild(b); 
-            const btn=document.createElement('button'); btn.className='fab-robot'; btn.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>'; btn.title="AI 陪练"; 
-            btn.onclick=()=>{ triggerHaptic(); resetIdleTimer(); toggleChat(); if(document.getElementById('chatBody').innerHTML.trim()==="") startAiSession(); }; 
-            w.appendChild(btn); 
-            c.insertBefore(w, c.firstChild); 
-            
-            const t=document.createElement('button'); t.className='fab-tools'; t.innerHTML='🧰'; t.onclick=openToolbox; 
-            c.insertBefore(t, c.firstChild); 
-        }
-
+        function startChatListening() { if (!recognition) return; if (!aiState.active) return; const btn = document.getElementById('chatMicBtn'); btn.classList.add('active'); try { recognition.start(); } catch(e) {} recognition.onresult = (event) => { const last = event.results.length - 1; const text = event.results[last][0].transcript; processAnswer(text); }; recognition.onend = () => { btn.classList.remove('active'); }; }
+        function getFullChineseSentence(u, s, cnWord, suffix) { let cw = cnWord; let sfx = suffix || "。"; let full = ""; if(sfx === '吗' || sfx === '?') sfx = "吗？"; switch(u) { case 1: full = (s===1) ? `嗨，我是${cw}。` : `我住在${cw}。`; break; case 2: full = (s===1) ? `打扰一下，我在找${cw}。` : `能告诉我${cw}${sfx}`; break; case 3: full = (s===1) ? `我能借用一下您的${cw}${sfx}` : `真的很有${cw}。`; break; case 4: full = (s===1) ? `我想${cw}。` : `这是我的${cw}。`; break; case 5: full = (s===1) ? `我想用${cw}支付。` : `你们提供${cw}${sfx}`; break; case 6: full = (s===1) ? `我想要${cw}。` : `请不要${cw}。`; break; case 7: full = (s===1) ? `咱们${cw}吧。` : `今天${cw}。`; break; case 8: full = (s===1) ? `好久不见！${cw}怎么样？` : `我们应该${cw}。`; break; case 9: full = (s===1) ? `我要去${cw}。` : `就在${cw}下车。`; break; case 10: full = (s===1) ? `我需要${cw}。` : `我感到${cw}。`; break; case 11: full = (s===1) ? `能${cw}吗？` : `我不${cw}。`; break; case 12: full = (s===1) ? `我想${cw}。` : `它${cw}。`; break; case 13: full = (s===1) ? `我想${cw}。` : `在${cw}。`; break; default: full = cw + sfx; } if(u===3 && s===2) { if(cw.includes('急')) full = "真的很紧急。"; if(cw.includes('快')) full = "会很快就好。"; } return full; }
+        function startAiSession() { aiState.active = true; aiState.score = 0; aiState.total = 0; document.getElementById('chatBody').innerHTML = ''; addBotMsg("Hi there! I'm your AI tutor. Want to practice English?", [{ text: "Yes, let's go!", action: askForScenario }, { text: "Not now", action: () => { toggleChat(); aiState.active = false; } }]); }
+        function askForScenario() { addUserMsg("Yes, let's go!"); let ops = []; for(let i=1; i<=13; i++) { const c = document.getElementById(`u${i}`); if(c) { const name = c.getAttribute('data-name'); ops.push({ text: name, action: () => startUnitPractice(i) }); } } addBotMsg("Great! Which scenario do you want to practice?", ops); }
+        function startUnitPractice(uid) { addUserMsg(`Unit ${uid}`); aiState.currentUnit = uid; aiState.currentStep = 1; addBotMsg("Awesome choice! Let's start!"); setTimeout(askQuestion, 1500); }
+        function resetIdleTimer() { if(aiState.active) return; if(aiState.idleTimer) clearTimeout(aiState.idleTimer); aiState.idleTimer = setTimeout(triggerIdleAlert, 60000); }
+        let idleLoopTimer = null;
+        function triggerIdleAlert() { if(aiState.active) return; document.getElementById('robotBadge').style.display = 'block'; const bubble = document.getElementById('robotBubble'); if(bubble) { bubble.classList.add('visible'); triggerHaptic(); setTimeout(() => { bubble.classList.remove('visible'); idleLoopTimer = setTimeout(triggerIdleAlert, 60000); }, 10000); } }
+        function addFloatingControls() { const c=document.querySelector('.float-controls'); const w=document.createElement('div'); w.style.position='relative'; const b=document.createElement('div'); b.id='robotBubble'; b.className='robot-speech-bubble'; b.innerText='嘿！想练练口语吗？点我！'; w.appendChild(b); const btn=document.createElement('button'); btn.className='fab-robot'; btn.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>'; btn.title="AI 陪练"; btn.onclick=()=>{ triggerHaptic(); resetIdleTimer(); toggleChat(); if(document.getElementById('chatBody').innerHTML.trim()==="") startAiSession(); }; w.appendChild(btn); c.insertBefore(w, c.firstChild); const t=document.createElement('button'); t.className='fab-tools'; t.innerHTML='🧰'; t.onclick=openToolbox; c.insertBefore(t, c.firstChild); }
         function toggleChat() { const el = document.getElementById('chatOverlay'); const isHidden = el.style.display === 'none' || el.style.display === ''; el.style.display = isHidden ? 'flex' : 'none'; document.getElementById('robotBadge').style.display = 'none'; if(isHidden) { const body = document.getElementById('chatBody'); body.scrollTop = body.scrollHeight; } }
-        function startAiSession() { aiState.active = true; document.getElementById('chatBody').innerHTML = ''; addBotMsg("Hi there! I'm your AI tutor. Want to practice?", [{ text: "Yes!", action: askForScenario }, { text: "No", action: () => { toggleChat(); aiState.active = false; } }]); }
-        function askForScenario() { addUserMsg("Yes!"); let ops = []; for(let i=1; i<=5; i++) { const c = document.getElementById(`u${i}`); if(c) { ops.push({ text: c.getAttribute('data-name'), action: () => startUnitPractice(i) }); } } addBotMsg("Pick a scenario:", ops); }
-        function startUnitPractice(uid) { addUserMsg(`Unit ${uid}`); aiState.currentUnit = uid; addBotMsg("Let's start! Read the English sentence loud."); }
-
-        function injectToolboxDOM(){
-            if(document.getElementById('toolOverlay')) return;
-            const d=document.createElement('div'); d.id='toolOverlay'; d.className='tool-overlay'; 
-            d.onclick=(e)=>{if(e.target===d)d.style.display='none';};
-            d.innerHTML=`<div class="tool-card"><div class="tool-tabs"><div class="tool-tab active" onclick="switchTool(0)">🌡️ 换算</div><div class="tool-tab" onclick="switchTool(1)">💵 小费</div><div class="tool-tab" onclick="switchTool(2)">💾 备份</div></div><div class="tool-section active" id="tool-calc"><div class="calc-row"><input type="number" class="calc-input" id="inp-f" placeholder="°F" oninput="convert('f')"><span class="calc-label">°F</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-c" placeholder="°C" oninput="convert('c')"><span class="calc-label">°C</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-lb" placeholder="lb" oninput="convert('lb')"><span class="calc-label">lb</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-kg" placeholder="kg" oninput="convert('kg')"><span class="calc-label">kg</span></div></div><div class="tool-section" id="tool-tip"><div class="calc-row" style="justify-content:center;"><span style="font-weight:bold;">消费 $</span><input type="number" class="calc-input" id="inp-bill" placeholder="0.00" style="width:150px;" oninput="calcTip()"></div><div class="tip-grid"><div class="tip-box"><span class="tip-pct">15%</span><span class="tip-val" id="tip-15">$0</span></div><div class="tip-box"><span class="tip-pct">18%</span><span class="tip-val" id="tip-18">$0</span></div><div class="tip-box"><span class="tip-pct">20%</span><span class="tip-val" id="tip-20">$0</span></div></div></div><div class="tool-section" id="tool-backup" style="text-align:center;"><p style="color:var(--text-sub); font-size:0.9em; margin-bottom:20px;">换手机前请备份。</p><div style="display:flex; gap:15px; justify-content:center;"><button onclick="backupData()" style="padding:12px 20px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold;">📤 导出</button><button onclick="restoreData()" style="padding:12px 20px; background:var(--display-area); color:var(--text-main); border:1px solid var(--border); border-radius:12px; font-weight:bold;">📥 恢复</button></div></div></div>`;
-            document.body.appendChild(d);
-        }
-        
+        function injectToolboxDOM(){if(document.getElementById('toolOverlay'))return;const d=document.createElement('div');d.id='toolOverlay';d.className='tool-overlay';d.onclick=(e)=>{if(e.target===d)d.style.display='none';};d.innerHTML=`<div class="tool-card"><div class="tool-tabs"><div class="tool-tab active" onclick="switchTool(0)">🌡️ 换算</div><div class="tool-tab" onclick="switchTool(1)">💵 小费</div><div class="tool-tab" onclick="switchTool(2)">💾 备份</div></div><div class="tool-section active" id="tool-calc"><div class="calc-row"><input type="number" class="calc-input" id="inp-f" placeholder="°F" oninput="convert('f')"><span class="calc-label">°F</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-c" placeholder="°C" oninput="convert('c')"><span class="calc-label">°C</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-lb" placeholder="lb" oninput="convert('lb')"><span class="calc-label">lb</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-kg" placeholder="kg" oninput="convert('kg')"><span class="calc-label">kg</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-oz" placeholder="oz" oninput="convert('oz')"><span class="calc-label">oz</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-ml" placeholder="ml" oninput="convert('ml')"><span class="calc-label">ml</span></div></div><div class="tool-section" id="tool-tip"><div class="calc-row" style="justify-content:center;"><span style="font-weight:bold;">消费 $</span><input type="number" class="calc-input" id="inp-bill" placeholder="0.00" style="width:150px;" oninput="calcTip()"></div><div class="tip-grid"><div class="tip-box"><span class="tip-pct">15%</span><span class="tip-val" id="tip-15">$0</span></div><div class="tip-box"><span class="tip-pct">18%</span><span class="tip-val" id="tip-18">$0</span></div><div class="tip-box"><span class="tip-pct">20%</span><span class="tip-val" id="tip-20">$0</span></div></div></div><div class="tool-section" id="tool-backup" style="text-align:center;"><p style="color:var(--text-sub); font-size:0.9em; margin-bottom:20px;">换手机或清缓存前，请先导出备份。</p><div style="display:flex; gap:15px; justify-content:center;"><button onclick="backupData()" style="padding:12px 20px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold;">📤 导出数据</button><button onclick="restoreData()" style="padding:12px 20px; background:var(--display-area); color:var(--text-main); border:1px solid var(--border); border-radius:12px; font-weight:bold;">📥 恢复数据</button></div></div></div>`;document.body.appendChild(d);}
         function switchTool(idx){triggerHaptic();document.querySelectorAll('.tool-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));document.querySelectorAll('.tool-section').forEach((s,i)=>s.classList.toggle('active',i===idx));}
-        function convert(t){const f=document.getElementById('inp-f'),c=document.getElementById('inp-c'),lb=document.getElementById('inp-lb'),kg=document.getElementById('inp-kg'); if(t==='f')c.value=f.value?((f.value-32)*5/9).toFixed(1):''; if(t==='c')f.value=c.value?((c.value*9/5)+32).toFixed(1):''; if(t==='lb')kg.value=lb.value?(lb.value*0.453).toFixed(1):''; if(t==='kg')lb.value=kg.value?(kg.value/0.453).toFixed(1):'';}
+        function convert(t){const f=document.getElementById('inp-f'),c=document.getElementById('inp-c'),lb=document.getElementById('inp-lb'),kg=document.getElementById('inp-kg'),oz=document.getElementById('inp-oz'),ml=document.getElementById('inp-ml');if(t==='f')c.value=f.value?((f.value-32)*5/9).toFixed(1):'';if(t==='c')f.value=c.value?((c.value*9/5)+32).toFixed(1):'';if(t==='lb')kg.value=lb.value?(lb.value*0.453).toFixed(1):'';if(t==='kg')lb.value=kg.value?(kg.value/0.453).toFixed(1):'';if(t==='oz')ml.value=oz.value?(oz.value*29.57).toFixed(1):'';if(t==='ml')oz.value=ml.value?(ml.value/29.57).toFixed(1):'';}
         function calcTip(){const b=parseFloat(document.getElementById('inp-bill').value)||0;document.getElementById('tip-15').innerText='$'+(b*1.15).toFixed(2);document.getElementById('tip-18').innerText='$'+(b*1.18).toFixed(2);document.getElementById('tip-20').innerText='$'+(b*1.20).toFixed(2);}
         function openToolbox(){triggerHaptic();document.getElementById('toolOverlay').style.display='flex';}
-        
-        function initGlobalClickListeners() { document.body.addEventListener('click', function(e) { const comboBtn = e.target.closest('.combo-audio-btn'); if (comboBtn) { e.stopPropagation(); triggerHaptic(); const container = comboBtn.closest('.combo-box'); if (container) { const textEl = container.querySelector('.combo-text'); if (textEl) speakDirect(textEl.innerText); } return; } }); }
-        
-        function backupData() { triggerHaptic(); let backup = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.startsWith('custom_chips_') || key.startsWith('u') || key === 'unit_usage' || key === 'theme' || key === 'user_xp') { backup[key] = localStorage.getItem(key); } } const dataStr = JSON.stringify(backup); navigator.clipboard.writeText(dataStr).then(() => { alert("✅ 已复制！请粘贴保存。"); }).catch(err => { prompt("手动复制：", dataStr); }); }
-        function restoreData() { triggerHaptic(); const dataStr = prompt("粘贴备份数据："); if (!dataStr) return; try { const backup = JSON.parse(dataStr); for (let key in backup) { localStorage.setItem(key, backup[key]); } alert("🎉 恢复成功！"); location.reload(); } catch (e) { alert("❌ 数据错误"); } }
-        
-        function injectShowCardDOM(){if(!document.getElementById('showCardOverlay')){const d=document.createElement('div');d.id='showCardOverlay';d.className='show-card-overlay';d.onclick=closeShowCard;d.innerHTML=`<div class="show-card-text" id="showCardEng"></div><div class="show-card-sub" id="showCardCn"></div><div class="show-card-hint">点击关闭</div>`;document.body.appendChild(d);}}
+        function closeToolbox(){document.getElementById('toolOverlay').style.display='none';}
+        function injectSmartKeywords(){/*...*/}
+        function injectShowCardDOM(){if(!document.getElementById('showCardOverlay')){const d=document.createElement('div');d.id='showCardOverlay';d.className='show-card-overlay';d.onclick=closeShowCard;d.innerHTML=`<div class="show-card-text" id="showCardEng"></div><div class="show-card-sub" id="showCardCn"></div><div class="show-card-hint">点击任意处关闭</div>`;document.body.appendChild(d);}}
+        function openShowCard(e,c){document.getElementById('showCardEng').innerText=e;document.getElementById('showCardCn').innerText=c;document.getElementById('showCardOverlay').style.display='flex';}
         function closeShowCard(){document.getElementById('showCardOverlay').style.display='none';}
+        function showToast(m){let t=document.getElementById('speechToast');if(!t){t=document.createElement('div');t.id='speechToast';t.className='speech-result-toast';document.body.appendChild(t);}t.innerText=m;t.style.display='block';setTimeout(()=>{t.style.display='none';},3000);}
         function triggerHaptic(){if(navigator.vibrate)navigator.vibrate(15);}
         function initScrollHints(){const cards=document.querySelectorAll('.unit-card');cards.forEach(card=>{if(card.scrollHeight>card.clientHeight)card.querySelector('.scroll-hint')?.classList.add('visible');card.addEventListener('scroll',function(){this.querySelector('.scroll-hint')?.classList.remove('visible');});});}
-        
-        // --- 核心修复：红色气泡生成 ---
-        function initBubbleTip() {
-            // 在第一个 Unit 的第一个 Step 里生成
-            const container = document.querySelector('#u1 .step-container');
-            if(container && !document.querySelector('.bubble-tip')) {
-                const tip = document.createElement('div');
-                tip.className = 'bubble-tip';
-                tip.innerText = '👇 点这里替换单词';
-                // 插入到 chips 容器前
-                const chips = container.querySelector('.chips-container');
-                if(chips) container.insertBefore(tip, chips);
-                
-                // 3秒后自动消失
-                setTimeout(() => {
-                    tip.classList.add('fade-out');
-                    setTimeout(() => tip.remove(), 1000);
-                }, 4000);
-            }
-        }
-
+        function dismissBubble(e){if(e){e.classList.add('fade-out');setTimeout(()=>{e.remove();},1000);}}
         function addCustomChip(u,s,p,x){triggerHaptic();const e=prompt("English:");if(!e)return;const c=prompt("Chinese:");if(!c)return;const d={unitNum:u,stepNum:s,eng:e,cn:c,prefix:p,suffix:x};const k=`custom_chips_u${u}_s${s}`;let l=JSON.parse(localStorage.getItem(k)||"[]");l.push(d);localStorage.setItem(k,JSON.stringify(l));renderAndClickChip(d,true);}
         function toggleEmergency(){triggerHaptic();document.getElementById('emergencyOverlay').classList.toggle('active');}
-        function loadUsageData(){ try { usageData=JSON.parse(localStorage.getItem('unit_usage')||"{}"); } catch(e){ usageData={}; } }
+        function loadUsageData(){usageData=JSON.parse(localStorage.getItem('unit_usage')||"{}");}
         function incrementUsage(u){usageData[u]=(usageData[u]||0)+1;localStorage.setItem('unit_usage',JSON.stringify(usageData));}
-        function checkMonthlyReport(){} 
-        
+        function checkMonthlyReport(){/*...*/ }
+        function showMonthlySummary(m){/*...*/ }
         function startRandomDrill(){triggerHaptic();const u=Math.floor(Math.random()*13)+1;const c=document.getElementById(`u${u}`);if(!c){startRandomDrill();return;}document.getElementById('modalQuestion').innerText=c.querySelector('.unit-header').innerText;document.getElementById('randomModal').style.display='flex';currentRandomUnit=u;}
         function closeModal(id){document.getElementById(id).style.display='none';}
         function revealRandomAnswer(){closeModal('randomModal');scrollToUnit(`u${currentRandomUnit}`);}
         function scrollToUnit(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}
         function toggleTheme(){triggerHaptic();const h=document.documentElement;const n=h.getAttribute('data-theme')==='light'?'dark':'light';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);}
         function loadTheme(){const s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s);}
-        
         function filterUnits(){const filter=document.getElementById('searchBox').value.toLowerCase();const cards=document.getElementsByClassName('unit-card');for(let card of cards){const text=card.innerText.toLowerCase();const keys=card.getAttribute('data-keywords')||"";card.style.display=(text.includes(filter)||keys.includes(filter))?"":"none";} document.getElementById('content-area').scrollTo(0,0);}
         function loadCustomChips(){for(let u=1;u<=13;u++)for(let s=1;s<=2;s++)JSON.parse(localStorage.getItem(`custom_chips_u${u}_s${s}`)||"[]").forEach(d=>renderAndClickChip(d,false));}
-        
-        function renderAndClickChip(d,t){
-            const c=document.getElementById(`u${d.unitNum}-s${d.stepNum}-chips`);if(!c)return;
-            const b=document.createElement('div');b.className='chip';b.innerText=d.eng;
-            b.onclick=()=>{updateUnit(d.unitNum,d.stepNum,d.eng,d.cn,d.prefix,d.suffix,b);};
-            const w=c.querySelector('.add-btn-wrapper');c.insertBefore(b,w||c.firstChild);
-            if(t)b.click();
-        }
-        
+        function renderAndClickChip(d,t){const c=document.getElementById(`u${d.unitNum}-s${d.stepNum}-chips`);if(!c)return;const b=document.createElement('div');b.className='chip';b.innerText=d.eng;b.onclick=()=>{updateUnit(d.unitNum,d.stepNum,d.eng,d.cn,d.prefix,d.suffix,b);};const w=c.querySelector('.add-btn-wrapper');c.insertBefore(b,w||c.firstChild);if(t)b.click();}
+        function updateCustomChipInStorage(d,n){const k=`custom_chips_u${d.unitNum}_s${d.stepNum}`;let l=JSON.parse(localStorage.getItem(k)||"[]");if(n==="")l=l.filter(i=>i.eng!==d.eng);else{const i=l.findIndex(x=>x.eng===d.eng);if(i>-1)l[i].eng=n;}localStorage.setItem(k,JSON.stringify(l));}
+        function toggleQuizMode(){triggerHaptic();document.body.classList.toggle('quiz-mode');}
         function updateUnit(unitNum,stepNum,engWord,cnWord,prefixEng,suffixCn,element,playSound=true){triggerHaptic();incrementUsage(unitNum);const wordId=`u${unitNum}-s${stepNum}-word`;const displayEl=document.getElementById(wordId);if(displayEl)displayEl.innerText=engWord;const fullCn=getFullChineseSentence(unitNum,stepNum,cnWord,suffixCn);document.getElementById(`u${unitNum}-s${stepNum}-trans`).innerText=fullCn;let container=element.parentElement;container.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));if(element.classList.contains('chip'))element.classList.add('active');localStorage.setItem(`u${unitNum}-s${stepNum}`,JSON.stringify({engWord,cnWord,prefix:prefixEng,suffix:suffixCn}));if(playSound)speakDirect(engWord);}
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
-        
-        function resetIdleTimer() { if(aiState.active) return; if(aiState.idleTimer) clearTimeout(aiState.idleTimer); aiState.idleTimer = setTimeout(triggerIdleAlert, 60000); }
-        let idleLoopTimer = null;
-        function triggerIdleAlert() { if(aiState.active) return; document.getElementById('robotBadge').style.display = 'block'; const bubble = document.getElementById('robotBubble'); if(bubble) { bubble.classList.add('visible'); triggerHaptic(); setTimeout(() => { bubble.classList.remove('visible'); idleLoopTimer = setTimeout(triggerIdleAlert, 60000); }, 10000); } }
-        function rebuildActionButtons() { /* 占位，防止报错 */ }
+        function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
     </script>
 </body>
 </html>

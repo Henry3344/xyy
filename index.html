@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#1c1c1e">
     
     <style>
-        /* === V37.0 样式表：等级+龟速+搜索修复版 === */
+        /* === V37.1 样式表：修复崩溃 + 完整功能版 === */
         :root {
             --bg-body: #f2f2f7; --bg-card: #ffffff; --text-main: #1c1c1e; --text-sub: #8e8e93;
             --primary: #007aff; --primary-light: #e5f1ff; --border: #c6c6c8;
@@ -32,10 +32,9 @@
         .header-container { flex: 0 0 auto; background: var(--nav-bg); backdrop-filter: blur(15px); z-index: 1000; border-bottom: 1px solid var(--border); padding-top: env(safe-area-inset-top); }
         .top-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; max-width: 650px; margin: 0 auto; }
         
-        /* 标题与等级 */
         .title-group { display: flex; align-items: center; gap: 8px; }
         .app-title { font-size: 1.1em; font-weight: 800; margin: 0; }
-        /* 新增：等级徽章样式 */
+        /* 等级徽章 */
         .level-badge { 
             background: var(--gold); color: black; padding: 2px 8px; 
             border-radius: 10px; font-size: 0.75em; font-weight: 900; 
@@ -47,16 +46,17 @@
         .header-actions { display: flex; gap: 12px; }
         .icon-btn { background: none; border: 1px solid var(--border); color: var(--text-main); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .icon-btn.danger { border-color: var(--danger); color: var(--danger); }
+        
         .search-row { padding: 0 15px 8px 15px; max-width: 650px; margin: 0 auto; }
         .search-input { width: 100%; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); box-sizing: border-box; outline: none; transition: color 0.5s; }
         .search-input.fade-text { color: transparent; }
+        
         .nav-scroll { display: flex; overflow-x: auto; padding: 0 15px 10px 15px; gap: 8px; max-width: 650px; margin: 0 auto; scrollbar-width: none; }
         .nav-scroll::-webkit-scrollbar { display: none; }
         .nav-btn { flex: 0 0 auto; background: var(--primary-light); color: var(--primary); padding: 5px 10px; border-radius: 14px; font-weight: 600; font-size: 0.8em; text-decoration: none; cursor: pointer; }
         [data-theme="dark"] .nav-btn { border: 1px solid var(--border); }
         .nav-btn.active-nav { background: var(--primary); color: white; }
 
-        /* 内容区 */
         #content-area { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 15px 0; gap: 15px; align-items: flex-start; scroll-behavior: smooth; }
         #content-area::-webkit-scrollbar { display: none; }
         .snap-spacer { flex: 0 0 7.5vw; } 
@@ -64,9 +64,9 @@
             flex: 0 0 85vw; max-width: 500px; background: var(--bg-card); 
             border-radius: 20px; padding: 20px; box-shadow: 0 8px 30px var(--shadow); 
             border: 1px solid var(--border); scroll-snap-align: center; 
-            scroll-snap-stop: always; /* 阻尼感 */
+            scroll-snap-stop: always; 
             height: 98%; max-height: 85vh; overflow-y: auto; position: relative; 
-            padding-bottom: 120px; /* 避让底部悬浮球 */
+            padding-bottom: 140px; /* 加大底部空间，防止遮挡 */
             box-sizing: border-box; 
         }
         .unit-header { font-size: 1.3em; font-weight: 800; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid var(--display-area); padding-bottom: 10px; display: flex; justify-content: space-between; }
@@ -105,28 +105,49 @@
         @keyframes float-hint { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
 
         .divider { height: 1px; background: var(--border); margin: 20px 0; border: none; }
-        .combo-box { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px; border-radius: 16px; margin-top: 20px; position: relative; }
+        
+        /* 底部蓝色组合框 - 关键修复 */
+        .combo-box { 
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); 
+            color: white; padding: 15px; border-radius: 16px; margin-top: 20px; 
+            position: relative; 
+            /* 确保内部元素定位准确 */
+        }
         .combo-title { font-size: 0.8em; font-weight: bold; opacity: 0.8; margin-bottom: 8px; display: flex; justify-content: space-between; }
         .combo-text { padding-right: 40px; font-weight: 600; margin-bottom: 10px; line-height: 1.4; }
         
-        /* 底部功能按钮：喇叭和乌龟 */
+        /* 核心修复：底部按钮位置和层级 */
         .combo-audio-btn { 
             position: absolute; top: 15px; right: 15px; 
             background: #27ae60; border: none; color: white; 
             width: 36px; height: 36px; border-radius: 50%; 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 1.1em; cursor: pointer; z-index: 10; 
+            font-size: 1.1em; cursor: pointer; z-index: 20; /* 提高层级 */
         }
         .btn-slow { 
-            position: absolute; top: 15px; right: 60px; /* 在喇叭左边 */
+            position: absolute; top: 15px; right: 60px; 
             background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); 
             color: white; width: 36px; height: 36px; border-radius: 50%; 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 1.2em; cursor: pointer; z-index: 10; 
+            font-size: 1.2em; cursor: pointer; z-index: 20; /* 提高层级 */
         }
 
-        .float-controls { position: fixed; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; align-items: flex-end; pointer-events: none; }
-        .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3em; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative; pointer-events: auto; }
+        /* 悬浮球容器 - 关键修复：允许点击穿透 */
+        .float-controls { 
+            position: fixed; bottom: 40px; right: 20px; 
+            display: flex; flex-direction: column; gap: 15px; 
+            z-index: 2000; align-items: flex-end; 
+            pointer-events: none; /* 容器不挡手 */
+        }
+        /* 按钮自身恢复点击 */
+        .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { 
+            width: 42px; height: 42px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.3em; border: none; cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative; 
+            pointer-events: auto; /* 按钮可点 */
+        }
+        
         .fab-quiz { background: var(--danger); color: white; width: auto; padding: 8px 16px; border-radius: 30px; font-size: 0.85em; }
         .fab-random { background: var(--accent); color: white; }
         .fab-robot { background: #000; color: white; border: 2px solid #00ff00; }
@@ -756,7 +777,7 @@
         © <span id="year">2025</span> Henry's Survival English Guide.
     </div>
     <script>
-        // === 核心逻辑 (V36.0: 等级 + 龟速 + 强力搜索) ===
+        // === 核心逻辑 (V37.1: 修复崩溃 + 完整功能版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -767,7 +788,7 @@
         
         let aiState = { active: false, currentUnit: null, currentStep: 0, score: 0, total: 0, currentTargetEng: "", currentTargetCn: "", waitingForSpeech: false, silenceTimer: null, idleTimer: null };
 
-        // 🔥 超全生活场景词库 (已映射中文，确保可搜到)
+        // 🔥 超全生活场景词库 (已严格检查语法)
         const extraVocab = {
             1: { 1: [{e:"new neighbor", c:"新邻居"}, {e:"from 3B", c:"3B的住户"}, {e:"just moved in", c:"刚搬来的"}, {e:"Henry", c:"Henry"}, {e:"living downstairs", c:"住楼下的"}, {e:"the new guy", c:"新来的那个"}], 2: [{e:"down the hall", c:"走廊尽头"}, {e:"upstairs", c:"楼上"}, {e:"next door", c:"隔壁"}, {e:"in unit 402", c:"402室"}, {e:"across the street", c:"马路对面"}] },
             2: { 1: [{e:"the subway", c:"地铁站"}, {e:"the restroom", c:"洗手间"}, {e:"the exit", c:"出口"}, {e:"an elevator", c:"电梯"}, {e:"a pharmacy", c:"药房"}, {e:"the bus stop", c:"公交站"}], 2: [{e:"where it is", c:"它在哪"}, {e:"which floor", c:"在几楼"}, {e:"the direction", c:"方向"}, {e:"how to get there", c:"怎么走"}] },
@@ -787,23 +808,21 @@
         window.onload = function() {
             document.getElementById('year').innerText = new Date().getFullYear();
             loadTheme();
-            loadXP(); // 加载等级
-            
-            // 🚀 1. 注入内容与关键词
-            injectExtraChips();
+            loadXP(); // 1. 加载等级
+            injectExtraChips(); // 2. 注入单词药丸
             loadCustomChips();
             loadUsageData();
-            injectSmartKeywords(); 
+            injectSmartKeywords(); // 3. 注入搜索关键词 (关键修复点)
             injectShowCardDOM();
             injectChatDOM();
             injectToolboxDOM(); 
             initSpeechRecognition();
             checkMonthlyReport(); 
             
-            // 🚀 2. 硬核注入底部按钮 (喇叭 + 乌龟) - 在排序前执行！
+            // 🚀 4. 硬核注入底部按钮 (喇叭 + 乌龟) - 在排序前执行！
             injectLogicButtons();
             
-            // 🚀 3. 排序 + 循环 (此时卡片里已经有了硬核按钮)
+            // 🚀 5. 排序 + 循环 (此时卡片里已经有了硬核按钮)
             autoSortUnits(); 
             
             for (let i = 1; i <= 13; i++) {
@@ -817,7 +836,7 @@
             initScrollHints();
             rebuildActionButtons(); 
             
-            // 🚀 4. 全局点击监听 (保底)
+            // 🚀 6. 全局点击监听 (保底)
             initGlobalClickListeners(); 
             
             addFloatingControls(); 
@@ -838,12 +857,10 @@
             updateLevelDisplay();
         }
         function updateLevelDisplay() {
-            // 简单的升级公式：每10点经验升1级，最高99
             let level = Math.floor(userXP / 10) + 1;
             if (level > 99) level = 99;
             const badge = document.getElementById('userLevel');
             if (badge) {
-                // 如果升级了，闪一下
                 if (badge.innerText !== `Lv.${level}`) {
                     badge.classList.add('bump');
                     setTimeout(() => badge.classList.remove('bump'), 200);
@@ -856,30 +873,27 @@
         function injectLogicButtons() {
             const boxes = document.querySelectorAll('.combo-box');
             boxes.forEach(box => {
-                // 清理旧的
                 box.querySelectorAll('.combo-audio-btn, .btn-slow').forEach(b => b.remove());
                 
-                // 1. 创建普通喇叭
+                // 喇叭
                 const btnNormal = document.createElement('button');
                 btnNormal.className = 'combo-audio-btn';
                 btnNormal.innerHTML = '🔊'; 
-                btnNormal.style.zIndex = "10"; 
-                // 直接写入属性，克隆免疫
+                btnNormal.style.zIndex = "20"; 
                 btnNormal.setAttribute('onclick', 'handleLogicClick(event, this, 1.0)'); 
                 box.appendChild(btnNormal);
 
-                // 2. 创建乌龟 (龟速)
+                // 乌龟
                 const btnSlow = document.createElement('button');
                 btnSlow.className = 'btn-slow';
                 btnSlow.innerHTML = '🐢'; 
-                btnSlow.style.zIndex = "10"; 
+                btnSlow.style.zIndex = "20"; 
                 btnSlow.setAttribute('onclick', 'handleLogicClick(event, this, 0.6)'); 
                 box.appendChild(btnSlow);
             });
         }
 
         // --- 🚀 全局处理函数 (支持语速参数) ---
-        // 必须挂在 window 上，确保 onclick 属性找得到
         window.handleLogicClick = function(e, btn, rate) {
             e.stopPropagation();
             gainXP(1); // 增加经验值
@@ -1052,6 +1066,7 @@
         function toggleQuizMode(){triggerHaptic();document.body.classList.toggle('quiz-mode');}
         function updateUnit(unitNum,stepNum,engWord,cnWord,prefixEng,suffixCn,element,playSound=true){triggerHaptic();incrementUsage(unitNum);const wordId=`u${unitNum}-s${stepNum}-word`;const displayEl=document.getElementById(wordId);if(displayEl)displayEl.innerText=engWord;const fullCn=getFullChineseSentence(unitNum,stepNum,cnWord,suffixCn);document.getElementById(`u${unitNum}-s${stepNum}-trans`).innerText=fullCn;let container=element.parentElement;container.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));if(element.classList.contains('chip'))element.classList.add('active');localStorage.setItem(`u${unitNum}-s${stepNum}`,JSON.stringify({engWord,cnWord,prefix:prefixEng,suffix:suffixCn}));if(playSound)speakDirect(engWord);}
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
+        function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
     </script>
 </body>
 </html>

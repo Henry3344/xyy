@@ -819,7 +819,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V33.1: 底部喇叭修复 + 场景搜索版) ===
+        // === 核心逻辑 (V33.2: 底部喇叭全局委托修复版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -869,8 +869,8 @@
             initScrollHints();
             rebuildActionButtons(); 
             
-            // 🚀 新增：绑定底部“逻辑构造”区域的小喇叭
-            bindComboAudioButtons();
+            // 🚀 核心修复：注册全局点击监听，解决所有按钮（含克隆体）的点击失效问题
+            initGlobalClickListeners();
             
             addFloatingControls(); 
             startSmartSearchAnimation();
@@ -879,25 +879,24 @@
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 🚀 修复点：绑定底部喇叭事件 ---
-        function bindComboAudioButtons() {
-            // 找到所有 .combo-audio-btn
-            const btns = document.querySelectorAll('.combo-audio-btn');
-            btns.forEach(btn => {
-                // 移除旧事件防止重复绑定
-                btn.onclick = null;
-                btn.onclick = function(e) {
+        // --- 🚀 全局事件委托 (解决克隆体点击失效 + 底部喇叭修复) ---
+        function initGlobalClickListeners() {
+            document.body.addEventListener('click', function(e) {
+                // 1. 监听底部“逻辑构造”的喇叭 (.combo-audio-btn)
+                const comboBtn = e.target.closest('.combo-audio-btn');
+                if (comboBtn) {
                     e.stopPropagation();
                     triggerHaptic();
-                    // 找到同级容器里的文字 .combo-text
-                    const parent = this.closest('.combo-box');
-                    if (parent) {
-                        const textEl = parent.querySelector('.combo-text');
-                        if (textEl) {
-                            speakDirect(textEl.innerText);
-                        }
+                    const container = comboBtn.closest('.combo-box');
+                    if (container) {
+                        // 找同级里的文字
+                        const textEl = container.querySelector('.combo-text');
+                        if (textEl) speakDirect(textEl.innerText);
                     }
-                };
+                    return;
+                }
+                
+                // 2. 这里也可以扩展监听其他动态生成的元素...
             });
         }
 
@@ -951,7 +950,7 @@
             }
         }
 
-        // --- 原有逻辑保持稳定 ---
+        // --- 其他逻辑保持 V33.0 稳定版 ---
         function speakWholeSentence(wordId, p, x) {
             const wordEl = document.getElementById(wordId);
             if(wordEl) {
@@ -1021,7 +1020,7 @@
         function toggleQuizMode(){triggerHaptic();document.body.classList.toggle('quiz-mode');}
         function updateUnit(unitNum,stepNum,engWord,cnWord,prefixEng,suffixCn,element,playSound=true){triggerHaptic();incrementUsage(unitNum);const wordId=`u${unitNum}-s${stepNum}-word`;const displayEl=document.getElementById(wordId);if(displayEl)displayEl.innerText=engWord;const fullCn=getFullChineseSentence(unitNum,stepNum,cnWord,suffixCn);document.getElementById(`u${unitNum}-s${stepNum}-trans`).innerText=fullCn;let container=element.parentElement;container.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));if(element.classList.contains('chip'))element.classList.add('active');localStorage.setItem(`u${unitNum}-s${stepNum}`,JSON.stringify({engWord,cnWord,prefix:prefixEng,suffix:suffixCn}));if(playSound)speakDirect(engWord);}
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
-        function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl){const container=wordEl.closest('.text-content');if(container)speakDirect(container.innerText);}}
+        function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
     </script>
 </body>
 </html>

@@ -2,10 +2,20 @@
 <html lang="zh-CN" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Survival English Guide</title>
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Survival English Guide v25.5</title>
+    <meta name="apple-mobile-web-app-title" content="生存英语">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1c1c1e">
+    
+    <style>
+        /* ... (保留你现在的 V33.4 样式，不用动) ... */
+    </style>
+</head>
+
     <style>
         /* --- V33.4 样式表：点击穿透 + 底部避让版 --- */
         :root {
@@ -831,7 +841,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V33.4: 样式穿透修复版) ===
+        // === 核心逻辑 (V34.0: App化 + 数据备份终极版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -839,7 +849,7 @@
         
         let aiState = { active: false, currentUnit: null, currentStep: 0, score: 0, total: 0, currentTargetEng: "", currentTargetCn: "", waitingForSpeech: false, silenceTimer: null, idleTimer: null };
 
-        // 扩充词库 (Unit -> Step -> [{e:英文, c:中文}])
+        // 扩充词库
         const extraVocab = {
             1: { 1: [{e:"new neighbor", c:"新邻居"}, {e:"from 3B", c:"3B的住户"}, {e:"just moved in", c:"刚搬来的"}, {e:"Henry", c:"Henry"}, {e:"living downstairs", c:"住楼下的"}, {e:"the new guy", c:"新来的那个"}], 2: [{e:"down the hall", c:"走廊尽头"}, {e:"upstairs", c:"楼上"}, {e:"next door", c:"隔壁"}, {e:"in unit 402", c:"402室"}, {e:"across the street", c:"马路对面"}] },
             2: { 1: [{e:"the subway", c:"地铁站"}, {e:"the restroom", c:"洗手间"}, {e:"the exit", c:"出口"}, {e:"an elevator", c:"电梯"}, {e:"a pharmacy", c:"药房"}, {e:"the bus stop", c:"公交站"}], 2: [{e:"where it is", c:"它在哪"}, {e:"which floor", c:"在几楼"}, {e:"the direction", c:"方向"}, {e:"how to get there", c:"怎么走"}] },
@@ -868,12 +878,8 @@
             injectToolboxDOM(); 
             initSpeechRecognition();
             checkMonthlyReport(); 
-            
-            // 🚀 1. 先注入底部喇叭 (硬核替换)
-            injectLogicButtons();
-            
-            // 2. 再排序
-            autoSortUnits(); 
+            injectLogicButtons(); // 1
+            autoSortUnits(); // 2
             
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
@@ -885,13 +891,93 @@
             setTimeout(() => { initBubbleTip(); }, 1000);
             initScrollHints();
             rebuildActionButtons(); 
+            initGlobalClickListeners(); // 3
             addFloatingControls(); 
             startSmartSearchAnimation();
+            
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 🚀 核心修复：硬核注入底部喇叭 ---
+        // --- 🚀 数据备份与恢复 ---
+        function backupData() {
+            triggerHaptic();
+            // 收集所有以 'custom_chips_' 开头的 localStorage
+            let backup = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('custom_chips_') || key.startsWith('u') || key === 'unit_usage' || key === 'theme') {
+                    backup[key] = localStorage.getItem(key);
+                }
+            }
+            const dataStr = JSON.stringify(backup);
+            // 复制到剪贴板
+            navigator.clipboard.writeText(dataStr).then(() => {
+                alert("✅ 数据已复制到剪贴板！\n\n请粘贴保存到备忘录或微信。");
+            }).catch(err => {
+                prompt("复制失败，请手动复制以下内容：", dataStr);
+            });
+        }
+
+        function restoreData() {
+            triggerHaptic();
+            const dataStr = prompt("请粘贴之前备份的数据字符串：");
+            if (!dataStr) return;
+            try {
+                const backup = JSON.parse(dataStr);
+                for (let key in backup) {
+                    localStorage.setItem(key, backup[key]);
+                }
+                alert("🎉 数据恢复成功！页面将刷新。");
+                location.reload();
+            } catch (e) {
+                alert("❌ 数据格式错误，恢复失败。");
+            }
+        }
+
+        // --- 注入工具箱 (包含备份按钮) ---
+        function injectToolboxDOM(){
+            if(document.getElementById('toolOverlay'))return;
+            const d=document.createElement('div');
+            d.id='toolOverlay';d.className='tool-overlay';
+            d.onclick=(e)=>{if(e.target===d)d.style.display='none';};
+            
+            // 增加备份区
+            d.innerHTML=`
+                <div class="tool-card">
+                    <div class="tool-tabs">
+                        <div class="tool-tab active" onclick="switchTool(0)">🌡️ 换算</div>
+                        <div class="tool-tab" onclick="switchTool(1)">💵 小费</div>
+                        <div class="tool-tab" onclick="switchTool(2)">💾 备份</div>
+                    </div>
+                    
+                    <div class="tool-section active" id="tool-calc">
+                        <div class="calc-row"><input type="number" class="calc-input" id="inp-f" placeholder="°F" oninput="convert('f')"><span class="calc-label">°F</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-c" placeholder="°C" oninput="convert('c')"><span class="calc-label">°C</span></div>
+                        <div class="calc-row"><input type="number" class="calc-input" id="inp-lb" placeholder="lb" oninput="convert('lb')"><span class="calc-label">lb</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-kg" placeholder="kg" oninput="convert('kg')"><span class="calc-label">kg</span></div>
+                        <div class="calc-row"><input type="number" class="calc-input" id="inp-oz" placeholder="oz" oninput="convert('oz')"><span class="calc-label">oz</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-ml" placeholder="ml" oninput="convert('ml')"><span class="calc-label">ml</span></div>
+                    </div>
+                    
+                    <div class="tool-section" id="tool-tip">
+                        <div class="calc-row" style="justify-content:center;"><span style="font-weight:bold;">消费 $</span><input type="number" class="calc-input" id="inp-bill" placeholder="0.00" style="width:150px;" oninput="calcTip()"></div>
+                        <div class="tip-grid">
+                            <div class="tip-box"><span class="tip-pct">15%</span><span class="tip-val" id="tip-15">$0</span></div>
+                            <div class="tip-box"><span class="tip-pct">18%</span><span class="tip-val" id="tip-18">$0</span></div>
+                            <div class="tip-box"><span class="tip-pct">20%</span><span class="tip-val" id="tip-20">$0</span></div>
+                        </div>
+                    </div>
+
+                    <div class="tool-section" id="tool-backup" style="text-align:center;">
+                        <p style="color:var(--text-sub); font-size:0.9em; margin-bottom:20px;">换手机或清缓存前，请先导出备份。</p>
+                        <div style="display:flex; gap:15px; justify-content:center;">
+                            <button onclick="backupData()" style="padding:12px 20px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold;">📤 导出数据</button>
+                            <button onclick="restoreData()" style="padding:12px 20px; background:var(--display-area); color:var(--text-main); border:1px solid var(--border); border-radius:12px; font-weight:bold;">📥 恢复数据</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(d);
+        }
+
+        // --- 其他保持 V33.4 逻辑 ---
         function injectLogicButtons() {
             const boxes = document.querySelectorAll('.combo-box');
             boxes.forEach(box => {
@@ -905,21 +991,12 @@
                 box.appendChild(newBtn);
             });
         }
-
-        // --- 🚀 全局处理函数 ---
         window.handleLogicClick = function(e, btn) {
-            e.stopPropagation();
-            if(navigator.vibrate) navigator.vibrate(15);
-            btn.style.transform = "scale(0.9)";
-            setTimeout(() => btn.style.transform = "scale(1)", 150);
+            e.stopPropagation(); if(navigator.vibrate) navigator.vibrate(15);
+            btn.style.transform = "scale(0.9)"; setTimeout(() => btn.style.transform = "scale(1)", 150);
             const container = btn.closest('.combo-box');
-            if (container) {
-                const textEl = container.querySelector('.combo-text');
-                if (textEl) speakDirect(textEl.innerText);
-            }
+            if (container) { const textEl = container.querySelector('.combo-text'); if (textEl) speakDirect(textEl.innerText); }
         }
-
-        // --- 其他逻辑 ---
         function startSmartSearchAnimation() {
             const input = document.getElementById('searchBox');
             const hour = new Date().getHours();
@@ -963,12 +1040,15 @@
         function triggerIdleAlert() { if(aiState.active) return; document.getElementById('robotBadge').style.display = 'block'; const bubble = document.getElementById('robotBubble'); if(bubble) { bubble.classList.add('visible'); triggerHaptic(); setTimeout(() => { bubble.classList.remove('visible'); idleLoopTimer = setTimeout(triggerIdleAlert, 60000); }, 10000); } }
         function addFloatingControls() { const c=document.querySelector('.float-controls'); const w=document.createElement('div'); w.style.position='relative'; const b=document.createElement('div'); b.id='robotBubble'; b.className='robot-speech-bubble'; b.innerText='嘿！想练练口语吗？点我！'; w.appendChild(b); const btn=document.createElement('button'); btn.className='fab-robot'; btn.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>'; btn.title="AI 陪练"; btn.onclick=()=>{ triggerHaptic(); resetIdleTimer(); toggleChat(); if(document.getElementById('chatBody').innerHTML.trim()==="") startAiSession(); }; w.appendChild(btn); c.insertBefore(w, c.firstChild); const t=document.createElement('button'); t.className='fab-tools'; t.innerHTML='🧰'; t.onclick=openToolbox; c.insertBefore(t, c.firstChild); }
         function toggleChat() { const el = document.getElementById('chatOverlay'); const isHidden = el.style.display === 'none' || el.style.display === ''; el.style.display = isHidden ? 'flex' : 'none'; document.getElementById('robotBadge').style.display = 'none'; if(isHidden) { const body = document.getElementById('chatBody'); body.scrollTop = body.scrollHeight; } }
-        function injectToolboxDOM(){if(document.getElementById('toolOverlay'))return;const d=document.createElement('div');d.id='toolOverlay';d.className='tool-overlay';d.onclick=(e)=>{if(e.target===d)d.style.display='none';};d.innerHTML=`<div class="tool-card"><div class="tool-tabs"><div class="tool-tab active" onclick="switchTool(0)">🌡️ 换算</div><div class="tool-tab" onclick="switchTool(1)">💵 小费</div></div><div class="tool-section active" id="tool-calc"><div class="calc-row"><input type="number" class="calc-input" id="inp-f" placeholder="°F" oninput="convert('f')"><span class="calc-label">°F</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-c" placeholder="°C" oninput="convert('c')"><span class="calc-label">°C</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-lb" placeholder="lb" oninput="convert('lb')"><span class="calc-label">lb</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-kg" placeholder="kg" oninput="convert('kg')"><span class="calc-label">kg</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-oz" placeholder="oz" oninput="convert('oz')"><span class="calc-label">oz</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-ml" placeholder="ml" oninput="convert('ml')"><span class="calc-label">ml</span></div></div><div class="tool-section" id="tool-tip"><div class="calc-row" style="justify-content:center;"><span style="font-weight:bold;">消费 $</span><input type="number" class="calc-input" id="inp-bill" placeholder="0.00" style="width:150px;" oninput="calcTip()"></div><div class="tip-grid"><div class="tip-box"><span class="tip-pct">15%</span><span class="tip-val" id="tip-15">$0</span></div><div class="tip-box"><span class="tip-pct">18%</span><span class="tip-val" id="tip-18">$0</span></div><div class="tip-box"><span class="tip-pct">20%</span><span class="tip-val" id="tip-20">$0</span></div></div></div></div>`;document.body.appendChild(d);}
+        function injectToolboxDOM(){if(document.getElementById('toolOverlay'))return;const d=document.createElement('div');d.id='toolOverlay';d.className='tool-overlay';d.onclick=(e)=>{if(e.target===d)d.style.display='none';};d.innerHTML=`<div class="tool-card"><div class="tool-tabs"><div class="tool-tab active" onclick="switchTool(0)">🌡️ 换算</div><div class="tool-tab" onclick="switchTool(1)">💵 小费</div><div class="tool-tab" onclick="switchTool(2)">💾 备份</div></div><div class="tool-section active" id="tool-calc"><div class="calc-row"><input type="number" class="calc-input" id="inp-f" placeholder="°F" oninput="convert('f')"><span class="calc-label">°F</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-c" placeholder="°C" oninput="convert('c')"><span class="calc-label">°C</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-lb" placeholder="lb" oninput="convert('lb')"><span class="calc-label">lb</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-kg" placeholder="kg" oninput="convert('kg')"><span class="calc-label">kg</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-oz" placeholder="oz" oninput="convert('oz')"><span class="calc-label">oz</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-ml" placeholder="ml" oninput="convert('ml')"><span class="calc-label">ml</span></div></div><div class="tool-section" id="tool-tip"><div class="calc-row" style="justify-content:center;"><span style="font-weight:bold;">消费 $</span><input type="number" class="calc-input" id="inp-bill" placeholder="0.00" style="width:150px;" oninput="calcTip()"></div><div class="tip-grid"><div class="tip-box"><span class="tip-pct">15%</span><span class="tip-val" id="tip-15">$0</span></div><div class="tip-box"><span class="tip-pct">18%</span><span class="tip-val" id="tip-18">$0</span></div><div class="tip-box"><span class="tip-pct">20%</span><span class="tip-val" id="tip-20">$0</span></div></div></div><div class="tool-section" id="tool-backup" style="text-align:center;"><p style="color:var(--text-sub); font-size:0.9em; margin-bottom:20px;">换手机或清缓存前，请先导出备份。</p><div style="display:flex; gap:15px; justify-content:center;"><button onclick="backupData()" style="padding:12px 20px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold;">📤 导出数据</button><button onclick="restoreData()" style="padding:12px 20px; background:var(--display-area); color:var(--text-main); border:1px solid var(--border); border-radius:12px; font-weight:bold;">📥 恢复数据</button></div></div></div>`;document.body.appendChild(d);}
         function switchTool(idx){triggerHaptic();document.querySelectorAll('.tool-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));document.querySelectorAll('.tool-section').forEach((s,i)=>s.classList.toggle('active',i===idx));}
         function convert(t){const f=document.getElementById('inp-f'),c=document.getElementById('inp-c'),lb=document.getElementById('inp-lb'),kg=document.getElementById('inp-kg'),oz=document.getElementById('inp-oz'),ml=document.getElementById('inp-ml');if(t==='f')c.value=f.value?((f.value-32)*5/9).toFixed(1):'';if(t==='c')f.value=c.value?((c.value*9/5)+32).toFixed(1):'';if(t==='lb')kg.value=lb.value?(lb.value*0.453).toFixed(1):'';if(t==='kg')lb.value=kg.value?(kg.value/0.453).toFixed(1):'';if(t==='oz')ml.value=oz.value?(oz.value*29.57).toFixed(1):'';if(t==='ml')oz.value=ml.value?(ml.value/29.57).toFixed(1):'';}
         function calcTip(){const b=parseFloat(document.getElementById('inp-bill').value)||0;document.getElementById('tip-15').innerText='$'+(b*1.15).toFixed(2);document.getElementById('tip-18').innerText='$'+(b*1.18).toFixed(2);document.getElementById('tip-20').innerText='$'+(b*1.20).toFixed(2);}
         function openToolbox(){triggerHaptic();document.getElementById('toolOverlay').style.display='flex';}
         function closeToolbox(){document.getElementById('toolOverlay').style.display='none';}
+        function initGlobalClickListeners() { document.body.addEventListener('click', function(e) { const comboBtn = e.target.closest('.combo-audio-btn'); if (comboBtn) { e.stopPropagation(); triggerHaptic(); const container = comboBtn.closest('.combo-box'); if (container) { const textEl = container.querySelector('.combo-text'); if (textEl) speakDirect(textEl.innerText); } return; } }); }
+        function backupData() { triggerHaptic(); let backup = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.startsWith('custom_chips_') || key.startsWith('u') || key === 'unit_usage' || key === 'theme') { backup[key] = localStorage.getItem(key); } } const dataStr = JSON.stringify(backup); navigator.clipboard.writeText(dataStr).then(() => { alert("✅ 数据已复制到剪贴板！\n\n请粘贴保存到备忘录或微信。"); }).catch(err => { prompt("复制失败，请手动复制以下内容：", dataStr); }); }
+        function restoreData() { triggerHaptic(); const dataStr = prompt("请粘贴之前备份的数据字符串："); if (!dataStr) return; try { const backup = JSON.parse(dataStr); for (let key in backup) { localStorage.setItem(key, backup[key]); } alert("🎉 数据恢复成功！页面将刷新。"); location.reload(); } catch (e) { alert("❌ 数据格式错误，恢复失败。"); } }
         function injectSmartKeywords(){/*...*/}
         function injectShowCardDOM(){if(!document.getElementById('showCardOverlay')){const d=document.createElement('div');d.id='showCardOverlay';d.className='show-card-overlay';d.onclick=closeShowCard;d.innerHTML=`<div class="show-card-text" id="showCardEng"></div><div class="show-card-sub" id="showCardCn"></div><div class="show-card-hint">点击任意处关闭</div>`;document.body.appendChild(d);}}
         function openShowCard(e,c){document.getElementById('showCardEng').innerText=e;document.getElementById('showCardCn').innerText=c;document.getElementById('showCardOverlay').style.display='flex';}

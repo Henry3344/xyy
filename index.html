@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Survival English Guide v25.5</title>
     <style>
-        /* --- V31.4 样式表：适配长文案气泡 --- */
+        /* --- V31.5 样式表：气泡层级修复版 --- */
         :root {
             --bg-body: #f2f2f7; --bg-card: #ffffff; --text-main: #1c1c1e; --text-sub: #8e8e93;
             --primary: #007aff; --primary-light: #e5f1ff; --border: #c6c6c8;
@@ -23,15 +23,8 @@
             --hint-bg: rgba(28, 28, 30, 0.85);
         }
 
-        html, body { 
-            height: 100%; overflow: hidden; margin: 0; padding: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--bg-body); color: var(--text-main); 
-            display: flex; flex-direction: column; transition: background 0.3s; 
-            -webkit-tap-highlight-color: transparent; 
-        }
+        html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-body); color: var(--text-main); display: flex; flex-direction: column; transition: background 0.3s; -webkit-tap-highlight-color: transparent; }
         
-        /* 顶部导航 */
         .header-container { flex: 0 0 auto; background: var(--nav-bg); backdrop-filter: blur(15px); z-index: 1000; border-bottom: 1px solid var(--border); padding-top: env(safe-area-inset-top); }
         .top-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; max-width: 650px; margin: 0 auto; }
         .app-title { font-size: 1.1em; font-weight: 800; margin: 0; }
@@ -47,7 +40,6 @@
         [data-theme="dark"] .nav-btn { border: 1px solid var(--border); }
         .nav-btn.active-nav { background: var(--primary); color: white; }
 
-        /* 内容区 */
         #content-area { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 15px 0; gap: 15px; align-items: flex-start; scroll-behavior: smooth; }
         #content-area::-webkit-scrollbar { display: none; }
         .snap-spacer { flex: 0 0 7.5vw; } 
@@ -79,14 +71,15 @@
         .add-btn-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; } 
         .add-chip-btn { border: 1px dashed var(--text-sub); background: transparent; padding: 6px 10px; color: var(--text-sub); }
         
-        /* 核心调整：最大宽度增加到 200px 以适应长文案 */
+        /* 核心修复：气泡样式 */
         .bubble-tip { 
             position: relative; display: block; margin-top: 10px; 
             background: var(--danger); color: white; padding: 8px 12px; border-radius: 8px; 
             font-size: 0.8em; font-weight: bold; 
-            width: max-content; max-width: 200px; /* 改宽 */
+            width: max-content; max-width: 200px; 
             white-space: normal; line-height: 1.3; text-align: center; 
-            animation: popUp 0.3s ease-out; box-shadow: 0 4px 10px rgba(255, 59, 48, 0.3); z-index: 99;
+            animation: popUp 0.3s ease-out; box-shadow: 0 4px 10px rgba(255, 59, 48, 0.4); 
+            z-index: 200; /* 层级拉高 */
         }
         .bubble-tip::after { 
             content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -6px; 
@@ -794,7 +787,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V31.4: 气泡精准定位 + 文案更新版) ===
+        // === 核心逻辑 (V31.5: 气泡绝对定位修复版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -813,7 +806,7 @@
             injectToolboxDOM(); 
             initSpeechRecognition();
             checkMonthlyReport(); 
-            autoSortUnits();
+            autoSortUnits(); // 排序+循环+气泡
             
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
@@ -822,8 +815,6 @@
                 }
             }
             
-            // 延迟1秒，等无缝循环定位稳定
-            setTimeout(() => { initBubbleTip(); }, 1000);
             initScrollHints();
             rebuildActionButtons(); 
             addFloatingControls(); 
@@ -832,55 +823,40 @@
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 核心修复：气泡 (更新文案 + 延迟定位) ---
-        function initBubbleTip() {
-            const center = window.innerWidth / 2;
-            let bestCard = null;
-            let minDiff = Infinity;
-            
-            document.querySelectorAll('.unit-card:not(.clone)').forEach(card => {
-                const rect = card.getBoundingClientRect();
-                const cardCenter = rect.left + rect.width / 2;
-                const diff = Math.abs(center - cardCenter);
-                // 增加判断：必须是在视口内
-                if(rect.left < window.innerWidth && rect.right > 0) {
-                    if(diff < minDiff) {
-                        minDiff = diff;
-                        bestCard = card;
-                    }
-                }
-            });
+        // --- 核心修复：气泡 (直接贴给第一张卡片) ---
+        function initBubbleTip(targetCard) {
+            // 如果没传卡片，尝试找一下
+            if (!targetCard) {
+                // 默认找排序后的第一张非克隆卡片
+                targetCard = document.querySelector('#content-area .unit-card:not(.clone)');
+            }
+            if (!targetCard) return;
 
-            if (!bestCard) return;
-
-            const wrapper = bestCard.querySelector('.step-container .chips-container .add-btn-wrapper');
+            // 找到 Step 1 的加号容器
+            const wrapper = targetCard.querySelector('.step-container .chips-container .add-btn-wrapper');
             
             if (wrapper) {
-                if(wrapper.querySelector('.bubble-tip')) return;
+                if(wrapper.querySelector('.bubble-tip')) return; // 避免重复
 
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble-tip';
-                // 文案更新
                 bubble.innerText = '没找到你想要的？现在可以点击添加！';
                 
+                // 关键：插在容器末尾 (CSS flex-col 会让它排在加号下面)
                 wrapper.appendChild(bubble);
 
-                setTimeout(() => {
-                    dismissBubble(bubble);
-                }, 15000);
+                // 15秒后自动折叠消失
+                setTimeout(() => { dismissBubble(bubble); }, 15000);
             }
         }
 
         function dismissBubble(element) {
             if(!element) return;
             element.classList.add('fade-out');
-            setTimeout(() => {
-                element.remove();
-            }, 600); 
+            setTimeout(() => { element.remove(); }, 600); 
         }
 
-        // --- 其他逻辑保持 V31.x ---
-        
+        // --- 无缝循环 & 排序 ---
         function autoSortUnits() {
             const container = document.getElementById('content-area');
             const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); 
@@ -897,7 +873,10 @@
                 scoreA += (timeWeights[idA] || 0); scoreB += (timeWeights[idB] || 0);
                 return scoreB - scoreA; 
             });
-            container.innerHTML = ""; cards.forEach(card => container.appendChild(card));
+            container.innerHTML = ""; 
+            cards.forEach(card => container.appendChild(card));
+            
+            // 构建循环，并传入第一张卡片用于贴气泡
             initInfiniteLoop(container, cards);
         }
 
@@ -905,6 +884,10 @@
             container.querySelectorAll('.snap-spacer, .unit-card.clone').forEach(el => el.remove());
             if (cards.length < 2) return; 
             const firstCard = cards[0]; const lastCard = cards[cards.length - 1];
+            
+            // 立即给第一张卡片贴气泡
+            setTimeout(() => initBubbleTip(firstCard), 500);
+
             const cloneFirst = firstCard.cloneNode(true); const cloneLast = lastCard.cloneNode(true);
             [cloneFirst, cloneLast].forEach(el => { el.classList.add('clone'); el.id = ""; el.querySelectorAll('[id]').forEach(c => c.removeAttribute('id')); });
             const spacerStart = document.createElement('div'); spacerStart.className = 'snap-spacer';
@@ -921,6 +904,8 @@
             };
         }
 
+        // --- 其他逻辑保持 V31.x ---
+        
         function rebuildActionButtons() {
             for(let i=1; i<=13; i++) {
                 const card = document.getElementById(`u${i}`);
@@ -963,7 +948,6 @@
             else { showToast(`🤔 再试一次，听起来像：\n"${spoken}"`); }
         }
         
-        // AI 陪练相关
         function addBotMsg(text, chips=[], autoMic=false, callback=null) {
             const body = document.getElementById('chatBody');
             const d = document.createElement('div'); d.className='msg bot'; d.innerText=text; body.appendChild(d);
@@ -1028,7 +1012,6 @@
         function showToast(m){let t=document.getElementById('speechToast');if(!t){t=document.createElement('div');t.id='speechToast';t.className='speech-result-toast';document.body.appendChild(t);}t.innerText=m;t.style.display='block';setTimeout(()=>{t.style.display='none';},3000);}
         function triggerHaptic(){if(navigator.vibrate)navigator.vibrate(15);}
         function initScrollHints(){const cards=document.querySelectorAll('.unit-card');cards.forEach(card=>{if(card.scrollHeight>card.clientHeight)card.querySelector('.scroll-hint')?.classList.add('visible');card.addEventListener('scroll',function(){this.querySelector('.scroll-hint')?.classList.remove('visible');});});}
-        function initBubbleTip(){/* Moved to main block */}
         function dismissBubble(e){if(e){e.classList.add('fade-out');setTimeout(()=>{e.remove();},1000);}}
         function addCustomChip(u,s,p,x){triggerHaptic();const e=prompt("English:");if(!e)return;const c=prompt("Chinese:");if(!c)return;const d={unitNum:u,stepNum:s,eng:e,cn:c,prefix:p,suffix:x};const k=`custom_chips_u${u}_s${s}`;let l=JSON.parse(localStorage.getItem(k)||"[]");l.push(d);localStorage.setItem(k,JSON.stringify(l));renderAndClickChip(d,true);}
         function toggleEmergency(){triggerHaptic();document.getElementById('emergencyOverlay').classList.toggle('active');}

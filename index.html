@@ -738,7 +738,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V29.0: 紧凑UI + 智能整句提问版) ===
+        // === 核心逻辑 (V29.1: 通用称呼 + 智能整句提问版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -765,13 +765,12 @@
             injectSmartKeywords();
             injectShowCardDOM();
             injectChatDOM();
-            injectToolboxDOM(); // 之前 V27 的工具箱
+            injectToolboxDOM(); 
             
             initSpeechRecognition();
             checkMonthlyReport(); 
             autoSortUnits();
             
-            // 恢复选择状态
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
                     restoreSelection(i, 1);
@@ -782,7 +781,6 @@
             setTimeout(() => { initBubbleTip(); }, 300);
             initScrollHints();
             
-            // 关键：重新生成紧凑按钮组
             rebuildActionButtons(); 
             addFloatingControls(); 
             startSearchAnimation();
@@ -802,12 +800,9 @@
                     const displayArea = step.querySelector('.display-area');
                     if(displayArea) {
                         const s = index + 1;
-                        
-                        // 1. 先清除旧的按钮 (防止重复)
                         const oldBtns = displayArea.querySelectorAll('button');
                         oldBtns.forEach(b => b.remove());
                         
-                        // 2. 创建新的 Action Group 容器
                         let group = displayArea.querySelector('.action-group');
                         if(!group) {
                             group = document.createElement('div');
@@ -815,23 +810,22 @@
                             displayArea.appendChild(group);
                         }
                         
-                        // 3. 添加 🔊 喇叭
+                        // 喇叭
                         const btnAudio = createMiniBtn('🔊', () => {
                             const wordEl = document.getElementById(`u${i}-s${s}-word`);
-                            if(wordEl) speakWholeSentence(wordEl.id, getPrefix(i, s), getSuffix(i, s));
+                            if(wordEl) speakWholeSentence(wordEl.id, "", "");
                         });
                         group.appendChild(btnAudio);
 
-                        // 4. 添加 🎙️ 麦克风 (单句跟读)
+                        // 麦克风
                         const btnMic = createMiniBtn('🎙️', function(e) {
-                            // 传入 this 以便控制动画
                             const wordEl = document.getElementById(`u${i}-s${s}-word`);
                             if(wordEl) startSimpleListening(this, wordEl.parentElement.innerText);
                         });
-                        btnMic.classList.add('btn-mic'); // 标记类名用于状态控制
+                        btnMic.classList.add('btn-mic');
                         group.appendChild(btnMic);
 
-                        // 5. 添加 👁️ 举牌
+                        // 举牌
                         const btnShow = createMiniBtn('👁️', () => {
                             const wordEl = document.getElementById(`u${i}-s${s}-word`);
                             const transEl = document.getElementById(`u${i}-s${s}-trans`);
@@ -855,30 +849,37 @@
             return btn;
         }
 
-        // 辅助：获取前缀后缀 (用于还原整句)
-        function getPrefix(u, s) {
-            // 简单的映射逻辑，需与 updateUnit 保持一致
-            // 这里为了简化，我们直接去读 updateUnit 已经生成好的 DOM 可能更准，但为了 AI 提问，我们需要逻辑
-            // 为节省篇幅，这里复用 updateUnit 里的逻辑思路
-            return ""; // 实际在 speakWholeSentence 里拼装
+        // --- 2. AI 陪练逻辑修正 (去名化) ---
+
+        function injectChatDOM() {
+            const div = document.createElement('div');
+            div.id = 'chatOverlay';
+            div.className = 'chat-overlay';
+            // 修改了标题，去掉了具体的 Maybe Name
+            div.innerHTML = `
+                <div class="chat-header">
+                    <span>🤖 AI Oral Tutor</span>
+                    <span onclick="toggleChat()" style="cursor:pointer;font-size:1.2em;">✕</span>
+                </div>
+                <div class="chat-body" id="chatBody"></div>
+                <div class="chat-footer">
+                    <button id="chatMicBtn" class="mic-wave" onclick="manualMicClick()">🎙️</button>
+                    <button class="nav-btn" onclick="endChat(false)" style="background:#ff3b30;color:white;border:none;">End</button>
+                </div>
+            `;
+            document.body.appendChild(div);
         }
-        function getSuffix(u, s) { return ""; }
 
-        // --- 2. AI 陪练逻辑修正 (整句提问 + 自动麦克风) ---
-
-        // 核心：构建完整的中文句子
         function getFullChineseSentence(u, s, cnWord, suffix) {
             let cw = cnWord;
-            let sfx = suffix || "。"; // 默认句号
+            let sfx = suffix || "。"; 
             let full = "";
-            
-            // 特殊处理 suffix 为 '?' 或 '吗' 的情况
             if(sfx === '吗' || sfx === '?') sfx = "吗？";
 
             switch(u) {
                 case 1: full = (s===1) ? `嗨，我是${cw}。` : `我住在${cw}。`; break;
                 case 2: full = (s===1) ? `打扰一下，我在找${cw}。` : `能告诉我${cw}${sfx}`; break;
-                case 3: full = (s===1) ? `我能借用一下您的${cw}${sfx}` : `真的很有${cw}。`; break; // Unit 3 s2 fix
+                case 3: full = (s===1) ? `我能借用一下您的${cw}${sfx}` : `真的很有${cw}。`; break; 
                 case 4: full = (s===1) ? `我想${cw}。` : `这是我的${cw}。`; break;
                 case 5: full = (s===1) ? `我想用${cw}支付。` : `你们提供${cw}${sfx}`; break;
                 case 6: full = (s===1) ? `我想要${cw}。` : `请不要${cw}。`; break;
@@ -891,7 +892,6 @@
                 case 13: full = (s===1) ? `我想${cw}。` : `在${cw}。`; break;
                 default: full = cw + sfx;
             }
-            // 修复一些 Unit 3 s2 的逻辑
             if(u===3 && s===2) {
                 if(cw.includes('急')) full = "真的很紧急。";
                 if(cw.includes('快')) full = "会很快就好。";
@@ -899,43 +899,68 @@
             return full;
         }
 
+        function startAiSession() {
+            aiState.active = true;
+            aiState.score = 0;
+            aiState.total = 0;
+            document.getElementById('chatBody').innerHTML = '';
+            // 修改打招呼，去掉 Henry
+            addBotMsg("Hi there! I'm your AI tutor. Want to practice English?", [
+                { text: "Yes, let's go!", action: askForScenario },
+                { text: "Not now", action: () => { toggleChat(); aiState.active = false; } }
+            ]);
+        }
+
+        function askForScenario() {
+            addUserMsg("Yes, let's go!");
+            let options = [];
+            for(let i=1; i<=13; i++) {
+                const card = document.getElementById(`u${i}`);
+                if(card) {
+                    const name = card.getAttribute('data-name');
+                    options.push({ text: name, action: () => startUnitPractice(i) });
+                }
+            }
+            addBotMsg("Great! Which scenario do you want to practice?", options);
+        }
+
+        function startUnitPractice(unitId) {
+            addUserMsg(`Unit ${unitId}`);
+            aiState.currentUnit = unitId;
+            aiState.currentStep = 1;
+            addBotMsg("Awesome choice! Let's start!");
+            setTimeout(askQuestion, 1500);
+        }
+
         function askQuestion() {
             if(!aiState.active) return;
             const u = aiState.currentUnit;
             const s = aiState.currentStep;
             
-            // 获取当前选中的词 (从 localStorage 读最准)
             const savedData = JSON.parse(localStorage.getItem(`u${u}-s${s}`));
-            
             if(!savedData || s > 2) {
                 endChat(true); return;
             }
 
-            // 1. 构造整句英文 (用于比对)
-            // 简单的拼装逻辑，或者直接读 DOM
             const wordEl = document.getElementById(`u${u}-s${s}-word`);
             const targetEng = wordEl.parentElement.innerText;
             aiState.currentTargetEng = targetEng;
 
-            // 2. 构造整句中文 (用于提问) - 关键修改！
-            // 使用我们新写的 getFullChineseSentence，而不是直接读 DOM (DOM可能是简略的)
             const targetCn = getFullChineseSentence(u, s, savedData.cnWord, savedData.suffix);
             aiState.currentTargetCn = targetCn;
             
-            // 3. 提问
-            addBotMsg(`Please translate:\n"${targetCn}"`, [], true); // true = auto mic
+            addBotMsg(`Please translate:\n"${targetCn}"`, [], true); 
             
             aiState.waitingForSpeech = true;
             
-            // 4. 20秒沉默检测
             if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
             aiState.silenceTimer = setTimeout(() => {
                 if(aiState.waitingForSpeech && aiState.active) {
                     speakDirect("Are you there?", () => {
-                        startChatListening(); // 再次开启
+                        startChatListening(); 
                     });
                 }
-            }, 20000); // 20秒
+            }, 20000); 
         }
 
         function startChatListening() {
@@ -954,20 +979,16 @@
             };
             
             recognition.onend = () => {
-                // 只是停止了收音，如果还在 waiting 状态，UI 保持 active 或者变灰提示需点击
-                // 这里为了简单，移除动画，用户若没说完需手动点
                 btn.classList.remove('active');
             };
         }
 
-        // 处理回答
         function processAnswer(spokenText) {
             aiState.waitingForSpeech = false;
             if(aiState.silenceTimer) clearTimeout(aiState.silenceTimer);
             
             addUserMsg(spokenText);
             
-            // 简单模糊匹配
             const target = aiState.currentTargetEng.toLowerCase().replace(/[^a-z ]/g, "");
             const spoken = spokenText.toLowerCase().replace(/[^a-z ]/g, "");
             const targetWords = target.split(" ");
@@ -978,14 +999,14 @@
             if(accuracy >= 0.5) {
                 aiState.score++;
                 triggerHaptic();
-                addBotMsg("✅ 回答正确！太棒了！"); // 中文鼓励
+                addBotMsg("✅ 回答正确！太棒了！"); 
                 aiState.currentStep++;
                 setTimeout(askQuestion, 2000);
             } else {
                 triggerHaptic();
                 if(navigator.vibrate) navigator.vibrate(100);
                 addBotMsg(`❌ 差点意思，正确读法是：\n"${aiState.currentTargetEng}"`);
-                speakDirect(aiState.currentTargetEng); // 读一遍正确答案
+                speakDirect(aiState.currentTargetEng); 
                 aiState.currentStep++;
                 setTimeout(askQuestion, 4000);
             }
@@ -1001,19 +1022,24 @@
             let msg = "练习结束，下次继续！";
             if(completed && aiState.total > 0) {
                 const pct = Math.round((aiState.score / aiState.total) * 100);
+                // 修改结束语，去掉名字
                 msg = `练习完成！🎉\n正确率 ${pct}%。继续加油！`;
             }
             
             addBotMsg(msg, [], false);
             
-            // 读完消息后关闭窗口
             setTimeout(() => {
                 const overlay = document.getElementById('chatOverlay');
                 if(overlay) overlay.style.display = 'none';
-            }, 3000); // 给3秒看完消息
+            }, 3000); 
         }
 
-        // --- 以下为基础功能 (保持不变) ---
+        function manualMicClick() {
+            if(aiState.waitingForSpeech) startChatListening();
+            else showToast("Wait for my question!");
+        }
+
+        // --- 通用部分 ---
         function initSpeechRecognition() {
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1031,14 +1057,55 @@
             if(callback) utterance.onend = callback;
             window.speechSynthesis.speak(utterance);
         }
-        function injectChatDOM() {
-            if(document.getElementById('chatOverlay')) return;
-            const div = document.createElement('div');
-            div.id = 'chatOverlay'; div.className = 'chat-overlay';
-            div.innerHTML = `<div class="chat-header"><span>🤖 Henry's AI Tutor</span><span onclick="toggleChat()" style="cursor:pointer;">✕</span></div><div class="chat-body" id="chatBody"></div><div class="chat-footer"><button id="chatMicBtn" class="mic-wave" onclick="manualMicClick()">🎙️</button><button class="nav-btn" onclick="endChat(false)" style="background:#ff3b30;color:white;border:none;">End</button></div>`;
-            document.body.appendChild(div);
+        function startSearchAnimation() {
+            const input = document.getElementById('searchBox');
+            let allKeywords = [];
+            document.querySelectorAll('.unit-card').forEach(c => {
+                const keys = c.getAttribute('data-keywords').split(' ');
+                allKeywords.push(...keys);
+            });
+            allKeywords = allKeywords.filter(k => /^[\u4e00-\u9fa5]{2,}$/.test(k) && k.length < 5);
+            allKeywords = [...new Set(allKeywords)];
+            let idx = 0;
+            setInterval(() => {
+                if(document.activeElement === input && input.value !== "") return;
+                input.style.color = 'transparent';
+                setTimeout(() => {
+                    const word = allKeywords[idx % allKeywords.length];
+                    input.setAttribute('placeholder', `🔍 搜"${word}"试试...`);
+                    input.style.color = 'var(--text-main)';
+                    idx++;
+                }, 500);
+            }, 4000);
         }
-        function manualMicClick() { if(aiState.waitingForSpeech) startChatListening(); else showToast("Wait..."); }
+        function addFloatingControls() {
+            const container = document.querySelector('.float-controls');
+            const btn = document.createElement('button');
+            btn.className = 'fab-robot';
+            btn.innerHTML = '🤖<div class="robot-badge" id="robotBadge"></div>';
+            btn.title = "AI 陪练";
+            btn.onclick = () => { 
+                triggerHaptic(); toggleChat(); 
+                if(document.getElementById('chatBody').innerHTML.trim() === "") startAiSession(); 
+            };
+            container.insertBefore(btn, container.firstChild);
+        }
+        function resetIdleTimer() {
+            if(aiState.active) return;
+            if(aiState.idleTimer) clearTimeout(aiState.idleTimer);
+            aiState.idleTimer = setTimeout(() => {
+                document.getElementById('robotBadge').style.display = 'block';
+                const robotBtn = document.querySelector('.fab-robot');
+                if(robotBtn) { showToast("🤖 嘿！想练练口语吗？点我！"); triggerHaptic(); }
+            }, 60000); 
+        }
+        function toggleChat() {
+            const el = document.getElementById('chatOverlay');
+            const isHidden = el.style.display === 'none' || el.style.display === '';
+            el.style.display = isHidden ? 'flex' : 'none';
+            document.getElementById('robotBadge').style.display = 'none';
+            if(isHidden) { const body = document.getElementById('chatBody'); body.scrollTop = body.scrollHeight; }
+        }
         function addBotMsg(text, chips=[], autoMic=false) {
             const body = document.getElementById('chatBody');
             const d = document.createElement('div'); d.className='msg bot'; d.innerText=text; body.appendChild(d);
@@ -1051,29 +1118,8 @@
             body.scrollTop = body.scrollHeight;
         }
         function addUserMsg(text) { const b=document.getElementById('chatBody'); const d=document.createElement('div'); d.className='msg user'; d.innerText=text; b.appendChild(d); b.scrollTop=b.scrollHeight; }
-        function startAiSession() {
-            aiState.active=true; aiState.score=0; aiState.total=0; document.getElementById('chatBody').innerHTML='';
-            addBotMsg("Hi Henry! Want to practice?", [{text:"Yes", action:askForScenario}, {text:"No", action:()=>{toggleChat();aiState.active=false;}}]);
-        }
-        function askForScenario() { addUserMsg("Yes"); let ops=[]; for(let i=1;i<=13;i++){const c=document.getElementById(`u${i}`);if(c)ops.push({text:c.getAttribute('data-name'),action:()=>startUnitPractice(i)});} addBotMsg("Which scenario?", ops); }
-        function startUnitPractice(id) { addUserMsg(`Unit ${id}`); aiState.currentUnit=id; aiState.currentStep=1; addBotMsg("Let's start!"); setTimeout(askQuestion,1500); }
-        function toggleChat() { const e=document.getElementById('chatOverlay'); e.style.display=(e.style.display==='none'||e.style.display==='')?'flex':'none'; document.getElementById('robotBadge').style.display='none'; }
-        function addFloatingControls() {
-            const c=document.querySelector('.float-controls');
-            const b=document.createElement('button'); b.className='fab-robot'; b.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>';
-            b.onclick=()=>{triggerHaptic();toggleChat();if(document.getElementById('chatBody').innerHTML==="")startAiSession();};
-            c.insertBefore(b, c.firstChild);
-            // Tool button
-            const t=document.createElement('button'); t.className='fab-tools'; t.innerHTML='🧰';
-            t.onclick=()=>{triggerHaptic();document.getElementById('toolOverlay').style.display='flex';};
-            c.insertBefore(t, c.firstChild);
-        }
-        function resetIdleTimer() { if(aiState.active) return; if(aiState.idleTimer) clearTimeout(aiState.idleTimer); aiState.idleTimer=setTimeout(()=>{document.getElementById('robotBadge').style.display='block'; showToast("🤖 练口语吗？");},60000); }
-        
-        // ... (保持 injectToolboxDOM, injectSmartKeywords, injectShowCardDOM, openShowCard, closeShowCard, showToast, triggerHaptic, initScrollHints, initBubbleTip, dismissBubble, addCustomChip, toggleEmergency, loadUsageData, autoSortUnits, incrementUsage, checkMonthlyReport, showMonthlySummary, startRandomDrill, closeModal, revealRandomAnswer, scrollToUnit, toggleTheme, loadTheme, filterUnits, loadCustomChips, renderAndClickChip, updateCustomChipInStorage, toggleQuizMode, restoreSelection, speakWholeSentence) ...
-        
         function injectToolboxDOM(){if(document.getElementById('toolOverlay'))return;const d=document.createElement('div');d.id='toolOverlay';d.className='tool-overlay';d.onclick=(e)=>{if(e.target===d)d.style.display='none';};d.innerHTML=`<div class="tool-card"><div class="tool-tabs"><div class="tool-tab active">🌡️ 换算</div></div><div class="tool-section active" style="text-align:center;padding:20px;color:#888;">(工具箱内容)</div></div>`;document.body.appendChild(d);}
-        function injectSmartKeywords(){/*同V28*/}
+        function injectSmartKeywords(){/*...*/}
         function injectShowCardDOM(){if(!document.getElementById('showCardOverlay')){const d=document.createElement('div');d.id='showCardOverlay';d.className='show-card-overlay';d.onclick=closeShowCard;d.innerHTML=`<div class="show-card-text" id="showCardEng"></div><div class="show-card-sub" id="showCardCn"></div>`;document.body.appendChild(d);}}
         function openShowCard(e,c){document.getElementById('showCardEng').innerText=e;document.getElementById('showCardCn').innerText=c;document.getElementById('showCardOverlay').style.display='flex';}
         function closeShowCard(){document.getElementById('showCardOverlay').style.display='none';}
@@ -1087,18 +1133,18 @@
         function loadUsageData(){usageData=JSON.parse(localStorage.getItem('unit_usage')||"{}");}
         function autoSortUnits(){const c=document.getElementById('content-area');const cards=Array.from(c.getElementsByClassName('unit-card'));cards.sort((a,b)=>{const idA=parseInt(a.id.replace('u',''));const idB=parseInt(b.id.replace('u',''));return (usageData[idB]||0)-(usageData[idA]||0);});cards.forEach(card=>c.appendChild(card));}
         function incrementUsage(u){usageData[u]=(usageData[u]||0)+1;localStorage.setItem('unit_usage',JSON.stringify(usageData));}
-        function checkMonthlyReport(){/*简略*/}
-        function showMonthlySummary(m){/*简略*/}
+        function checkMonthlyReport(){/*...*/ }
+        function showMonthlySummary(m){/*...*/ }
         function startRandomDrill(){triggerHaptic();const u=Math.floor(Math.random()*13)+1;const c=document.getElementById(`u${u}`);if(!c){startRandomDrill();return;}document.getElementById('modalQuestion').innerText=c.querySelector('.unit-header').innerText;document.getElementById('randomModal').style.display='flex';currentRandomUnit=u;}
         function closeModal(id){document.getElementById(id).style.display='none';}
         function revealRandomAnswer(){closeModal('randomModal');scrollToUnit(`u${currentRandomUnit}`);}
         function scrollToUnit(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}
         function toggleTheme(){triggerHaptic();const h=document.documentElement;const n=h.getAttribute('data-theme')==='light'?'dark':'light';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);}
         function loadTheme(){const s=localStorage.getItem('theme');if(s)document.documentElement.setAttribute('data-theme',s);}
-        function filterUnits(){/*简略*/}
+        function filterUnits(){const filter=document.getElementById('searchBox').value.toLowerCase();const cards=document.getElementsByClassName('unit-card');for(let card of cards){const text=card.innerText.toLowerCase();const keys=card.getAttribute('data-keywords')||"";card.style.display=(text.includes(filter)||keys.includes(filter))?"":"none";}}
         function loadCustomChips(){for(let u=1;u<=13;u++)for(let s=1;s<=2;s++)JSON.parse(localStorage.getItem(`custom_chips_u${u}_s${s}`)||"[]").forEach(d=>renderAndClickChip(d,false));}
         function renderAndClickChip(d,t){const c=document.getElementById(`u${d.unitNum}-s${d.stepNum}-chips`);if(!c)return;const b=document.createElement('div');b.className='chip';b.innerText=d.eng;b.onclick=()=>{updateUnit(d.unitNum,d.stepNum,d.eng,d.cn,d.prefix,d.suffix,b);};const w=c.querySelector('.add-btn-wrapper');c.insertBefore(b,w||c.firstChild);if(t)b.click();}
-        function updateCustomChipInStorage(d,n){/*简略*/}
+        function updateCustomChipInStorage(d,n){const k=`custom_chips_u${d.unitNum}_s${d.stepNum}`;let l=JSON.parse(localStorage.getItem(k)||"[]");if(n==="")l=l.filter(i=>i.eng!==d.eng);else{const i=l.findIndex(x=>x.eng===d.eng);if(i>-1)l[i].eng=n;}localStorage.setItem(k,JSON.stringify(l));}
         function toggleQuizMode(){triggerHaptic();document.body.classList.toggle('quiz-mode');}
         
         // 单句跟读 (简单版)
@@ -1155,20 +1201,10 @@
         }
 
         function speakWholeSentence(wordId, prefix, punctuation) {
-            // 这里我们不再手动拼 prefix，而是直接读界面上已经生成的整句英文
             const wordEl = document.getElementById(wordId);
             if(wordEl) {
                 speakDirect(wordEl.parentElement.innerText);
             }
-        }
-
-        function speakDirect(text, callback) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = /[\u4e00-\u9fa5]/.test(text) ? 'zh-CN' : 'en-US'; 
-            utterance.rate = 0.9; 
-            if(callback) utterance.onend = callback;
-            window.speechSynthesis.speak(utterance);
         }
     </script>
 </body>

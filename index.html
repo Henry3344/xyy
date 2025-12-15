@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Survival English Guide v25.5</title>
     <style>
-        /* --- V31.5 样式表：气泡层级修复版 --- */
+        /* --- V31.6 样式表：强阻尼 + 机器人气泡 --- */
         :root {
             --bg-body: #f2f2f7; --bg-card: #ffffff; --text-main: #1c1c1e; --text-sub: #8e8e93;
             --primary: #007aff; --primary-light: #e5f1ff; --border: #c6c6c8;
@@ -43,7 +43,17 @@
         #content-area { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 15px 0; gap: 15px; align-items: flex-start; scroll-behavior: smooth; }
         #content-area::-webkit-scrollbar { display: none; }
         .snap-spacer { flex: 0 0 7.5vw; } 
-        .unit-card { flex: 0 0 85vw; max-width: 500px; background: var(--bg-card); border-radius: 20px; padding: 20px; box-shadow: 0 8px 30px var(--shadow); border: 1px solid var(--border); scroll-snap-align: center; height: 98%; max-height: 85vh; overflow-y: auto; position: relative; padding-bottom: 60px; box-sizing: border-box; }
+        
+        /* 核心修改：增加 scroll-snap-stop: always 实现强阻尼 */
+        .unit-card { 
+            flex: 0 0 85vw; max-width: 500px; background: var(--bg-card); 
+            border-radius: 20px; padding: 20px; box-shadow: 0 8px 30px var(--shadow); 
+            border: 1px solid var(--border); 
+            scroll-snap-align: center; 
+            scroll-snap-stop: always; /* 关键：强制每次只滑一张 */
+            height: 98%; max-height: 85vh; overflow-y: auto; position: relative; 
+            padding-bottom: 60px; box-sizing: border-box; 
+        }
         .unit-header { font-size: 1.3em; font-weight: 800; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid var(--display-area); padding-bottom: 10px; display: flex; justify-content: space-between; }
         .sort-rank { font-size: 0.6em; color: var(--text-sub); opacity: 0.5; }
 
@@ -71,7 +81,7 @@
         .add-btn-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; } 
         .add-chip-btn { border: 1px dashed var(--text-sub); background: transparent; padding: 6px 10px; color: var(--text-sub); }
         
-        /* 核心修复：气泡样式 */
+        /* 红色气泡 (卡片内) */
         .bubble-tip { 
             position: relative; display: block; margin-top: 10px; 
             background: var(--danger); color: white; padding: 8px 12px; border-radius: 8px; 
@@ -79,7 +89,7 @@
             width: max-content; max-width: 200px; 
             white-space: normal; line-height: 1.3; text-align: center; 
             animation: popUp 0.3s ease-out; box-shadow: 0 4px 10px rgba(255, 59, 48, 0.4); 
-            z-index: 200; /* 层级拉高 */
+            z-index: 200;
         }
         .bubble-tip::after { 
             content: ''; position: absolute; bottom: 100%; left: 50%; margin-left: -6px; 
@@ -99,11 +109,33 @@
         .combo-text { padding-right: 40px; font-weight: 600; margin-bottom: 10px; line-height: 1.4; }
         .combo-audio-btn { position: absolute; top: 15px; right: 15px; background: #27ae60; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; }
 
-        .float-controls { position: fixed; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 2000; align-items: flex-end; }
-        .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3em; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        /* 悬浮球区域 */
+        .float-controls { position: fixed; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 2000; align-items: flex-end; }
+        .fab-btn, .fab-quiz, .fab-random, .fab-robot, .fab-tools { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3em; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative; }
         .fab-quiz { background: var(--danger); color: white; width: auto; padding: 8px 16px; border-radius: 30px; font-size: 0.85em; }
         .fab-random { background: var(--accent); color: white; }
-        .fab-robot { background: #000; color: white; border: 2px solid #00ff00; position: relative; }
+        
+        .fab-robot { background: #000; color: white; border: 2px solid #00ff00; }
+        /* 机器人气泡：指向右侧的机器人 */
+        .robot-speech-bubble {
+            position: absolute; bottom: 0; right: 55px; /* 在机器人左侧 */
+            background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main);
+            padding: 8px 12px; border-radius: 12px 12px 0 12px; 
+            font-size: 0.85em; font-weight: bold; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            width: max-content; max-width: 160px;
+            opacity: 0; transform: translateX(10px); transition: all 0.3s ease; pointer-events: none;
+        }
+        .robot-speech-bubble.visible { opacity: 1; transform: translateX(0); }
+        /* 箭头指向右边 */
+        .robot-speech-bubble::after {
+            content: ''; position: absolute; bottom: 10px; right: -6px;
+            border-width: 6px; border-style: solid; 
+            border-color: transparent transparent transparent var(--bg-card); /* 指向右 */
+        }
+        /* 夜间模式适配箭头 */
+        [data-theme="dark"] .robot-speech-bubble::after { border-left-color: var(--bg-card); }
+
         .robot-badge { position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: #ff3b30; border-radius: 50%; border: 2px solid #fff; display: none; }
         .fab-tools { background: #ff9f0a; color: white; }
 
@@ -787,13 +819,16 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V31.5: 气泡绝对定位修复版) ===
+        // === 核心逻辑 (V31.6: 机器人循环唤醒版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
         let recognition = null; 
         
         let aiState = { active: false, currentUnit: null, currentStep: 0, score: 0, total: 0, currentTargetEng: "", currentTargetCn: "", waitingForSpeech: false, silenceTimer: null, idleTimer: null };
+        
+        // 机器人循环计时器
+        let idleLoopTimer = null; 
 
         window.onload = function() {
             document.getElementById('year').innerText = new Date().getFullYear();
@@ -806,7 +841,7 @@
             injectToolboxDOM(); 
             initSpeechRecognition();
             checkMonthlyReport(); 
-            autoSortUnits(); // 排序+循环+气泡
+            autoSortUnits();
             
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
@@ -815,48 +850,114 @@
                 }
             }
             
+            setTimeout(() => { initBubbleTip(); }, 1000);
             initScrollHints();
             rebuildActionButtons(); 
             addFloatingControls(); 
             startSearchAnimation();
+            
+            // 启动闲置检测
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 核心修复：气泡 (直接贴给第一张卡片) ---
-        function initBubbleTip(targetCard) {
-            // 如果没传卡片，尝试找一下
-            if (!targetCard) {
-                // 默认找排序后的第一张非克隆卡片
-                targetCard = document.querySelector('#content-area .unit-card:not(.clone)');
-            }
-            if (!targetCard) return;
-
-            // 找到 Step 1 的加号容器
-            const wrapper = targetCard.querySelector('.step-container .chips-container .add-btn-wrapper');
+        // --- 核心升级：机器人闲置唤醒 (Loop) ---
+        function resetIdleTimer() {
+            if(aiState.active) return; // 聊天中不干扰
             
-            if (wrapper) {
-                if(wrapper.querySelector('.bubble-tip')) return; // 避免重复
+            // 清除所有相关的定时器
+            if(aiState.idleTimer) clearTimeout(aiState.idleTimer);
+            if(idleLoopTimer) clearTimeout(idleLoopTimer);
+            
+            // 隐藏气泡 (如果有的话)
+            const bubble = document.getElementById('robotBubble');
+            if(bubble) bubble.classList.remove('visible');
+            document.getElementById('robotBadge').style.display = 'none';
 
+            // 重新开始 60秒 计时
+            aiState.idleTimer = setTimeout(triggerIdleAlert, 60000); 
+        }
+
+        function triggerIdleAlert() {
+            if(aiState.active) return;
+            
+            // 1. 显示红点
+            document.getElementById('robotBadge').style.display = 'block';
+            
+            // 2. 显示侧边气泡
+            const bubble = document.getElementById('robotBubble');
+            if(bubble) {
+                bubble.classList.add('visible');
+                triggerHaptic();
+                
+                // 3. 10秒后消失
+                setTimeout(() => {
+                    bubble.classList.remove('visible');
+                    
+                    // 4. 消失后，如果用户还没动，开启下一轮 60秒 循环
+                    // 注意：如果用户动了，resetIdleTimer 会被调用，清理掉 idleLoopTimer
+                    idleLoopTimer = setTimeout(triggerIdleAlert, 60000);
+                    
+                }, 10000);
+            }
+        }
+
+        // 修改：悬浮球添加气泡 DOM
+        function addFloatingControls() {
+            const container = document.querySelector('.float-controls');
+            
+            // 机器人按钮容器 (为了相对定位气泡)
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            
+            // 气泡
+            const bubble = document.createElement('div');
+            bubble.id = 'robotBubble';
+            bubble.className = 'robot-speech-bubble';
+            bubble.innerText = '嘿！想练练口语吗？点我！';
+            wrapper.appendChild(bubble);
+
+            // 按钮
+            const btn = document.createElement('button');
+            btn.className = 'fab-robot';
+            btn.innerHTML = '🤖<div class="robot-badge" id="robotBadge"></div>';
+            btn.title = "AI 陪练";
+            btn.onclick = () => { 
+                triggerHaptic(); 
+                resetIdleTimer(); // 点击也是一种交互
+                toggleChat(); 
+                if(document.getElementById('chatBody').innerHTML.trim() === "") {
+                    startAiSession(); 
+                }
+            };
+            wrapper.appendChild(btn);
+            container.insertBefore(wrapper, container.firstChild);
+
+            // 工具箱按钮 (保持不变)
+            const t = document.createElement('button');
+            t.className = 'fab-tools';
+            t.innerHTML = '🧰';
+            t.onclick = openToolbox;
+            container.insertBefore(t, container.firstChild);
+        }
+
+        // --- 其他逻辑保持 V31.5 ---
+        
+        function initBubbleTip(targetCard) {
+            if (!targetCard) targetCard = document.querySelector('#content-area .unit-card:not(.clone)');
+            if (!targetCard) return;
+            const wrapper = targetCard.querySelector('.step-container .chips-container .add-btn-wrapper');
+            if (wrapper) {
+                if(wrapper.querySelector('.bubble-tip')) return;
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble-tip';
                 bubble.innerText = '没找到你想要的？现在可以点击添加！';
-                
-                // 关键：插在容器末尾 (CSS flex-col 会让它排在加号下面)
                 wrapper.appendChild(bubble);
-
-                // 15秒后自动折叠消失
                 setTimeout(() => { dismissBubble(bubble); }, 15000);
             }
         }
+        function dismissBubble(element) { if(element) { element.classList.add('fade-out'); setTimeout(() => { element.remove(); }, 600); } }
 
-        function dismissBubble(element) {
-            if(!element) return;
-            element.classList.add('fade-out');
-            setTimeout(() => { element.remove(); }, 600); 
-        }
-
-        // --- 无缝循环 & 排序 ---
         function autoSortUnits() {
             const container = document.getElementById('content-area');
             const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); 
@@ -873,10 +974,7 @@
                 scoreA += (timeWeights[idA] || 0); scoreB += (timeWeights[idB] || 0);
                 return scoreB - scoreA; 
             });
-            container.innerHTML = ""; 
-            cards.forEach(card => container.appendChild(card));
-            
-            // 构建循环，并传入第一张卡片用于贴气泡
+            container.innerHTML = ""; cards.forEach(card => container.appendChild(card));
             initInfiniteLoop(container, cards);
         }
 
@@ -884,10 +982,7 @@
             container.querySelectorAll('.snap-spacer, .unit-card.clone').forEach(el => el.remove());
             if (cards.length < 2) return; 
             const firstCard = cards[0]; const lastCard = cards[cards.length - 1];
-            
-            // 立即给第一张卡片贴气泡
             setTimeout(() => initBubbleTip(firstCard), 500);
-
             const cloneFirst = firstCard.cloneNode(true); const cloneLast = lastCard.cloneNode(true);
             [cloneFirst, cloneLast].forEach(el => { el.classList.add('clone'); el.id = ""; el.querySelectorAll('[id]').forEach(c => c.removeAttribute('id')); });
             const spacerStart = document.createElement('div'); spacerStart.className = 'snap-spacer';
@@ -904,8 +999,6 @@
             };
         }
 
-        // --- 其他逻辑保持 V31.x ---
-        
         function rebuildActionButtons() {
             for(let i=1; i<=13; i++) {
                 const card = document.getElementById(`u${i}`);
@@ -996,8 +1089,6 @@
         function askForScenario() { addUserMsg("Yes, let's go!"); let ops = []; for(let i=1; i<=13; i++) { const c = document.getElementById(`u${i}`); if(c) { const name = c.getAttribute('data-name'); ops.push({ text: name, action: () => startUnitPractice(i) }); } } addBotMsg("Great! Which scenario do you want to practice?", ops); }
         function startUnitPractice(uid) { addUserMsg(`Unit ${uid}`); aiState.currentUnit = uid; aiState.currentStep = 1; addBotMsg("Awesome choice! Let's start!"); setTimeout(askQuestion, 1500); }
         function startSearchAnimation() { const input = document.getElementById('searchBox'); let allKeywords = []; document.querySelectorAll('.unit-card').forEach(c => { const keys = c.getAttribute('data-keywords').split(' '); allKeywords.push(...keys); }); allKeywords = allKeywords.filter(k => /^[\u4e00-\u9fa5]{2,}$/.test(k) && k.length < 5); allKeywords = [...new Set(allKeywords)]; let idx = 0; setInterval(() => { if(document.activeElement === input && input.value !== "") return; input.style.color = 'transparent'; setTimeout(() => { const word = allKeywords[idx % allKeywords.length]; input.setAttribute('placeholder', `🔍 搜"${word}"试试...`); input.style.color = 'var(--text-main)'; idx++; }, 500); }, 4000); }
-        function addFloatingControls() { const c=document.querySelector('.float-controls'); const b=document.createElement('button'); b.className='fab-robot'; b.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>'; b.title="AI 陪练"; b.onclick=()=>{ triggerHaptic(); toggleChat(); if(document.getElementById('chatBody').innerHTML.trim()==="") startAiSession(); }; c.insertBefore(b, c.firstChild); const t=document.createElement('button'); t.className='fab-tools'; t.innerHTML='🧰'; t.onclick=openToolbox; c.insertBefore(t, c.firstChild); }
-        function resetIdleTimer() { if(aiState.active) return; if(aiState.idleTimer) clearTimeout(aiState.idleTimer); aiState.idleTimer = setTimeout(() => { document.getElementById('robotBadge').style.display = 'block'; const robotBtn = document.querySelector('.fab-robot'); if(robotBtn) { showToast("🤖 嘿！想练练口语吗？点我！"); triggerHaptic(); } }, 60000); }
         function toggleChat() { const el = document.getElementById('chatOverlay'); const isHidden = el.style.display === 'none' || el.style.display === ''; el.style.display = isHidden ? 'flex' : 'none'; document.getElementById('robotBadge').style.display = 'none'; if(isHidden) { const body = document.getElementById('chatBody'); body.scrollTop = body.scrollHeight; } }
         function injectToolboxDOM(){if(document.getElementById('toolOverlay'))return;const d=document.createElement('div');d.id='toolOverlay';d.className='tool-overlay';d.onclick=(e)=>{if(e.target===d)d.style.display='none';};d.innerHTML=`<div class="tool-card"><div class="tool-tabs"><div class="tool-tab active" onclick="switchTool(0)">🌡️ 换算</div><div class="tool-tab" onclick="switchTool(1)">💵 小费</div></div><div class="tool-section active" id="tool-calc"><div class="calc-row"><input type="number" class="calc-input" id="inp-f" placeholder="°F" oninput="convert('f')"><span class="calc-label">°F</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-c" placeholder="°C" oninput="convert('c')"><span class="calc-label">°C</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-lb" placeholder="lb" oninput="convert('lb')"><span class="calc-label">lb</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-kg" placeholder="kg" oninput="convert('kg')"><span class="calc-label">kg</span></div><div class="calc-row"><input type="number" class="calc-input" id="inp-oz" placeholder="oz" oninput="convert('oz')"><span class="calc-label">oz</span><span class="calc-eq">⇌</span><input type="number" class="calc-input" id="inp-ml" placeholder="ml" oninput="convert('ml')"><span class="calc-label">ml</span></div></div><div class="tool-section" id="tool-tip"><div class="calc-row" style="justify-content:center;"><span style="font-weight:bold;">消费 $</span><input type="number" class="calc-input" id="inp-bill" placeholder="0.00" style="width:150px;" oninput="calcTip()"></div><div class="tip-grid"><div class="tip-box"><span class="tip-pct">15%</span><span class="tip-val" id="tip-15">$0</span></div><div class="tip-box"><span class="tip-pct">18%</span><span class="tip-val" id="tip-18">$0</span></div><div class="tip-box"><span class="tip-pct">20%</span><span class="tip-val" id="tip-20">$0</span></div></div></div></div>`;document.body.appendChild(d);}
         function switchTool(idx){triggerHaptic();document.querySelectorAll('.tool-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));document.querySelectorAll('.tool-section').forEach((s,i)=>s.classList.toggle('active',i===idx));}

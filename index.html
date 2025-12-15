@@ -819,7 +819,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V33.0: 场景搜索修正 + 语音修复版) ===
+        // === 核心逻辑 (V33.1: 底部喇叭修复 + 场景搜索版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -847,7 +847,7 @@
         window.onload = function() {
             document.getElementById('year').innerText = new Date().getFullYear();
             loadTheme();
-            injectExtraChips(); // 1. 注入词库
+            injectExtraChips();
             loadCustomChips();
             loadUsageData();
             injectSmartKeywords();
@@ -868,52 +868,64 @@
             setTimeout(() => { initBubbleTip(); }, 1000);
             initScrollHints();
             rebuildActionButtons(); 
+            
+            // 🚀 新增：绑定底部“逻辑构造”区域的小喇叭
+            bindComboAudioButtons();
+            
             addFloatingControls(); 
-            startSmartSearchAnimation(); // 2. 启动智能场景搜索
+            startSmartSearchAnimation();
             
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 🚀 修复点：语音朗读 (精准定位文字区) ---
-        function speakWholeSentence(wordId, p, x) {
-            const wordEl = document.getElementById(wordId);
-            if(wordEl) {
-                // 关键修正：向上找到 .text-content 容器，只读里面的字，完全避开 .action-group (按钮区)
-                const container = wordEl.closest('.text-content');
-                if (container) {
-                    speakDirect(container.innerText);
-                }
-            }
+        // --- 🚀 修复点：绑定底部喇叭事件 ---
+        function bindComboAudioButtons() {
+            // 找到所有 .combo-audio-btn
+            const btns = document.querySelectorAll('.combo-audio-btn');
+            btns.forEach(btn => {
+                // 移除旧事件防止重复绑定
+                btn.onclick = null;
+                btn.onclick = function(e) {
+                    e.stopPropagation();
+                    triggerHaptic();
+                    // 找到同级容器里的文字 .combo-text
+                    const parent = this.closest('.combo-box');
+                    if (parent) {
+                        const textEl = parent.querySelector('.combo-text');
+                        if (textEl) {
+                            speakDirect(textEl.innerText);
+                        }
+                    }
+                };
+            });
         }
 
-        // --- 🚀 优化点：强场景化引导搜索 ---
+        // --- 场景搜索引导 ---
         function startSmartSearchAnimation() {
             const input = document.getElementById('searchBox');
             const hour = new Date().getHours();
             
-            // 默认全天候场景
             let prompts = [
                 { t: "完全听不懂对方说什么？", k: "翻译" },
                 { t: "找不到洗手间很尴尬？", k: "内急" }
             ];
 
-            // 动态注入分时段的“生存痛点”
-            if (hour >= 5 && hour < 10) { // 早上
+            if (hour >= 5 && hour < 10) { 
                 prompts.push({ t: "赶时间上班怕迟到？", k: "打车" });
                 prompts.push({ t: "刚搬来还没认识邻居？", k: "邻居" });
-            } else if (hour >= 11 && hour < 14) { // 中午
+            } else if (hour >= 11 && hour < 14) { 
                 prompts.push({ t: "不知道该怎么点餐？", k: "点餐" });
                 prompts.push({ t: "和同事吃饭怕冷场？", k: "聊天" });
                 prompts.push({ t: "买单时想AA制？", k: "AA" });
-            } else if (hour >= 14 && hour < 18) { // 下午
+            } else if (hour >= 14 && hour < 18) { 
                 prompts.push({ t: "下班想去喝杯咖啡？", k: "咖啡" });
                 prompts.push({ t: "银行柜员没有中文服务？", k: "银行" });
                 prompts.push({ t: "买的东西不合适想退？", k: "退货" });
-            } else if (hour >= 18 && hour < 22) { // 晚上
+            } else if (hour >= 18 && hour < 22) { 
                 prompts.push({ t: "晚上聚会想请客？", k: "买单" });
                 prompts.push({ t: "不想做饭想叫外卖？", k: "外卖" });
-            } else { // 深夜 (22 - 5)
+            } else { 
                 prompts.push({ t: "半夜回家要打Uber？", k: "打车" });
                 prompts.push({ t: "身体不舒服想看医生？", k: "救命" });
                 prompts.push({ t: "遇到紧急情况？", k: "警察" });
@@ -921,8 +933,6 @@
 
             prompts.sort(() => Math.random() - 0.5);
             let idx = 0;
-            
-            // 初始设置，去除默认的 placeholder
             updatePlaceholder();
 
             setInterval(() => {
@@ -941,7 +951,14 @@
             }
         }
 
-        // --- 其他逻辑 (保持 V31.x 稳定版) ---
+        // --- 原有逻辑保持稳定 ---
+        function speakWholeSentence(wordId, p, x) {
+            const wordEl = document.getElementById(wordId);
+            if(wordEl) {
+                const container = wordEl.closest('.text-content');
+                if (container) speakDirect(container.innerText);
+            }
+        }
         function injectExtraChips() { for (let u = 1; u <= 13; u++) { for (let s = 1; s <= 2; s++) { const container = document.getElementById(`u${u}-s${s}-chips`); if (!container || !extraVocab[u] || !extraVocab[u][s]) continue; const existing = Array.from(container.querySelectorAll('.chip')).map(c => c.innerText); const wrapper = container.querySelector('.add-btn-wrapper'); extraVocab[u][s].forEach(item => { if (!existing.includes(item.e)) { const btn = document.createElement('div'); btn.className = 'chip'; btn.innerText = item.e; btn.onclick = function() { updateUnit(u, s, item.e, item.c, "", "", this); }; if(wrapper) container.insertBefore(btn, wrapper); else container.appendChild(btn); } }); } } }
         function initBubbleTip(targetCard) { if (!targetCard) targetCard = document.querySelector('#content-area .unit-card:not(.clone)'); if (!targetCard) return; const wrapper = targetCard.querySelector('.step-container .chips-container .add-btn-wrapper'); if (wrapper) { if(wrapper.querySelector('.bubble-tip')) return; const bubble = document.createElement('div'); bubble.className = 'bubble-tip'; bubble.innerText = '没找到你想要的？现在可以点击添加！'; wrapper.appendChild(bubble); setTimeout(() => { dismissBubble(bubble); }, 15000); } }
         function dismissBubble(element) { if(element) { element.classList.add('fade-out'); setTimeout(() => { element.remove(); }, 600); } }
@@ -1004,6 +1021,7 @@
         function toggleQuizMode(){triggerHaptic();document.body.classList.toggle('quiz-mode');}
         function updateUnit(unitNum,stepNum,engWord,cnWord,prefixEng,suffixCn,element,playSound=true){triggerHaptic();incrementUsage(unitNum);const wordId=`u${unitNum}-s${stepNum}-word`;const displayEl=document.getElementById(wordId);if(displayEl)displayEl.innerText=engWord;const fullCn=getFullChineseSentence(unitNum,stepNum,cnWord,suffixCn);document.getElementById(`u${unitNum}-s${stepNum}-trans`).innerText=fullCn;let container=element.parentElement;container.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));if(element.classList.contains('chip'))element.classList.add('active');localStorage.setItem(`u${unitNum}-s${stepNum}`,JSON.stringify({engWord,cnWord,prefix:prefixEng,suffix:suffixCn}));if(playSound)speakDirect(engWord);}
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
+        function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl){const container=wordEl.closest('.text-content');if(container)speakDirect(container.innerText);}}
     </script>
 </body>
 </html>

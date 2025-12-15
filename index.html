@@ -809,7 +809,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V30.0: 无缝循环 + 沉浸式体验版) ===
+        // === 核心逻辑 (V30.1: 双向无缝循环 + 纯正口音修复版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -829,7 +829,7 @@
             initSpeechRecognition();
             checkMonthlyReport(); 
             
-            // 核心：先排序，再构建循环
+            // 核心：排序 -> 构建双向循环
             autoSortUnits();
             
             // 恢复选择状态
@@ -849,58 +849,93 @@
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 🚀 新增：无缝循环逻辑 ---
+        // --- 🚀 核心升级：双向无缝循环 (Bi-directional Loop) ---
         function initInfiniteLoop(container, cards) {
             // 1. 清理旧的 spacer 和 clone
             container.querySelectorAll('.snap-spacer, .unit-card.clone').forEach(el => el.remove());
 
-            if (cards.length === 0) return;
+            if (cards.length < 2) return; // 卡片太少不循环
 
-            // 2. 添加头部 spacer (为了居中)
+            const cardWidth = cards[0].offsetWidth; // 假设卡片等宽
+            const gap = 15; // CSS gap
+
+            // 2. 克隆首尾
+            const firstCard = cards[0];
+            const lastCard = cards[cards.length - 1];
+            
+            const cloneFirst = firstCard.cloneNode(true);
+            const cloneLast = lastCard.cloneNode(true);
+            
+            // 标记 clone 并移除 ID 防止冲突
+            [cloneFirst, cloneLast].forEach(el => {
+                el.classList.add('clone');
+                el.id = "";
+                el.querySelectorAll('[id]').forEach(c => c.removeAttribute('id'));
+            });
+
+            // 3. 插入 DOM 结构：[Spacer] [Clone Last] [Real 1...N] [Clone First] [Spacer]
             const spacerStart = document.createElement('div');
             spacerStart.className = 'snap-spacer';
-            container.insertBefore(spacerStart, container.firstChild);
-
-            // 3. 克隆第一张卡片 (Ghost Card)
-            const firstCard = cards[0];
-            const cloneCard = firstCard.cloneNode(true);
-            cloneCard.classList.add('clone');
-            cloneCard.id = ''; // 移除 ID 避免冲突
-            // 移除 clone 里的 id 属性，防止 JS 报错
-            cloneCard.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-            // 视觉上稍微变暗一点点，或者加个标记 (可选，这里保持一致以欺骗视觉)
-            container.appendChild(cloneCard);
-
-            // 4. 添加尾部 spacer
+            
             const spacerEnd = document.createElement('div');
             spacerEnd.className = 'snap-spacer';
+
+            container.insertBefore(spacerStart, container.firstChild);
+            container.insertBefore(cloneLast, container.firstChild.nextSibling); // 插在 spacer 后
+            container.appendChild(cloneFirst);
             container.appendChild(spacerEnd);
 
-            // 5. 监听滚动 (瞬间传送)
-            container.onscroll = () => {
-                // 计算滚动距离 + 容器宽度
-                const scrollRight = container.scrollLeft + container.offsetWidth;
-                const totalWidth = container.scrollWidth;
+            // 4. 初始定位：瞬间跳到 Real Card 1 (跳过 Spacer + Clone Last)
+            // 计算偏移量：Spacer宽度 + CloneLast宽度 + 2个gap
+            // 由于 display:flex，计算起来可能受 spacer flex-basis 影响
+            // 最稳妥是用 scrollIntoView 但需要禁用动画
+            
+            // 强制瞬间定位到真正的第一个卡片
+            requestAnimationFrame(() => {
+                container.style.scrollBehavior = 'auto';
+                // 偏移量 = 左侧 Spacer(7.5vw) + CloneLast(85vw) + Gap(15px) * 2 roughly
+                // 更精准的方法是直接定位元素
+                const offset = firstCard.offsetLeft - container.offsetLeft - (window.innerWidth * 0.075); // 减去左padding
+                container.scrollLeft = offset;
                 
-                // 阈值：当距离终点很近时 (约半张卡片宽度)
-                if (totalWidth - scrollRight < 20) {
-                    // 瞬间跳回第一张卡片的位置
-                    // 此时第一张卡片在 spacer 后面，所以是 spacer 的宽度
-                    container.style.scrollBehavior = 'auto'; // 关闭平滑
-                    container.scrollLeft = spacerStart.offsetWidth; 
-                    // 强制重绘后再开启平滑 (可选，但为了性能通常不需要马上开启)
-                    requestAnimationFrame(() => {
-                        container.style.scrollBehavior = 'smooth';
-                    });
+                // 恢复平滑滚动
+                setTimeout(() => { container.style.scrollBehavior = 'smooth'; }, 50);
+            });
+
+            // 5. 监听滚动 (双向传送)
+            container.onscroll = () => {
+                const scrollLeft = container.scrollLeft;
+                const scrollWidth = container.scrollWidth;
+                const clientWidth = container.clientWidth;
+                
+                // 阈值宽松一点，防止卡顿
+                const buffer = 10;
+
+                // A. 往右滑到底 (看到 Clone First) -> 跳回 Real First
+                // 判定：接近末尾
+                if (scrollWidth - (scrollLeft + clientWidth) < buffer) {
+                    container.style.scrollBehavior = 'auto';
+                    // 跳到 Real First (它在 Clone Last 后面)
+                    // 位置大约是：Spacer + CloneLast + Gap
+                    container.scrollLeft = firstCard.offsetLeft - (window.innerWidth * 0.075); 
+                    requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); });
+                }
+
+                // B. 往左滑到头 (看到 Clone Last) -> 跳回 Real Last
+                // 判定：接近 0
+                if (scrollLeft < buffer) {
+                    container.style.scrollBehavior = 'auto';
+                    // 跳到 Real Last
+                    container.scrollLeft = lastCard.offsetLeft - (window.innerWidth * 0.075);
+                    requestAnimationFrame(() => { setTimeout(() => container.style.scrollBehavior = 'smooth', 50); });
                 }
             };
         }
 
-        // 修改 autoSortUnits 以触发循环构建
+        // 修改 autoSortUnits 以触发循环
         function autoSortUnits() {
             const container = document.getElementById('content-area');
-            // 获取所有非 clone 的卡片
-            const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)'));
+            const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); // 只取真身
             
             const hour = new Date().getHours();
             let timeWeights = {};
@@ -919,11 +954,30 @@
                 return scoreB - scoreA; 
             });
 
-            // 重新插入 DOM
+            // 重新排列 DOM (先只放真身)
+            container.innerHTML = ""; 
             cards.forEach(card => container.appendChild(card));
             
-            // 构建循环
+            // 构建双向循环
             initInfiniteLoop(container, cards);
+        }
+
+        // --- 🚀 核心升级：TTS 口音修复 (Accent Fix) ---
+        function speakDirect(text, callback) {
+            window.speechSynthesis.cancel();
+            
+            // 逻辑修正：
+            // 如果包含至少2个连续的英文字母，就认为是英语指令（即使里面夹杂了中文引用）
+            // 比如 "Please translate '你好'" -> 有英文 -> 用美音读
+            // 只有纯中文或极少英文（如变量名）才用中文读
+            const hasEnglishContext = /[a-zA-Z]{2,}/.test(text);
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = hasEnglishContext ? 'en-US' : 'zh-CN'; 
+            utterance.rate = 0.9; 
+            
+            if(callback) utterance.onend = callback;
+            window.speechSynthesis.speak(utterance);
         }
 
         // --- 其他逻辑保持 V29.2 ---
@@ -1070,7 +1124,7 @@
         }
         function manualMicClick() { if(aiState.waitingForSpeech) startChatListening(); else showToast("Wait for my question!"); }
         function initSpeechRecognition() { if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) { const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; recognition = new SpeechRecognition(); recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1; recognition.onresult = (e) => { console.log(e.results[0][0].transcript); }; } }
-        function speakDirect(text, callback) { window.speechSynthesis.cancel(); const isChinese = /[\u4e00-\u9fa5]/.test(text); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = isChinese ? 'zh-CN' : 'en-US'; utterance.rate = 0.9; if(callback) utterance.onend = callback; window.speechSynthesis.speak(utterance); }
+        
         function startSearchAnimation() { const input = document.getElementById('searchBox'); let allKeywords = []; document.querySelectorAll('.unit-card').forEach(c => { const keys = c.getAttribute('data-keywords').split(' '); allKeywords.push(...keys); }); allKeywords = allKeywords.filter(k => /^[\u4e00-\u9fa5]{2,}$/.test(k) && k.length < 5); allKeywords = [...new Set(allKeywords)]; let idx = 0; setInterval(() => { if(document.activeElement === input && input.value !== "") return; input.style.color = 'transparent'; setTimeout(() => { const word = allKeywords[idx % allKeywords.length]; input.setAttribute('placeholder', `🔍 搜"${word}"试试...`); input.style.color = 'var(--text-main)'; idx++; }, 500); }, 4000); }
         function addFloatingControls() { const c=document.querySelector('.float-controls'); const b=document.createElement('button'); b.className='fab-robot'; b.innerHTML='🤖<div class="robot-badge" id="robotBadge"></div>'; b.title="AI 陪练"; b.onclick=()=>{ triggerHaptic(); toggleChat(); if(document.getElementById('chatBody').innerHTML.trim()==="") startAiSession(); }; c.insertBefore(b, c.firstChild); const t=document.createElement('button'); t.className='fab-tools'; t.innerHTML='🧰'; t.onclick=openToolbox; c.insertBefore(t, c.firstChild); }
         function resetIdleTimer() { if(aiState.active) return; if(aiState.idleTimer) clearTimeout(aiState.idleTimer); aiState.idleTimer = setTimeout(() => { document.getElementById('robotBadge').style.display = 'block'; const robotBtn = document.querySelector('.fab-robot'); if(robotBtn) { showToast("🤖 嘿！想练练口语吗？点我！"); triggerHaptic(); } }, 60000); }
@@ -1083,7 +1137,7 @@
         function calcTip(){const b=parseFloat(document.getElementById('inp-bill').value)||0;document.getElementById('tip-15').innerText='$'+(b*1.15).toFixed(2);document.getElementById('tip-18').innerText='$'+(b*1.18).toFixed(2);document.getElementById('tip-20').innerText='$'+(b*1.20).toFixed(2);}
         function openToolbox(){triggerHaptic();document.getElementById('toolOverlay').style.display='flex';}
         function closeToolbox(){document.getElementById('toolOverlay').style.display='none';}
-        function injectSmartKeywords(){/*省略*/}
+        function injectSmartKeywords(){/*...*/}
         function injectShowCardDOM(){if(!document.getElementById('showCardOverlay')){const d=document.createElement('div');d.id='showCardOverlay';d.className='show-card-overlay';d.onclick=closeShowCard;d.innerHTML=`<div class="show-card-text" id="showCardEng"></div><div class="show-card-sub" id="showCardCn"></div><div class="show-card-hint">点击任意处关闭</div>`;document.body.appendChild(d);}}
         function openShowCard(e,c){document.getElementById('showCardEng').innerText=e;document.getElementById('showCardCn').innerText=c;document.getElementById('showCardOverlay').style.display='flex';}
         function closeShowCard(){document.getElementById('showCardOverlay').style.display='none';}
@@ -1112,7 +1166,6 @@
         function updateUnit(unitNum,stepNum,engWord,cnWord,prefixEng,suffixCn,element,playSound=true){triggerHaptic();incrementUsage(unitNum);const wordId=`u${unitNum}-s${stepNum}-word`;const displayEl=document.getElementById(wordId);if(displayEl)displayEl.innerText=engWord;const fullCn=getFullChineseSentence(unitNum,stepNum,cnWord,suffixCn);document.getElementById(`u${unitNum}-s${stepNum}-trans`).innerText=fullCn;let container=element.parentElement;container.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));if(element.classList.contains('chip'))element.classList.add('active');localStorage.setItem(`u${unitNum}-s${stepNum}`,JSON.stringify({engWord,cnWord,prefix:prefixEng,suffix:suffixCn}));if(playSound)speakDirect(engWord);}
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
         function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
-        function speakDirect(text,callback){window.speechSynthesis.cancel();const isChinese=/[\u4e00-\u9fa5]/.test(text);const utterance=new SpeechSynthesisUtterance(text);utterance.lang=isChinese?'zh-CN':'en-US';utterance.rate=0.9;if(callback)utterance.onend=callback;window.speechSynthesis.speak(utterance);}
     </script>
 </body>
 </html>

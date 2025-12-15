@@ -819,7 +819,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V32.0: 场景感知搜索 + 海量词库扩充版) ===
+        // === 核心逻辑 (V32.1: 扩展词库汉化补全版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -827,59 +827,152 @@
         
         let aiState = { active: false, currentUnit: null, currentStep: 0, score: 0, total: 0, currentTargetEng: "", currentTargetCn: "", waitingForSpeech: false, silenceTimer: null, idleTimer: null };
 
-        // 扩充词库 (Unit ID -> Step ID -> Words)
+        // 扩充词库 (Unit -> Step -> [{e:英文, c:中文}])
         const extraVocab = {
             1: { // 邻居
-                1: ["new neighbor", "from 3B", "just moved in", "Henry", "living downstairs", "the new guy"],
-                2: ["down the hall", "upstairs", "next door", "in unit 402", "across the street"]
+                1: [
+                    {e:"new neighbor", c:"新邻居"}, {e:"from 3B", c:"3B的住户"}, 
+                    {e:"just moved in", c:"刚搬来的"}, {e:"Henry", c:"Henry"}, 
+                    {e:"living downstairs", c:"住楼下的"}, {e:"the new guy", c:"新来的那个"}
+                ],
+                2: [
+                    {e:"down the hall", c:"走廊尽头"}, {e:"upstairs", c:"楼上"}, 
+                    {e:"next door", c:"隔壁"}, {e:"in unit 402", c:"402室"}, 
+                    {e:"across the street", c:"马路对面"}
+                ]
             },
             2: { // 位置
-                1: ["the subway", "the restroom", "the exit", "an elevator", "a pharmacy", "the bus stop"],
-                2: ["where it is", "which floor", "the direction", "how to get there"]
+                1: [
+                    {e:"the subway", c:"地铁站"}, {e:"the restroom", c:"洗手间"}, 
+                    {e:"the exit", c:"出口"}, {e:"an elevator", c:"电梯"}, 
+                    {e:"a pharmacy", c:"药房"}, {e:"the bus stop", c:"公交站"}
+                ],
+                2: [
+                    {e:"where it is", c:"它在哪"}, {e:"which floor", c:"在几楼"}, 
+                    {e:"the direction", c:"方向"}, {e:"how to get there", c:"怎么走"}
+                ]
             },
             3: { // 内急/借用
-                1: ["phone charger", "wifi password", "pen", "lighter", "umbrella", "power bank"],
-                2: ["urgent", "an emergency", "dying", "running low", "important"]
+                1: [
+                    {e:"phone charger", c:"手机充电器"}, {e:"wifi password", c:"WiFi密码"}, 
+                    {e:"pen", c:"笔"}, {e:"lighter", c:"打火机"}, 
+                    {e:"umbrella", c:"雨伞"}, {e:"power bank", c:"充电宝"}
+                ],
+                2: [
+                    {e:"urgent", c:"紧急"}, {e:"an emergency", c:"急事"}, 
+                    {e:"dying", c:"快没电了"}, {e:"running low", c:"电量低"}, 
+                    {e:"important", c:"很重要"}
+                ]
             },
             4: { // 银行
-                1: ["deposit cash", "withdraw money", "transfer funds", "open an account", "change PIN"],
-                2: ["ID card", "passport", "debit card", "check", "account number"]
+                1: [
+                    {e:"deposit cash", c:"存现金"}, {e:"withdraw money", c:"取钱"}, 
+                    {e:"transfer funds", c:"转账"}, {e:"open an account", c:"开户"}, 
+                    {e:"change PIN", c:"改密码"}
+                ],
+                2: [
+                    {e:"ID card", c:"身份证"}, {e:"passport", c:"护照"}, 
+                    {e:"debit card", c:"借记卡"}, {e:"check", c:"支票"}, 
+                    {e:"account number", c:"账号"}
+                ]
             },
             5: { // 结账
-                1: ["credit card", "Apple Pay", "cash", "Venmo", "Zelle", "AliPay"],
-                2: ["a receipt", "a discount", "cash back", "small change", "a bag"]
+                1: [
+                    {e:"credit card", c:"信用卡"}, {e:"Apple Pay", c:"Apple Pay"}, 
+                    {e:"cash", c:"现金"}, {e:"Venmo", c:"Venmo"}, 
+                    {e:"Zelle", c:"Zelle"}, {e:"AliPay", c:"支付宝"}
+                ],
+                2: [
+                    {e:"a receipt", c:"收据"}, {e:"a discount", c:"折扣"}, 
+                    {e:"cash back", c:"返现"}, {e:"small change", c:"零钱"}, 
+                    {e:"a bag", c:"袋子"}
+                ]
             },
             6: { // 点餐
-                1: ["tap water", "the menu", "napkins", "a refill", "chopsticks", "a box"],
-                2: ["add sugar", "make it spicy", "add ice", "put cilantro", "rush it"]
+                1: [
+                    {e:"tap water", c:"自来水"}, {e:"the menu", c:"菜单"}, 
+                    {e:"napkins", c:"餐巾纸"}, {e:"a refill", c:"续杯"}, 
+                    {e:"chopsticks", c:"筷子"}, {e:"a box", c:"打包盒"}
+                ],
+                2: [
+                    {e:"add sugar", c:"加糖"}, {e:"make it spicy", c:"做成辣的"}, 
+                    {e:"add ice", c:"加冰"}, {e:"put cilantro", c:"放香菜"}, 
+                    {e:"rush it", c:"快一点"}
+                ]
             },
             7: { // 聚餐
-                1: ["split the bill", "share the cost", "go Dutch", "treat you"],
-                2: ["on me", "my treat", "my turn", "covered by me"]
+                1: [
+                    {e:"split the bill", c:"平摊"}, {e:"share the cost", c:"分担费用"}, 
+                    {e:"go Dutch", c:"AA制"}, {e:"treat you", c:"请你"}
+                ],
+                2: [
+                    {e:"on me", c:"我请客"}, {e:"my treat", c:"我买单"}, 
+                    {e:"my turn", c:"轮到我了"}, {e:"covered by me", c:"我包了"}
+                ]
             },
             8: { // 叙旧
-                1: ["no see", "no talk", "since college", "since last year"],
-                2: ["catch up", "hang out", "get coffee", "keep in touch", "exchange numbers"]
+                1: [
+                    {e:"no see", c:"没见"}, {e:"no talk", c:"没聊"}, 
+                    {e:"since college", c:"大学后"}, {e:"since last year", c:"去年后"}
+                ],
+                2: [
+                    {e:"catch up", c:"叙叙旧"}, {e:"hang out", c:"聚聚"}, 
+                    {e:"get coffee", c:"喝杯咖啡"}, {e:"keep in touch", c:"常联系"}, 
+                    {e:"exchange numbers", c:"交换号码"}
+                ]
             },
             9: { // 打车
-                1: ["JFK airport", "Main Street", "the hotel", "this address", "Flushing"],
-                2: ["right here", "at the corner", "at the light", "by the sign"]
+                1: [
+                    {e:"JFK airport", c:"JFK机场"}, {e:"Main Street", c:"Main街"}, 
+                    {e:"the hotel", c:"酒店"}, {e:"this address", c:"这个地址"}, 
+                    {e:"Flushing", c:"法拉盛"}
+                ],
+                2: [
+                    {e:"right here", c:"就在这"}, {e:"at the corner", c:"在路口"}, 
+                    {e:"at the light", c:"在红绿灯"}, {e:"by the sign", c:"标志牌旁"}
+                ]
             },
             10: { // 医疗/救命
-                1: ["a doctor", "an ambulance", "painkillers", "some ice", "help"],
-                2: ["dizzy", "nauseous", "feverish", "terrible", "weak"]
+                1: [
+                    {e:"a doctor", c:"医生"}, {e:"an ambulance", c:"救护车"}, 
+                    {e:"painkillers", c:"止痛药"}, {e:"some ice", c:"冰块"}, 
+                    {e:"help", c:"帮助"}
+                ],
+                2: [
+                    {e:"dizzy", c:"头晕"}, {e:"nauseous", c:"恶心"}, 
+                    {e:"feverish", c:"发烧"}, {e:"terrible", c:"很糟"}, 
+                    {e:"weak", c:"虚弱"}
+                ]
             },
             11: { // 听不懂
-                1: ["speak slowly", "say that again", "write it down", "use Google Translate"],
-                2: ["understand", "hear you", "get it", "know that word"]
+                1: [
+                    {e:"speak slowly", c:"说慢点"}, {e:"say that again", c:"再说一次"}, 
+                    {e:"write it down", c:"写下来"}, {e:"use Google Translate", c:"用谷歌翻译"}
+                ],
+                2: [
+                    {e:"understand", c:"听懂"}, {e:"hear you", c:"听清"}, 
+                    {e:"get it", c:"明白"}, {e:"know that word", c:"懂那个词"}
+                ]
             },
             12: { // 退货
-                1: ["return this", "exchange this", "get a refund", "speak to manager"],
-                2: ["is broken", "is expired", "doesn't fit", "is the wrong color"]
+                1: [
+                    {e:"return this", c:"退这个"}, {e:"exchange this", c:"换这个"}, 
+                    {e:"get a refund", c:"退款"}, {e:"speak to manager", c:"找经理"}
+                ],
+                2: [
+                    {e:"is broken", c:"坏了"}, {e:"is expired", c:"过期了"}, 
+                    {e:"doesn't fit", c:"不合身"}, {e:"is the wrong color", c:"颜色错了"}
+                ]
             },
             13: { // 预约
-                1: ["book a table", "make a reservation", "cancel my appointment", "reschedule"],
-                2: ["7:00 PM", "noon", "tomorrow morning", "next Monday"]
+                1: [
+                    {e:"book a table", c:"订位"}, {e:"make a reservation", c:"预约"}, 
+                    {e:"cancel my appointment", c:"取消预约"}, {e:"reschedule", c:"改期"}
+                ],
+                2: [
+                    {e:"7:00 PM", c:"晚上7点"}, {e:"noon", c:"中午"}, 
+                    {e:"tomorrow morning", c:"明早"}, {e:"next Monday", c:"下周一"}
+                ]
             }
         };
 
@@ -887,7 +980,7 @@
             document.getElementById('year').innerText = new Date().getFullYear();
             loadTheme();
             
-            // 1. 先注入扩展词库 (保证在 restoreSelection 之前)
+            // 1. 注入带中文翻译的扩展词库
             injectExtraChips();
             
             loadCustomChips();
@@ -898,7 +991,7 @@
             injectToolboxDOM(); 
             initSpeechRecognition();
             checkMonthlyReport(); 
-            autoSortUnits(); // 排序+循环+气泡
+            autoSortUnits(); 
             
             for (let i = 1; i <= 13; i++) {
                 if(document.getElementById(`u${i}`)) {
@@ -911,35 +1004,32 @@
             initScrollHints();
             rebuildActionButtons(); 
             addFloatingControls(); 
-            
-            // 2. 启动智能情景搜索
             startSmartSearchAnimation();
             
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 🚀 新功能：注入扩展词库 ---
+        // --- 🚀 升级版：注入双语词库 ---
         function injectExtraChips() {
             for (let u = 1; u <= 13; u++) {
                 for (let s = 1; s <= 2; s++) {
                     const container = document.getElementById(`u${u}-s${s}-chips`);
                     if (!container || !extraVocab[u] || !extraVocab[u][s]) continue;
                     
-                    // 获取现有的词，避免重复
                     const existing = Array.from(container.querySelectorAll('.chip')).map(c => c.innerText);
                     const wrapper = container.querySelector('.add-btn-wrapper');
                     
-                    extraVocab[u][s].forEach(word => {
-                        if (!existing.includes(word)) {
+                    extraVocab[u][s].forEach(item => {
+                        // item.e 是英文，item.c 是中文
+                        if (!existing.includes(item.e)) {
                             const btn = document.createElement('div');
                             btn.className = 'chip';
-                            btn.innerText = word;
+                            btn.innerText = item.e;
                             btn.onclick = function() { 
-                                // 这里简化处理，中文暂用英文代替，实际使用中主要为了跟读
-                                updateUnit(u, s, word, word, "", "", this); 
+                                // 关键：传入 item.c (中文翻译)
+                                updateUnit(u, s, item.e, item.c, "", "", this); 
                             };
-                            // 插在加号前面
                             if(wrapper) container.insertBefore(btn, wrapper);
                             else container.appendChild(btn);
                         }
@@ -948,56 +1038,41 @@
             }
         }
 
-        // --- 🚀 新功能：智能情景搜索 ---
+        // --- 智能情景搜索 ---
         function startSmartSearchAnimation() {
             const input = document.getElementById('searchBox');
             const hour = new Date().getHours();
             
-            // 基础提示库
             let prompts = [
-                { t: "听不懂英语？", k: "翻译" },
-                { t: "想退货？", k: "退款" },
-                { t: "迷路了？", k: "导航" },
-                { t: "找不到厕所？", k: "洗手间" }
+                { t: "听不懂英语？", k: "翻译" }, { t: "想退货？", k: "退款" },
+                { t: "迷路了？", k: "导航" }, { t: "找不到厕所？", k: "洗手间" }
             ];
 
-            // 根据时间注入特定场景
-            if (hour >= 6 && hour < 10) { // 早上
-                prompts.push({ t: "赶时间上班？", k: "打车" });
-                prompts.push({ t: "没睡醒？", k: "咖啡" });
+            if (hour >= 6 && hour < 10) { 
+                prompts.push({ t: "赶时间上班？", k: "打车" }); prompts.push({ t: "没睡醒？", k: "咖啡" });
                 prompts.push({ t: "刚搬来这儿？", k: "邻居" });
-            } else if (hour >= 11 && hour < 14) { // 中午
-                prompts.push({ t: "不知道吃啥？", k: "推荐" });
-                prompts.push({ t: "买单尴尬？", k: "AA" });
-            } else if (hour >= 17 && hour < 21) { // 晚上
-                prompts.push({ t: "下班喝一杯？", k: "酒吧" });
-                prompts.push({ t: "不想做饭？", k: "外卖" });
-            } else if (hour >= 21 || hour < 5) { // 深夜
-                prompts.push({ t: "睡不着？", k: "失眠" });
-                prompts.push({ t: "遇到危险？", k: "救命" });
+            } else if (hour >= 11 && hour < 14) { 
+                prompts.push({ t: "不知道吃啥？", k: "推荐" }); prompts.push({ t: "买单尴尬？", k: "AA" });
+            } else if (hour >= 17 && hour < 21) { 
+                prompts.push({ t: "下班喝一杯？", k: "酒吧" }); prompts.push({ t: "不想做饭？", k: "外卖" });
+            } else if (hour >= 21 || hour < 5) { 
+                prompts.push({ t: "睡不着？", k: "失眠" }); prompts.push({ t: "遇到危险？", k: "救命" });
                 prompts.push({ t: "身体不舒服？", k: "医生" });
             }
 
-            // 随机打乱
             prompts.sort(() => Math.random() - 0.5);
-
             let idx = 0;
-            // 初始显示
             updatePlaceholder();
 
             setInterval(() => {
-                if (document.activeElement === input && input.value !== "") return; // 输入时不打扰
-                
-                // 淡出
+                if (document.activeElement === input && input.value !== "") return; 
                 input.classList.add('fade-text');
-                
                 setTimeout(() => {
                     idx = (idx + 1) % prompts.length;
                     updatePlaceholder();
-                    // 淡入
                     input.classList.remove('fade-text');
-                }, 500); // 配合 CSS transition 0.5s
-            }, 5000); // 5秒切换
+                }, 500); 
+            }, 5000);
 
             function updatePlaceholder() {
                 const item = prompts[idx];
@@ -1005,7 +1080,7 @@
             }
         }
 
-        // --- 核心修复：气泡 (直接贴给第一张卡片) ---
+        // --- 气泡逻辑 ---
         function initBubbleTip(targetCard) {
             if (!targetCard) targetCard = document.querySelector('#content-area .unit-card:not(.clone)');
             if (!targetCard) return;
@@ -1021,7 +1096,6 @@
         }
         function dismissBubble(element) { if(element) { element.classList.add('fade-out'); setTimeout(() => { element.remove(); }, 600); } }
 
-        // --- 其他基础逻辑 ---
         function autoSortUnits() {
             const container = document.getElementById('content-area');
             const cards = Array.from(container.querySelectorAll('.unit-card:not(.clone)')); 

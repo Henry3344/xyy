@@ -819,7 +819,7 @@
     </div>
 
     <script>
-        // === 核心逻辑 (V33.2: 底部喇叭全局委托修复版) ===
+        // === 核心逻辑 (V33.3: 底部喇叭硬核修复版) ===
         let usageData = {};
         let currentRandomUnit = null;
         let pressTimer;
@@ -856,6 +856,11 @@
             injectToolboxDOM(); 
             initSpeechRecognition();
             checkMonthlyReport(); 
+            
+            // 🚀 1. 先注入底部喇叭 (硬核替换)
+            injectLogicButtons();
+            
+            // 2. 再排序 (这样克隆出的卡片也会带有好使的喇叭)
             autoSortUnits(); 
             
             for (let i = 1; i <= 13; i++) {
@@ -868,96 +873,68 @@
             setTimeout(() => { initBubbleTip(); }, 1000);
             initScrollHints();
             rebuildActionButtons(); 
-            
-            // 🚀 核心修复：注册全局点击监听，解决所有按钮（含克隆体）的点击失效问题
-            initGlobalClickListeners();
-            
             addFloatingControls(); 
             startSmartSearchAnimation();
-            
             resetIdleTimer();
             ['touchstart','click','scroll'].forEach(e => document.addEventListener(e, resetIdleTimer));
         };
 
-        // --- 🚀 全局事件委托 (解决克隆体点击失效 + 底部喇叭修复) ---
-        function initGlobalClickListeners() {
-            document.body.addEventListener('click', function(e) {
-                // 1. 监听底部“逻辑构造”的喇叭 (.combo-audio-btn)
-                const comboBtn = e.target.closest('.combo-audio-btn');
-                if (comboBtn) {
-                    e.stopPropagation();
-                    triggerHaptic();
-                    const container = comboBtn.closest('.combo-box');
-                    if (container) {
-                        // 找同级里的文字
-                        const textEl = container.querySelector('.combo-text');
-                        if (textEl) speakDirect(textEl.innerText);
-                    }
-                    return;
-                }
+        // --- 🚀 核心修复：硬核注入底部喇叭 ---
+        // 直接在 HTML 属性里写 onclick，克隆也不怕！
+        function injectLogicButtons() {
+            const boxes = document.querySelectorAll('.combo-box');
+            boxes.forEach(box => {
+                // 1. 删掉旧的
+                const oldBtn = box.querySelector('.combo-audio-btn');
+                if (oldBtn) oldBtn.remove();
                 
-                // 2. 这里也可以扩展监听其他动态生成的元素...
+                // 2. 创建新的
+                const newBtn = document.createElement('button');
+                newBtn.className = 'combo-audio-btn';
+                newBtn.innerHTML = '🔊'; // 或者用你的图标
+                newBtn.style.zIndex = "10"; // 确保在上层
+                
+                // 3. 关键：直接写入 onclick 属性
+                newBtn.setAttribute('onclick', 'handleLogicClick(event, this)');
+                
+                box.appendChild(newBtn);
             });
         }
 
-        // --- 场景搜索引导 ---
+        // --- 🚀 全局处理函数 ---
+        // 必须挂在 window 上，确保 onclick 属性找得到
+        window.handleLogicClick = function(e, btn) {
+            e.stopPropagation();
+            if(navigator.vibrate) navigator.vibrate(15);
+            
+            // 点击反馈动画
+            btn.style.transform = "scale(0.9)";
+            setTimeout(() => btn.style.transform = "scale(1)", 150);
+
+            const container = btn.closest('.combo-box');
+            if (container) {
+                const textEl = container.querySelector('.combo-text');
+                if (textEl) {
+                    speakDirect(textEl.innerText);
+                }
+            }
+        }
+
+        // --- 其他逻辑 (保持 V33.0 稳定版) ---
         function startSmartSearchAnimation() {
             const input = document.getElementById('searchBox');
             const hour = new Date().getHours();
-            
-            let prompts = [
-                { t: "完全听不懂对方说什么？", k: "翻译" },
-                { t: "找不到洗手间很尴尬？", k: "内急" }
-            ];
-
-            if (hour >= 5 && hour < 10) { 
-                prompts.push({ t: "赶时间上班怕迟到？", k: "打车" });
-                prompts.push({ t: "刚搬来还没认识邻居？", k: "邻居" });
-            } else if (hour >= 11 && hour < 14) { 
-                prompts.push({ t: "不知道该怎么点餐？", k: "点餐" });
-                prompts.push({ t: "和同事吃饭怕冷场？", k: "聊天" });
-                prompts.push({ t: "买单时想AA制？", k: "AA" });
-            } else if (hour >= 14 && hour < 18) { 
-                prompts.push({ t: "下班想去喝杯咖啡？", k: "咖啡" });
-                prompts.push({ t: "银行柜员没有中文服务？", k: "银行" });
-                prompts.push({ t: "买的东西不合适想退？", k: "退货" });
-            } else if (hour >= 18 && hour < 22) { 
-                prompts.push({ t: "晚上聚会想请客？", k: "买单" });
-                prompts.push({ t: "不想做饭想叫外卖？", k: "外卖" });
-            } else { 
-                prompts.push({ t: "半夜回家要打Uber？", k: "打车" });
-                prompts.push({ t: "身体不舒服想看医生？", k: "救命" });
-                prompts.push({ t: "遇到紧急情况？", k: "警察" });
-            }
-
-            prompts.sort(() => Math.random() - 0.5);
-            let idx = 0;
-            updatePlaceholder();
-
-            setInterval(() => {
-                if (document.activeElement === input && input.value !== "") return; 
-                input.classList.add('fade-text');
-                setTimeout(() => {
-                    idx = (idx + 1) % prompts.length;
-                    updatePlaceholder();
-                    input.classList.remove('fade-text');
-                }, 500); 
-            }, 5000);
-
-            function updatePlaceholder() {
-                const item = prompts[idx];
-                input.setAttribute('placeholder', `${item.t} 搜 "${item.k}" 试试...`);
-            }
+            let prompts = [ { t: "完全听不懂对方说什么？", k: "翻译" }, { t: "找不到洗手间很尴尬？", k: "内急" } ];
+            if (hour >= 5 && hour < 10) { prompts.push({ t: "赶时间上班怕迟到？", k: "打车" }); prompts.push({ t: "刚搬来还没认识邻居？", k: "邻居" }); } 
+            else if (hour >= 11 && hour < 14) { prompts.push({ t: "不知道该怎么点餐？", k: "点餐" }); prompts.push({ t: "和同事吃饭怕冷场？", k: "聊天" }); prompts.push({ t: "买单时想AA制？", k: "AA" }); } 
+            else if (hour >= 14 && hour < 18) { prompts.push({ t: "下班想去喝杯咖啡？", k: "咖啡" }); prompts.push({ t: "银行柜员没有中文服务？", k: "银行" }); prompts.push({ t: "买的东西不合适想退？", k: "退货" }); } 
+            else if (hour >= 18 && hour < 22) { prompts.push({ t: "晚上聚会想请客？", k: "买单" }); prompts.push({ t: "不想做饭想叫外卖？", k: "外卖" }); } 
+            else { prompts.push({ t: "半夜回家要打Uber？", k: "打车" }); prompts.push({ t: "身体不舒服想看医生？", k: "救命" }); prompts.push({ t: "遇到紧急情况？", k: "警察" }); }
+            prompts.sort(() => Math.random() - 0.5); let idx = 0; updatePlaceholder();
+            setInterval(() => { if (document.activeElement === input && input.value !== "") return; input.classList.add('fade-text'); setTimeout(() => { idx = (idx + 1) % prompts.length; updatePlaceholder(); input.classList.remove('fade-text'); }, 500); }, 5000);
+            function updatePlaceholder() { const item = prompts[idx]; input.setAttribute('placeholder', `${item.t} 搜 "${item.k}" 试试...`); }
         }
-
-        // --- 其他逻辑保持 V33.0 稳定版 ---
-        function speakWholeSentence(wordId, p, x) {
-            const wordEl = document.getElementById(wordId);
-            if(wordEl) {
-                const container = wordEl.closest('.text-content');
-                if (container) speakDirect(container.innerText);
-            }
-        }
+        function speakWholeSentence(wordId, p, x) { const wordEl = document.getElementById(wordId); if(wordEl) { const container = wordEl.closest('.text-content'); if (container) speakDirect(container.innerText); } }
         function injectExtraChips() { for (let u = 1; u <= 13; u++) { for (let s = 1; s <= 2; s++) { const container = document.getElementById(`u${u}-s${s}-chips`); if (!container || !extraVocab[u] || !extraVocab[u][s]) continue; const existing = Array.from(container.querySelectorAll('.chip')).map(c => c.innerText); const wrapper = container.querySelector('.add-btn-wrapper'); extraVocab[u][s].forEach(item => { if (!existing.includes(item.e)) { const btn = document.createElement('div'); btn.className = 'chip'; btn.innerText = item.e; btn.onclick = function() { updateUnit(u, s, item.e, item.c, "", "", this); }; if(wrapper) container.insertBefore(btn, wrapper); else container.appendChild(btn); } }); } } }
         function initBubbleTip(targetCard) { if (!targetCard) targetCard = document.querySelector('#content-area .unit-card:not(.clone)'); if (!targetCard) return; const wrapper = targetCard.querySelector('.step-container .chips-container .add-btn-wrapper'); if (wrapper) { if(wrapper.querySelector('.bubble-tip')) return; const bubble = document.createElement('div'); bubble.className = 'bubble-tip'; bubble.innerText = '没找到你想要的？现在可以点击添加！'; wrapper.appendChild(bubble); setTimeout(() => { dismissBubble(bubble); }, 15000); } }
         function dismissBubble(element) { if(element) { element.classList.add('fade-out'); setTimeout(() => { element.remove(); }, 600); } }

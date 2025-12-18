@@ -1038,5 +1038,56 @@
         function restoreSelection(unitNum,stepNum){const savedData=localStorage.getItem(`u${unitNum}-s${stepNum}`);if(savedData){const data=JSON.parse(savedData);const container=document.getElementById(`u${unitNum}-s${stepNum}-chips`);if(container){const chips=container.querySelectorAll('.chip');for(let chip of chips){if(chip.innerText===data.engWord){updateUnit(unitNum,stepNum,data.engWord,data.cnWord,data.prefix,data.suffix,chip,false);break;}}}}}
         function speakWholeSentence(wordId,p,x){const wordEl=document.getElementById(wordId);if(wordEl)speakDirect(wordEl.parentElement.innerText);}
     </script>
+// === 放到 script 标签末尾 ===
+
+// 📤 导出数据：生成一个 .json 文件给用户下载
+function backupData() {
+    triggerHaptic();
+    const data = {};
+    // 遍历所有 LocalStorage 里的自定义词条和统计数据
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('custom_chips') || key === 'unit_usage' || key.startsWith('u')) {
+            data[key] = localStorage.getItem(key);
+        }
+    }
+    const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Henry_English_Backup_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast("✅ 备份文件已生成！");
+}
+
+// 📥 恢复数据：触发文件选择
+function restoreData() {
+    triggerHaptic();
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = JSON.parse(event.target.result);
+                Object.keys(data).forEach(key => {
+                    localStorage.setItem(key, data[key]);
+                });
+                showToast("✅ 数据恢复成功！即将刷新...");
+                setTimeout(() => location.reload(), 1500);
+            } catch (err) {
+                alert("❌ 文件格式错误！");
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
 </body>
 </html>
